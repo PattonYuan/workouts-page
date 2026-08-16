@@ -2496,7 +2496,7 @@ window.REALDATA = {
     },
     {
       "date": "2023-12-04",
-      "type": "workout",
+      "type": "walk",
       "title": "深圳市 健走",
       "distanceKm": 1.01,
       "movingTimeSec": 761,
@@ -9046,7 +9046,7 @@ window.REALDATA = {
     },
     {
       "date": "2023-12-14",
-      "type": "workout",
+      "type": "walk",
       "title": "深圳市 健走",
       "distanceKm": 1.04,
       "movingTimeSec": 688,
@@ -17597,7 +17597,7 @@ window.REALDATA = {
     },
     {
       "date": "2023-12-30",
-      "type": "workout",
+      "type": "walk",
       "title": "深圳市 健走",
       "distanceKm": 0.85,
       "movingTimeSec": 590,
@@ -106598,7 +106598,7 @@ window.REALDATA = {
     },
     {
       "date": "2024-12-31",
-      "type": "workout",
+      "type": "walk",
       "title": "深圳市 健走",
       "distanceKm": 9.02,
       "movingTimeSec": 4911,
@@ -156923,7 +156923,7 @@ window.REALDATA = {
     },
     {
       "date": "2026-04-05",
-      "type": "workout",
+      "type": "walk",
       "title": "广州市 Walk",
       "distanceKm": 2.59,
       "movingTimeSec": 2676,

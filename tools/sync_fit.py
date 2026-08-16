@@ -32,7 +32,7 @@ SPORT_MAP = {
     "cycling": "ride",           # 公路骑行 / 骑行（sportType=200）
     "indoor_cycling": "ride",
     "hiking": "hike",            # 徒步（sportType=104）单独成类
-    "walking": "workout",        # 健走（sportType=900）归入训练
+    "walking": "walk",           # 健走（sportType=900）单独成「步行」类
     "swimming": "workout",
     "training": "workout",
     "workout": "workout",
@@ -42,18 +42,19 @@ SPORT_MAP = {
 
 # 高驰 sportType 码 -> 页面类型（权威来源，优先于 FIT 的 sport 字段）
 # 实测：100/101=跑步, 200=骑行, 104=徒步, 103/400/401/402/701=训练,
-#       900=健走, 9807=摩托骑行, 1000/9900=羽毛球(无FIT)
+#       900=健走(步行), 9807=摩托骑行, 1000/9900=羽毛球(无FIT)
 COROS_TYPE_MAP = {
     100: "run", 101: "run",
     200: "ride",
     104: "hike",
     103: "workout", 400: "workout", 401: "workout", 402: "workout", 701: "workout",
-    900: "workout",
+    900: "walk",
     9807: "moto",
 }
 
 SPORT_LABEL = {
     "run": "Run",
+    "walk": "Walk",
     "ride": "Ride",
     "hike": "Hike",
     "moto": "Moto",

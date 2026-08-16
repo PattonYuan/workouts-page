@@ -69,7 +69,7 @@
   let map = null;
   let mapTile = null;
   let mapTrackGroup = null;
-  const mapFilter = new Set(['run', 'ride', 'hike', 'moto']);
+  const mapFilter = new Set(['run', 'walk', 'ride', 'hike', 'moto']);
   let mapTrackRefs = [];        // [{ act, layer }]
   let currentTrackActs = [];    // 轨迹墙当前展示的 12 条，用于点击联动
 
@@ -270,7 +270,7 @@
     const year = currentYear;
     const acts = ACTIVITIES.filter(
       (a) => a.date.startsWith(year) &&
-        ['run', 'ride', 'hike', 'moto'].includes(a.type) && a.distanceKm > 0
+        ['run', 'walk', 'ride', 'hike', 'moto'].includes(a.type) && a.distanceKm > 0
     )
       .slice()
       .sort((a, b) => (a.date < b.date ? 1 : -1))

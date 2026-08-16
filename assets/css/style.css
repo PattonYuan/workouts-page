@@ -28,6 +28,7 @@
   --hike: #e8a33d;
   --moto: #8e44ad;
   --workout: #eb5757;
+  --walk: #00b8d4;
 }
 
 body.dark {
@@ -51,6 +52,7 @@ body.dark {
   --hike: #f0b24d;
   --moto: #b07ad6;
   --workout: #f0726f;
+  --walk: #4dd0e1;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }

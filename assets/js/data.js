@@ -133,6 +133,7 @@ if (_real && _real.profile) {
 /* --------------------------- 运动类型配置 --------------------------- */
 const SPORT = {
   run:     { label: '跑步', color: '#2f80ed', icon: '🏃' },
+  walk:    { label: '步行', color: '#00b8d4', icon: '🚶' },
   ride:    { label: '骑行', color: '#27ae60', icon: '🚴' },
   hike:    { label: '徒步', color: '#e8a33d', icon: '🥾' },
   moto:    { label: '摩托', color: '#8e44ad', icon: '🏍️' },
@@ -140,7 +141,7 @@ const SPORT = {
 };
 
 // 统计卡片 / 轨迹墙展示顺序（其余类型按需追加）
-const SPORT_ORDER = ['run', 'ride', 'hike', 'moto', 'workout'];
+const SPORT_ORDER = ['run', 'walk', 'ride', 'hike', 'moto', 'workout'];
 
 const HABIT = {
   pushup:     { label: '俯卧撑', color: '#f2994a', icon: '💪' },
