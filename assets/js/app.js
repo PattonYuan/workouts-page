@@ -32,7 +32,8 @@
     $('#heroLocation').textContent = PROFILE.location || '';
     $('#heroSince').textContent = PROFILE.since || new Date().getFullYear();
 
-    const thisYear = new Date().getFullYear();
+    const years = availableYears();
+    const thisYear = years.length ? years[0] : new Date().getFullYear();
     const yActs = ACTIVITIES.filter((a) => a.date.startsWith(thisYear));
     const totalKm = yActs.reduce((s, a) => s + (a.distanceKm || 0), 0);
     const totalTime = yActs.reduce((s, a) => s + a.movingTimeSec, 0);
@@ -270,9 +271,10 @@
     $('#tracksGrid').innerHTML = acts
       .map((a) => {
         const color = SPORT[a.type].color;
+        const svg = (a.track && a.track.length >= 2) ? realTrackSVG(a.track, color) : routeSVG(color, a.date);
         return `
         <div class="track-card" title="${a.date} · ${a.title} · ${a.distanceKm.toFixed(1)}km">
-          ${routeSVG(color, a.date)}
+          ${svg}
           <div class="t-title">${a.title}</div>
           <div class="t-meta">${a.distanceKm.toFixed(1)}km · ${fmtDate(a.date).split(' · ')[0]}</div>
         </div>`;
@@ -280,7 +282,29 @@
       .join('');
   }
 
-  // 由日期生成确定性的「伪轨迹」曲线
+  // 由真实 GPS 轨迹 [[lat,lon],...] 绘制（按经纬度归一化到 viewBox）
+  function realTrackSVG(track, color) {
+    const W = 130, H = 80, pad = 8;
+    const lats = track.map((p) => p[0]);
+    const lons = track.map((p) => p[1]);
+    const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+    const minLon = Math.min(...lons), maxLon = Math.max(...lons);
+    const spanLat = maxLat - minLat || 1e-6;
+    const spanLon = maxLon - minLon || 1e-6;
+    const pts = track.map(([la, lo]) => [
+      pad + ((lo - minLon) / spanLon) * (W - 2 * pad),
+      pad + (1 - (la - minLat) / spanLat) * (H - 2 * pad),
+    ]);
+    const d = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ');
+    const s = pts[0], e = pts[pts.length - 1];
+    return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+      <path d="${d}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="${s[0].toFixed(1)}" cy="${s[1].toFixed(1)}" r="3" fill="${color}" opacity=".9"/>
+      <circle cx="${e[0].toFixed(1)}" cy="${e[1].toFixed(1)}" r="3.4" fill="${color}"/>
+    </svg>`;
+  }
+
+  // 由日期生成确定性的「伪轨迹」曲线（无真实 GPS 时使用）
   function routeSVG(color, seedStr) {
     let seed = 0;
     for (let i = 0; i < seedStr.length; i++) seed = (seed * 31 + seedStr.charCodeAt(i)) | 0;
@@ -303,8 +327,7 @@
     </svg>`;
   }
 
-  function mulberry32Safe(seed) {
-    return function () {
+  function mulberry32Safe(seed) {    return function () {
       seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
       let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
       t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
