@@ -116,14 +116,13 @@ function buildCheckins() {
   return checkins;
 }
 
-// 优先使用真实数据（由 tools/sync_*.py 合并写入 real_data.js）；否则回退到示例数据
+// 优先使用真实数据（由 tools/sync_*.py 合并写入 real_data.js）。
+// 仅当「完全没有真实数据」（real_data.js 未加载）时才回退到示例数据；
+// 一旦真实数据存在，即使某字段为空数组（例如 Coros 不含习惯打卡，checkins=[]），
+// 也必须以真实数据为准，绝不能回退到示例数据，否则会凭空造出假的打卡/热力图。
 const _real = (typeof window !== 'undefined' && window.REALDATA) ? window.REALDATA : null;
-const ACTIVITIES = (_real && _real.activities && _real.activities.length)
-  ? _real.activities
-  : buildActivities();
-const CHECKINS = (_real && _real.checkins && _real.checkins.length)
-  ? _real.checkins
-  : buildCheckins();
+const ACTIVITIES = _real ? (_real.activities || []) : buildActivities();
+const CHECKINS = _real ? (_real.checkins || []) : buildCheckins();
 
 // 若真实数据提供了个人资料，则覆盖默认资料
 if (_real && _real.profile) {

@@ -484,8 +484,21 @@
 
   /* ----------------------------- 习惯打卡 ----------------------------- */
   function renderHabits() {
+    const section = document.getElementById('habits');
+    // 没有任何打卡数据（如 Coros 不含习惯打卡，checkins=[]）时，整体隐藏该板块
+    if (!CHECKINS || !CHECKINS.length) {
+      if (section) section.style.display = 'none';
+      return;
+    }
+    if (section) section.style.display = '';
+
     const year = currentYear;
     const wrapper = $('#habitCards');
+    const yearItems = CHECKINS.filter((c) => c.date.startsWith(year));
+    if (!yearItems.length) {
+      wrapper.innerHTML = '<p class="muted">今年暂无习惯打卡记录。</p>';
+      return;
+    }
     wrapper.innerHTML = '';
 
     Object.keys(HABIT).forEach((key) => {
