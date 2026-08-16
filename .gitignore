@@ -1,0 +1,9 @@
+# 本地导出的运动文件（含个人数据，不要提交）
+coros_activities/
+keep_activities/
+*.gpx
+*.tcx
+*.fit
+__pycache__/
+*.pyc
+.DS_Store
