@@ -84,7 +84,7 @@
 
   function renderYearTabs() {
     const years = availableYears();
-    if (!years.includes(currentYear)) currentYear = years[0];
+    if (!years.includes(String(currentYear))) currentYear = +years[0];
     $('#yearTabs').innerHTML = years
       .map((y) => `<button class="${y === currentYear ? 'active' : ''}" data-year="${y}">${y}</button>`)
       .join('');
@@ -93,6 +93,9 @@
         currentYear = +b.dataset.year;
         renderYearTabs();
         renderHeatmap();
+        renderStats();
+        renderActivities();
+        renderTracks();
         renderMap();
       })
     );
@@ -132,7 +135,7 @@
     let col = 0;
 
     while (cursor <= end) {
-      const inYear = cursor.getFullYear() === year;
+      const inYear = String(cursor.getFullYear()) === String(year);
       const key = ymd(cursor);
       const info = dayMap[key];
 
