@@ -310,8 +310,10 @@ def main():
     if not activities:
         print("未解析到任何活动，保留页面内置示例数据。")
         return
-    merge_and_write(activities, out_path=args.out)
-    print("完成。刷新浏览器即可看到真实 Keep 数据（已与高驰等合并）。")
+    for a in activities:
+        a.setdefault("source", "keep")
+    merge_and_write(activities, out_path=args.out, source="keep")
+    print("完成。刷新浏览器即可看到真实 Keep 数据（已与高驰等合并，重复记录自动去重）。")
 
 
 if __name__ == "__main__":

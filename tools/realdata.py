@@ -29,6 +29,35 @@ def _key(a):
     return f"{a.get('date')}|{a.get('title')}|{a.get('distanceKm')}|{a.get('movingTimeSec')}"
 
 
+# 平台优先级：高驰数据更准（含真实标题/心率/GPS），重复时以高驰为准
+_SOURCE_RANK = {"coros": 2, "keep": 1}
+
+
+def _rank(src):
+    return _SOURCE_RANK.get(src or "", 0)
+
+
+def _fuzzy_dup(new, existing):
+    """跨平台重复判定（用于 Coros→Keep 同步场景）。
+
+    当两条记录 同日 + 同运动类型 + 距离接近 + 时长接近 时，视为同一次运动，
+    即使标题/数值因导出方式不同而有差异，也判定为重复。
+    """
+    if not new.get("date") or new.get("date") != existing.get("date"):
+        return False
+    if new.get("type") != existing.get("type"):
+        return False
+    nd, ed = new.get("distanceKm") or 0, existing.get("distanceKm") or 0
+    nt, et = new.get("movingTimeSec") or 0, existing.get("movingTimeSec") or 0
+    # 距离容差：0.3km 或 3%，取较大者
+    if abs(nd - ed) > max(0.3, 0.03 * max(nd, ed, 1)):
+        return False
+    # 时长容差：120s 或 5%，取较大者
+    if abs(nt - et) > max(120, 0.05 * max(nt, et, 1)):
+        return False
+    return True
+
+
 def merge_and_write(new_activities, profile=None, checkins=None, out_path=None, source=None):
     if out_path is None:
         here = os.path.dirname(os.path.abspath(__file__))
@@ -46,12 +75,30 @@ def merge_and_write(new_activities, profile=None, checkins=None, out_path=None, 
         # 兼容旧调用（不带 source）：整文件由本次结果替换
         data["activities"] = []
 
+    # 其它平台已有活动（用于跨平台去重判定）
+    others = list(data["activities"])
     seen = {_key(a) for a in data["activities"]}
     for a in new_activities:
         k = _key(a)
-        if k not in seen:
-            data["activities"].append(a)
-            seen.add(k)
+        if k in seen:
+            continue  # 完全一致的重复（如同文件重跑）
+        if source:
+            # 跨平台模糊去重：若与某个更高/同级优先级的平台记录重复，则丢弃本次（保留既有）
+            a_rank = _rank(source)
+            matched = False
+            for o in others:
+                if _fuzzy_dup(a, o):
+                    o_rank = _rank(o.get("source"))
+                    if o_rank >= a_rank:
+                        print(f"↺ 去重跳过（与 {o.get('source')} 重复）: {a.get('date')} {a.get('title')} "
+                              f"{a.get('distanceKm')}km")
+                        matched = True
+                        break
+                    # 否则本次优先级更高（如 coros 重跑撞上 keep 原生记录），保留本次
+            if matched:
+                continue
+        data["activities"].append(a)
+        seen.add(k)
     data["activities"].sort(key=lambda a: a["date"])
 
     if profile:
