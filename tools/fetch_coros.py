@@ -48,7 +48,25 @@ COROS_URL = {
 TIMEOUT = httpx.Timeout(240.0, connect=360.0)
 
 
+def _load_dotenv():
+    """读取脚本同目录的 .env（KEY=VALUE，忽略 # 注释与空行）。不依赖第三方库。
+
+    这样高驰凭据可以和 Keep 共用同一个 tools/.env，定时任务无需额外注入环境变量。
+    """
+    p = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    if not os.path.exists(p):
+        return
+    with open(p, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+
+
 def load_credentials():
+    _load_dotenv()  # 优先从同目录 .env 载入（若存在）
     email = os.environ.get("COROS_EMAIL")
     pwd = os.environ.get("COROS_PASSWORD")
     if email and pwd:
