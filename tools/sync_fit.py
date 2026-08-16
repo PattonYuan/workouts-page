@@ -27,14 +27,16 @@ from realdata import merge_and_write
 
 SPORT_MAP = {
     "running": "run",
-    "cycling": "ride",
-    "walking": "workout",
+    "treadmill": "run",          # 跑步机
+    "cycling": "ride",           # 公路骑行 / 骑行（sportType=200）
+    "indoor_cycling": "ride",
+    "hiking": "workout",         # 徒步（sportType=104，按有氧训练计）
+    "walking": "workout",        # 健走（sportType=900）
     "swimming": "workout",
     "training": "workout",
     "workout": "workout",
     "elliptical": "workout",
-    "indoor_cycling": "ride",
-    "treadmill": "run",
+    "generic": "workout",        # 摩托骑行等无明确类型（sportType=9807）
 }
 
 SPORT_LABEL = {

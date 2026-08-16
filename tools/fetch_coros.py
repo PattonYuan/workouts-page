@@ -40,7 +40,9 @@ except ImportError:
 COROS_URL = {
     "LOGIN_URL": "https://teamcnapi.coros.com/account/login",
     "DOWNLOAD_URL": "https://teamcnapi.coros.com/activity/detail/download",
-    "ACTIVITY_LIST": "https://teamcnapi.coros.com/activity/query?&modeList=100,102,103",
+    # 不传 modeList：拉取账号内全部运动类型（跑步/骑行/徒步/训练/健走…），
+    # 之前写死 modeList=100,102,103 会漏掉骑行(200)、徒步(104)、训练、健走等。
+    "ACTIVITY_LIST": "https://teamcnapi.coros.com/activity/query?",
 }
 TIMEOUT = httpx.Timeout(240.0, connect=360.0)
 
@@ -97,36 +99,39 @@ class Coros:
             }
             self.req = httpx.AsyncClient(timeout=TIMEOUT, headers=self.headers)
 
-    async def fetch_activity_ids(self):
-        ids, page = [], 1
+    async def fetch_activities(self):
+        """返回账号内全部活动 [(labelId, sportType), ...]，翻页拉全。"""
+        out, page = [], 1
         while True:
-            r = await self.req.get(f"{COROS_URL['ACTIVITY_LIST']}&pageNumber={page}&size=20")
+            r = await self.req.get(f"{COROS_URL['ACTIVITY_LIST']}&pageNumber={page}&size=50")
             items = r.json().get("data", {}).get("dataList") or []
             if not items:
                 break
             for a in items:
                 if a.get("labelId"):
-                    ids.append(a["labelId"])
+                    out.append((a["labelId"], a.get("sportType")))
             page += 1
-        return ids
+        return out
 
-    async def download(self, label_id, folder):
-        url = f"{COROS_URL['DOWNLOAD_URL']}?labelId={label_id}&sportType=100&fileType=4"
+    async def download(self, label_id, sport_type, folder):
+        # 关键修复：下载时 sportType 必须传「该活动自身的类型」，不能写死 100。
+        # 写死 100 会让骑行/徒步/训练等全部被高驰返回成 running 型 FIT。
+        url = f"{COROS_URL['DOWNLOAD_URL']}?labelId={label_id}&sportType={sport_type}&fileType=4"
         try:
             r = await self.req.post(url)
             file_url = r.json().get("data", {}).get("fileUrl")
             if not file_url:
                 return None
-            fname = os.path.basename(file_url)
-            path = os.path.join(folder, fname)
+            # 以 labelId 命名，保证增量同步时按活动去重（幂等）
+            path = os.path.join(folder, f"{label_id}.fit")
             async with self.req.stream("GET", file_url) as resp:
                 resp.raise_for_status()
                 async with aiofiles.open(path, "wb") as f:
                     async for chunk in resp.aiter_bytes():
                         await f.write(chunk)
-            return fname
+            return label_id
         except Exception as e:
-            print(f"  ⚠️  下载 {label_id} 失败: {e}")
+            print(f"  ⚠️  下载 {label_id}(sportType={sport_type}) 失败: {e}")
             return None
 
 
@@ -137,10 +142,10 @@ async def run(out_dir):
 
     c = Coros(email, pwd)
     await c.login()
-    ids = await c.fetch_activity_ids()
-    print(f"高驰账号共有 {len(ids)} 个活动；本地已存在 {len(existing)} 个")
+    acts = await c.fetch_activities()
+    print(f"高驰账号共有 {len(acts)} 个活动；本地已存在 {len(existing)} 个")
 
-    todo = [i for i in ids if i not in existing]
+    todo = [(lid, st) for lid, st in acts if lid not in existing]
     if not todo:
         print("✅ 已是最新，无需下载。")
         await c.req.aclose()
@@ -148,14 +153,15 @@ async def run(out_dir):
 
     sem = asyncio.Semaphore(10)
 
-    async def task(i):
+    async def task(lid, st):
         async with sem:
-            return await c.download(i, out_dir)
+            return await c.download(lid, st, out_dir)
 
-    results = await asyncio.gather(*(task(i) for i in todo))
+    results = await asyncio.gather(*(task(lid, st) for lid, st in todo))
     await c.req.aclose()
     ok = sum(1 for r in results if r)
-    print(f"✅ 本次新增下载 {ok} 个活动到 {out_dir}")
+    skip = len(results) - ok
+    print(f"✅ 本次新增下载 {ok} 个活动到 {out_dir}（部分活动无 FIT 文件，已跳过 {skip} 个）")
     return ok
 
 
