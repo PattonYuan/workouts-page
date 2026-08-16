@@ -163,35 +163,38 @@
     const year = currentYear;
     const acts = ACTIVITIES.filter((a) => a.date.startsWith(year));
 
-    const byType = { run: [], ride: [], workout: [] };
-    acts.forEach((a) => byType[a.type].push(a));
+    const byType = {};
+    SPORT_ORDER.forEach((t) => (byType[t] = []));
+    acts.forEach((a) => { if (byType[a.type]) byType[a.type].push(a); });
 
     const sumKm = (arr) => arr.reduce((s, a) => s + (a.distanceKm || 0), 0);
     const sumTime = (arr) => arr.reduce((s, a) => s + a.movingTimeSec, 0);
-    const sumEle = (arr) => arr.reduce((s, a) => s + a.elevationM, 0);
+    const sumEle = (arr) => arr.reduce((s, a) => s + (a.elevationM || 0), 0);
 
-    const cards = [
-      {
-        color: 'var(--run)', title: '🏃 跑步',
-        big: sumKm(byType.run).toFixed(0), unit: 'km',
-        sub: `${byType.run.length} 次 · 爬升 ${sumEle(byType.run)}m`,
-      },
-      {
-        color: 'var(--ride)', title: '🚴 骑行',
-        big: sumKm(byType.ride).toFixed(0), unit: 'km',
-        sub: `${byType.ride.length} 次 · 爬升 ${sumEle(byType.ride)}m`,
-      },
-      {
-        color: 'var(--workout)', title: '🏋️ 训练',
-        big: byType.workout.length, unit: '次',
-        sub: `时长 ${fmtDuration(sumTime(byType.workout))}`,
-      },
-      {
-        color: 'var(--accent)', title: '📊 年度合计',
-        big: acts.length, unit: '次',
-        sub: `总里程 ${sumKm(acts).toFixed(0)}km · 时长 ${fmtDuration(sumTime(acts))}`,
-      },
-    ];
+    const cards = [];
+    SPORT_ORDER.forEach((t) => {
+      const cfg = SPORT[t];
+      const arr = byType[t] || [];
+      if (t === 'workout') {
+        cards.push({
+          color: cfg.color, title: `${cfg.icon} ${cfg.label}`,
+          big: arr.length, unit: '次',
+          sub: `时长 ${fmtDuration(sumTime(arr))}`,
+        });
+      } else {
+        cards.push({
+          color: cfg.color, title: `${cfg.icon} ${cfg.label}`,
+          big: sumKm(arr).toFixed(0), unit: 'km',
+          sub: `${arr.length} 次 · 爬升 ${sumEle(arr)}m`,
+        });
+      }
+    });
+
+    cards.push({
+      color: 'var(--accent)', title: '📊 年度合计',
+      big: acts.length, unit: '次',
+      sub: `总里程 ${sumKm(acts).toFixed(0)}km · 时长 ${fmtDuration(sumTime(acts))}`,
+    });
 
     $('#statCards').innerHTML = cards
       .map(
@@ -257,7 +260,8 @@
   function renderTracks() {
     const year = currentYear;
     const acts = ACTIVITIES.filter(
-      (a) => a.date.startsWith(year) && (a.type === 'run' || a.type === 'ride') && a.distanceKm > 0
+      (a) => a.date.startsWith(year) &&
+        ['run', 'ride', 'hike', 'moto'].includes(a.type) && a.distanceKm > 0
     )
       .slice()
       .sort((a, b) => (a.date < b.date ? 1 : -1))

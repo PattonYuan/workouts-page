@@ -8,7 +8,7 @@
  * 数据字段说明：
  *   PROFILE      : 个人资料（姓名、标语、头像）
  *   ACTIVITIES   : 运动记录 [{ date, type, title, distanceKm, movingTimeSec, elevationM, avgHr }]
- *                  type ∈ 'run' | 'ride' | 'workout'
+ *                  type ∈ 'run' | 'ride' | 'hike' | 'moto' | 'workout'
  *   CHECKINS     : 习惯打卡 [{ date, item, reps }]
  *                  item ∈ 'pushup' | 'squat' | 'coldshower'
  * ========================================================================= */
@@ -134,8 +134,13 @@ if (_real && _real.profile) {
 const SPORT = {
   run:     { label: '跑步', color: '#2f80ed', icon: '🏃' },
   ride:    { label: '骑行', color: '#27ae60', icon: '🚴' },
+  hike:    { label: '徒步', color: '#e8a33d', icon: '🥾' },
+  moto:    { label: '摩托', color: '#8e44ad', icon: '🏍️' },
   workout: { label: '训练', color: '#eb5757', icon: '🏋️' },
 };
+
+// 统计卡片 / 轨迹墙展示顺序（其余类型按需追加）
+const SPORT_ORDER = ['run', 'ride', 'hike', 'moto', 'workout'];
 
 const HABIT = {
   pushup:     { label: '俯卧撑', color: '#f2994a', icon: '💪' },

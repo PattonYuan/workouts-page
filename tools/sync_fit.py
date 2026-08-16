@@ -18,6 +18,7 @@ sync_fit.py —— 解析高驰(Coros)导出的 FIT 文件，写入 workouts-pag
 """
 import argparse
 import glob
+import json
 import os
 import sys
 
@@ -30,18 +31,32 @@ SPORT_MAP = {
     "treadmill": "run",          # 跑步机
     "cycling": "ride",           # 公路骑行 / 骑行（sportType=200）
     "indoor_cycling": "ride",
-    "hiking": "workout",         # 徒步（sportType=104，按有氧训练计）
-    "walking": "workout",        # 健走（sportType=900）
+    "hiking": "hike",            # 徒步（sportType=104）单独成类
+    "walking": "workout",        # 健走（sportType=900）归入训练
     "swimming": "workout",
     "training": "workout",
     "workout": "workout",
     "elliptical": "workout",
-    "generic": "workout",        # 摩托骑行等无明确类型（sportType=9807）
+    "generic": "workout",        # 无明确类型回退（摩托骑行需靠 Coros sportType 区分）
+}
+
+# 高驰 sportType 码 -> 页面类型（权威来源，优先于 FIT 的 sport 字段）
+# 实测：100/101=跑步, 200=骑行, 104=徒步, 103/400/401/402/701=训练,
+#       900=健走, 9807=摩托骑行, 1000/9900=羽毛球(无FIT)
+COROS_TYPE_MAP = {
+    100: "run", 101: "run",
+    200: "ride",
+    104: "hike",
+    103: "workout", 400: "workout", 401: "workout", 402: "workout", 701: "workout",
+    900: "workout",
+    9807: "moto",
 }
 
 SPORT_LABEL = {
     "run": "Run",
     "ride": "Ride",
+    "hike": "Hike",
+    "moto": "Moto",
     "workout": "Workout",
 }
 
@@ -64,20 +79,20 @@ def time_of_day_label(hour):
     return "Evening"
 
 
-def parse_fit_file(path):
+def parse_fit_file(path, coros_type=None, name=None):
     """解析单个 FIT 文件。优先 fitdecode（更鲁棒，可跳过异常帧），失败回退 fitparse。"""
     try:
-        return _parse_with_fitdecode(path)
+        return _parse_with_fitdecode(path, coros_type=coros_type, name=name)
     except Exception as e:
         print(f"  ⚠️  fitdecode 解析失败 {os.path.basename(path)}: {e}，尝试 fitparse")
         try:
-            return _parse_with_fitparse(path)
+            return _parse_with_fitparse(path, coros_type=coros_type, name=name)
         except Exception as e2:
             print(f"  ❌  跳过 {os.path.basename(path)}: {e2}")
             return None
 
 
-def _parse_with_fitdecode(path):
+def _parse_with_fitdecode(path, coros_type=None, name=None):
     import fitdecode
 
     session = None
@@ -96,10 +111,10 @@ def _parse_with_fitdecode(path):
                     track.append((round(lat, 5), round(lon, 5)))
     if not session:
         return None
-    return _build_activity(session, track, os.path.basename(path))
+    return _build_activity(session, track, os.path.basename(path), coros_type=coros_type, name=name)
 
 
-def _parse_with_fitparse(path):
+def _parse_with_fitparse(path, coros_type=None, name=None):
     import fitparse
 
     fit = fitparse.FitFile(path)
@@ -116,19 +131,23 @@ def _parse_with_fitparse(path):
         lon = semicircle_to_deg(d.get("position_long"))
         if lat is not None and lon is not None:
             track.append((round(lat, 5), round(lon, 5)))
-    return _build_activity(session, track, os.path.basename(path))
+    return _build_activity(session, track, os.path.basename(path), coros_type=coros_type, name=name)
 
 
-def _build_activity(session, track, fname):
+def _build_activity(session, track, fname, coros_type=None, name=None):
     sport = (session.get("sport") or "training").lower()
     stype = SPORT_MAP.get(sport, "workout")
+    # 优先用高驰 sportType（权威）：摩托骑行(9807)等 FIT 标为 generic 的活动可正确归类
+    if coros_type is not None and coros_type in COROS_TYPE_MAP:
+        stype = COROS_TYPE_MAP[coros_type]
 
     start = session.get("start_time")
     if start is None:
         return None
     date = start.strftime("%Y-%m-%d")
     hour = start.hour
-    title = f"{time_of_day_label(hour)} {SPORT_LABEL.get(stype, 'Workout')}"
+    # 优先用高驰活动名（真实名称），否则按时间段合成
+    title = name.strip() if name and name.strip() else f"{time_of_day_label(hour)} {SPORT_LABEL.get(stype, 'Workout')}"
 
     distance_km = round((session.get("total_distance") or 0) / 1000.0, 2)
     moving = session.get("total_timer_time") or session.get("total_elapsed_time") or 0
@@ -175,14 +194,27 @@ def main():
 
     activities = []
     for fp in files:
-        a = parse_fit_file(fp)
+        coros_type = None
+        name = None
+        # 读取 fetch_coros.py 生成的侧车元数据（高驰 sportType + 活动名）
+        # 注意：fetch_coros 写入的是 "<labelId>.fit.meta.json"
+        meta_path = fp + ".meta.json"
+        if os.path.exists(meta_path):
+            try:
+                with open(meta_path, encoding="utf-8") as mf:
+                    meta = json.load(mf)
+                coros_type = meta.get("sportType")
+                name = meta.get("name")
+            except Exception:
+                pass
+        a = parse_fit_file(fp, coros_type=coros_type, name=name)
         if a:
             activities.append(a)
 
     print(f"解析到 {len(activities)} 条真实高驰活动（来自 {len(files)} 个 FIT 文件）")
     if not activities:
         return
-    merge_and_write(activities, out_path=args.out)
+    merge_and_write(activities, out_path=args.out, source="coros")
 
 
 if __name__ == "__main__":

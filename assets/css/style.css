@@ -25,6 +25,8 @@
 
   --run: #2f80ed;
   --ride: #27ae60;
+  --hike: #e8a33d;
+  --moto: #8e44ad;
   --workout: #eb5757;
 }
 
@@ -43,6 +45,12 @@ body.dark {
   --hm-2: #1565a8;
   --hm-3: #2f80ed;
   --hm-4: #6fb1ff;
+
+  --run: #5aa0ff;
+  --ride: #4caf72;
+  --hike: #f0b24d;
+  --moto: #b07ad6;
+  --workout: #f0726f;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }

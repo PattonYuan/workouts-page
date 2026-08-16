@@ -29,13 +29,22 @@ def _key(a):
     return f"{a.get('date')}|{a.get('title')}|{a.get('distanceKm')}|{a.get('movingTimeSec')}"
 
 
-def merge_and_write(new_activities, profile=None, checkins=None, out_path=None):
+def merge_and_write(new_activities, profile=None, checkins=None, out_path=None, source=None):
     if out_path is None:
         here = os.path.dirname(os.path.abspath(__file__))
         out_path = os.path.join(here, "..", "assets", "js", "real_data.js")
     out_path = os.path.abspath(out_path)
 
     data = load_existing(out_path)
+
+    # 同源替换：重新解析（如分类规则变更/重拉）时，先丢弃旧的同源活动，
+    # 再写入新解析结果，避免旧分类（如摩托骑行被误判为训练）残留。
+    # 不同源（如 coros + keep）则累加，互不覆盖。
+    if source:
+        data["activities"] = [a for a in data["activities"] if a.get("source") != source]
+    else:
+        # 兼容旧调用（不带 source）：整文件由本次结果替换
+        data["activities"] = []
 
     seen = {_key(a) for a in data["activities"]}
     for a in new_activities:

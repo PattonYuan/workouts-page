@@ -27,6 +27,7 @@ import argparse
 import asyncio
 import glob
 import hashlib
+import json
 import os
 import sys
 
@@ -100,7 +101,7 @@ class Coros:
             self.req = httpx.AsyncClient(timeout=TIMEOUT, headers=self.headers)
 
     async def fetch_activities(self):
-        """返回账号内全部活动 [(labelId, sportType), ...]，翻页拉全。"""
+        """返回账号内全部活动 [(labelId, sportType, name), ...]，翻页拉全。"""
         out, page = [], 1
         while True:
             r = await self.req.get(f"{COROS_URL['ACTIVITY_LIST']}&pageNumber={page}&size=50")
@@ -109,11 +110,11 @@ class Coros:
                 break
             for a in items:
                 if a.get("labelId"):
-                    out.append((a["labelId"], a.get("sportType")))
+                    out.append((a["labelId"], a.get("sportType"), a.get("name")))
             page += 1
         return out
 
-    async def download(self, label_id, sport_type, folder):
+    async def download(self, label_id, sport_type, name, folder):
         # 关键修复：下载时 sportType 必须传「该活动自身的类型」，不能写死 100。
         # 写死 100 会让骑行/徒步/训练等全部被高驰返回成 running 型 FIT。
         url = f"{COROS_URL['DOWNLOAD_URL']}?labelId={label_id}&sportType={sport_type}&fileType=4"
@@ -129,6 +130,10 @@ class Coros:
                 async with aiofiles.open(path, "wb") as f:
                     async for chunk in resp.aiter_bytes():
                         await f.write(chunk)
+            # 侧车元数据：高驰 sportType + 活动名，供 sync_fit.py 正确分类/命名
+            meta = {"sportType": sport_type, "name": name or ""}
+            async with aiofiles.open(path + ".meta.json", "w", encoding="utf-8") as mf:
+                await mf.write(json.dumps(meta, ensure_ascii=False))
             return label_id
         except Exception as e:
             print(f"  ⚠️  下载 {label_id}(sportType={sport_type}) 失败: {e}")
@@ -145,7 +150,7 @@ async def run(out_dir):
     acts = await c.fetch_activities()
     print(f"高驰账号共有 {len(acts)} 个活动；本地已存在 {len(existing)} 个")
 
-    todo = [(lid, st) for lid, st in acts if lid not in existing]
+    todo = [(lid, st, nm) for lid, st, nm in acts if lid not in existing]
     if not todo:
         print("✅ 已是最新，无需下载。")
         await c.req.aclose()
@@ -153,11 +158,11 @@ async def run(out_dir):
 
     sem = asyncio.Semaphore(10)
 
-    async def task(lid, st):
+    async def task(lid, st, nm):
         async with sem:
-            return await c.download(lid, st, out_dir)
+            return await c.download(lid, st, nm, out_dir)
 
-    results = await asyncio.gather(*(task(lid, st) for lid, st in todo))
+    results = await asyncio.gather(*(task(lid, st, nm) for lid, st, nm in todo))
     await c.req.aclose()
     ok = sum(1 for r in results if r)
     skip = len(results) - ok
