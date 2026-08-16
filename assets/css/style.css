@@ -250,6 +250,22 @@ a:hover { text-decoration: underline; }
 .habit-foot { display: flex; gap: 18px; margin-top: 12px; font-size: 13px; color: var(--muted); }
 .habit-foot b { color: var(--text); font-size: 16px; display: block; }
 
+/* --------------------------- 轨迹地图 --------------------------- */
+.track-card { cursor: pointer; }
+.track-map {
+  height: 540px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  background: var(--bg-soft);
+}
+.track-map .leaflet-container { background: var(--bg-soft); font: inherit; }
+.track-map .leaflet-interactive { outline: none; }
+.track-map .leaflet-popup-content { margin: 12px 14px; font-size: 13px; line-height: 1.5; }
+.track-map .leaflet-popup-content b { color: var(--text); }
+.map-hint { font-size: 13px; margin-top: 10px; }
+
 /* ----------------------------- Footer ----------------------------- */
 .site-footer {
   margin-top: 50px; padding: 30px 20px; border-top: 1px solid var(--border);

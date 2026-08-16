@@ -7,6 +7,9 @@
   <meta name="description" content="个人运动记录主页 · 跑步 / 骑行 / 训练 / 习惯打卡" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏃</text></svg>" />
   <link rel="stylesheet" href="assets/css/style.css" />
+  <!-- Leaflet 地图库（轨迹地图底图） -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        crossorigin="" referrerpolicy="no-referrer" />
 </head>
 <body>
   <!-- ===================== 顶部导航 ===================== -->
@@ -21,6 +24,7 @@
         <a href="#stats">统计</a>
         <a href="#activities">活动</a>
         <a href="#tracks">轨迹</a>
+        <a href="#trackmap">地图</a>
         <a href="#habits">习惯</a>
       </nav>
       <button id="themeToggle" class="theme-toggle" aria-label="切换主题">🌙</button>
@@ -93,6 +97,22 @@
       <div class="tracks-grid" id="tracksGrid"><!-- JS 填充 --></div>
     </section>
 
+    <!-- ===================== 轨迹地图 ===================== -->
+    <section id="trackmap" class="section container">
+      <div class="section-head">
+        <h2>轨迹地图</h2>
+        <div class="filters" id="mapFilters">
+          <button class="chip active" data-type="run">🏃 跑步</button>
+          <button class="chip active" data-type="ride">🚴 骑行</button>
+          <button class="chip active" data-type="hike">🥾 徒步</button>
+          <button class="chip active" data-type="moto">🏍️ 摩托</button>
+          <button class="chip" id="mapReset">↺ 重置视图</button>
+        </div>
+      </div>
+      <div id="trackMap" class="track-map"></div>
+      <p class="map-hint muted">真实 GPS 轨迹叠加在地图上 · 点击轨迹查看详情 · 点击上方「轨迹墙」卡片可在地图上聚焦</p>
+    </section>
+
     <!-- ===================== 习惯打卡 ===================== -->
     <section id="habits" class="section container">
       <div class="section-head"><h2>习惯打卡</h2></div>
@@ -109,6 +129,8 @@
 
   <script src="assets/js/real_data.js"></script>
   <script src="assets/js/data.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          crossorigin="" referrerpolicy="no-referrer"></script>
   <script src="assets/js/app.js"></script>
 </body>
 </html>

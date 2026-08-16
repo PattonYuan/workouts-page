@@ -65,6 +65,14 @@
     return streak;
   }
 
+  /* ----------------------------- 轨迹地图状态 ----------------------------- */
+  let map = null;
+  let mapTile = null;
+  let mapTrackGroup = null;
+  const mapFilter = new Set(['run', 'ride', 'hike', 'moto']);
+  let mapTrackRefs = [];        // [{ act, layer }]
+  let currentTrackActs = [];    // 轨迹墙当前展示的 12 条，用于点击联动
+
   /* ----------------------------- 热力图 ----------------------------- */
   let currentYear = new Date().getFullYear();
 
@@ -85,6 +93,7 @@
         currentYear = +b.dataset.year;
         renderYearTabs();
         renderHeatmap();
+        renderMap();
       })
     );
   }
@@ -272,18 +281,27 @@
       return;
     }
 
+    currentTrackActs = acts;
     $('#tracksGrid').innerHTML = acts
-      .map((a) => {
+      .map((a, i) => {
         const color = SPORT[a.type].color;
         const svg = (a.track && a.track.length >= 2) ? realTrackSVG(a.track, color) : routeSVG(color, a.date);
         return `
-        <div class="track-card" title="${a.date} · ${a.title} · ${a.distanceKm.toFixed(1)}km">
+        <div class="track-card" data-idx="${i}" title="${a.date} · ${a.title} · ${a.distanceKm.toFixed(1)}km（点击在地图上聚焦）">
           ${svg}
           <div class="t-title">${a.title}</div>
           <div class="t-meta">${a.distanceKm.toFixed(1)}km · ${fmtDate(a.date).split(' · ')[0]}</div>
         </div>`;
       })
       .join('');
+
+    // 点击轨迹卡片 → 在地图上聚焦该轨迹
+    $$('#tracksGrid .track-card').forEach((card) => {
+      card.addEventListener('click', () => {
+        const a = currentTrackActs[+card.dataset.idx];
+        if (a) focusTrackOnMap(a);
+      });
+    });
   }
 
   // 由真实 GPS 轨迹 [[lat,lon],...] 绘制（按经纬度归一化到 viewBox）
@@ -337,6 +355,128 @@
       t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
+  }
+
+  /* ----------------------------- 轨迹地图 ----------------------------- */
+  function mapTileUrl() {
+    const dark = document.body.classList.contains('dark');
+    const base = dark
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/'
+      : 'https://{s}.basemaps.cartocdn.com/light_all/';
+    return base + '{z}/{x}/{y}{r}.png';
+  }
+  function mapAttribution() {
+    return '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+  }
+
+  function initMap() {
+    if (map) return;
+    const el = $('#trackMap');
+    if (!el) return;
+    if (typeof L === 'undefined') {
+      el.innerHTML =
+        '<div style="height:100%;display:grid;place-items:center;text-align:center;padding:24px;color:var(--muted)">' +
+        '地图组件加载失败（需要联网加载 Leaflet 与地图瓦片）。<br>可继续使用上方「轨迹墙」查看路线轮廓。</div>';
+      return;
+    }
+    map = L.map(el, { zoomControl: true, attributionControl: true, scrollWheelZoom: false })
+      .setView([22.55, 114.06], 11); // 默认深圳，随后按轨迹自适应
+    mapTile = L.tileLayer(mapTileUrl(), {
+      subdomains: 'abcd', maxZoom: 19, attribution: mapAttribution(),
+      errorTileUrl:
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+    }).addTo(map);
+    // 瓦片因网络受限加载失败时给出提示（底图可能为空，但轨迹线仍会绘制）
+    let tileErrors = 0;
+    mapTile.on('tileerror', () => {
+      tileErrors++;
+      const hint = $('.map-hint');
+      if (tileErrors > 8 && hint && !hint.dataset.warn) {
+        hint.dataset.warn = '1';
+        hint.textContent = '⚠️ 地图底图加载失败（当前网络无法访问瓦片服务）。轨迹线仍可显示，联网后底图会自动出现。';
+      }
+    });
+    mapTrackGroup = L.layerGroup().addTo(map);
+    window.addEventListener('resize', () => map && map.invalidateSize());
+  }
+
+  function drawTracksOnMap() {
+    if (!map || !mapTrackGroup) return;
+    mapTrackGroup.clearLayers();
+    mapTrackRefs = [];
+    const year = currentYear;
+    const acts = ACTIVITIES.filter(
+      (a) => a.date.startsWith(year) && a.track && a.track.length >= 2 && mapFilter.has(a.type)
+    );
+    let bounds = null;
+    acts.forEach((a) => {
+      const color = SPORT[a.type].color;
+      const latlngs = a.track.map((p) => [p[0], p[1]]);
+      const layer = L.polyline(latlngs, { color, weight: 3, opacity: 0.85, lineCap: 'round', lineJoin: 'round' });
+      layer.bindPopup(
+        `<div style="min-width:172px">
+          <div style="font-size:15px;font-weight:700;margin-bottom:2px">${SPORT[a.type].icon} ${a.title}</div>
+          <div style="color:#5b6675;font-size:12px;margin-bottom:6px">${fmtDate(a.date)}</div>
+          <div>距离 <b>${a.distanceKm ? a.distanceKm.toFixed(1) : '—'}</b> km</div>
+          <div>时长 <b>${fmtDuration(a.movingTimeSec)}</b></div>
+          ${a.elevationM ? `<div>爬升 <b>${a.elevationM}</b> m</div>` : ''}
+          ${a.avgHr ? `<div>心率 <b>${a.avgHr}</b> bpm</div>` : ''}
+        </div>`
+      );
+      layer.addTo(mapTrackGroup);
+      mapTrackRefs.push({ act: a, layer });
+      const b = layer.getBounds();
+      bounds = bounds ? bounds.extend(b) : b;
+    });
+    if (bounds && bounds.isValid()) {
+      map.fitBounds(bounds, { padding: [24, 24], maxZoom: 15 });
+    }
+  }
+
+  function renderMap() {
+    initMap();
+    if (!map) return;
+    drawTracksOnMap();
+  }
+
+  function applyMapTheme() {
+    if (!map || !mapTile) return;
+    mapTile.setUrl(mapTileUrl());
+  }
+
+  function focusTrackOnMap(a) {
+    if (!map) return;
+    // 若该类型被过滤隐藏，先恢复显示再聚焦
+    if (a.type && !mapFilter.has(a.type)) {
+      mapFilter.add(a.type);
+      const chip = $(`#mapFilters .chip[data-type="${a.type}"]`);
+      if (chip) chip.classList.add('active');
+      drawTracksOnMap();
+    }
+    if (!a.track || a.track.length < 2) return;
+    const b = L.latLngBounds(a.track.map((p) => [p[0], p[1]]));
+    const ref = mapTrackRefs.find((r) => r.act === a);
+    map.flyToBounds(b, { padding: [60, 60], maxZoom: 16, duration: 0.8 });
+    if (ref) setTimeout(() => ref.layer.openPopup(), 850);
+    document.getElementById('trackmap').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function bindMapFilters() {
+    $$('#mapFilters .chip[data-type]').forEach((chip) =>
+      chip.addEventListener('click', () => {
+        const t = chip.dataset.type;
+        if (mapFilter.has(t)) { mapFilter.delete(t); chip.classList.remove('active'); }
+        else { mapFilter.add(t); chip.classList.add('active'); }
+        drawTracksOnMap();
+      })
+    );
+    const reset = $('#mapReset');
+    if (reset) reset.addEventListener('click', () => {
+      if (map && mapTrackGroup) {
+        const b = mapTrackGroup.getBounds();
+        if (b.isValid()) map.fitBounds(b, { padding: [24, 24], maxZoom: 15 });
+      }
+    });
   }
 
   /* ----------------------------- 习惯打卡 ----------------------------- */
@@ -395,6 +535,7 @@
       const dark = document.body.classList.contains('dark');
       btn.textContent = dark ? '☀️' : '🌙';
       localStorage.setItem('workouts-theme', dark ? 'dark' : 'light');
+      applyMapTheme();
     });
   }
 
@@ -407,8 +548,10 @@
     bindActivityFilters();
     renderActivities();
     renderTracks();
+    bindMapFilters();
+    bindTheme();        // 先应用主题（含深色模式），再初始化地图底图
+    renderMap();
     renderHabits();
-    bindTheme();
   }
 
   document.addEventListener('DOMContentLoaded', init);
