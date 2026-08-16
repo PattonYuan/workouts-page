@@ -7,3 +7,8 @@ keep_activities/
 __pycache__/
 *.pyc
 .DS_Store
+
+# 凭据（含账号密码，绝不可提交）
+.env
+tools/.env
+
