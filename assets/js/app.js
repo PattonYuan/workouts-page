@@ -9,19 +9,43 @@
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
+  /* ----------------------------- 语言（默认英文） ----------------------------- */
+  let LANG = (function () {
+    try { return localStorage.getItem('workouts-lang'); } catch (e) { return null; }
+  })() || 'en';
+  function t(key) {
+    const d = I18N[LANG] || I18N.zh;
+    return (d && d[key] != null) ? d[key] : (I18N.zh[key] != null ? I18N.zh[key] : key);
+  }
+  function sportLabel(type) {
+    const s = SPORT[type];
+    if (!s) return type;
+    return LANG === 'en' ? s.en : s.label;
+  }
+  function habitLabel(key) {
+    const h = HABIT[key];
+    if (!h) return key;
+    return LANG === 'en' ? h.en : h.label;
+  }
+
+  const MON_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const WK_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const WK_ZH = ['日', '一', '二', '三', '四', '五', '六'];
+
   const pad = (n) => String(n).padStart(2, '0');
   const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
   function fmtDuration(sec) {
     const h = Math.floor(sec / 3600);
     const m = Math.floor((sec % 3600) / 60);
+    if (LANG === 'en') return h > 0 ? `${h}h ${m}m` : `${m}m`;
     if (h > 0) return `${h}小时${m}分`;
     return `${m}分钟`;
   }
   function fmtDate(s) {
     const d = new Date(s + 'T00:00:00');
-    const wk = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()];
-    return `${d.getMonth() + 1}月${d.getDate()}日 · 周${wk}`;
+    if (LANG === 'en') return `${MON_EN[d.getMonth()]} ${d.getDate()} · ${WK_EN[d.getDay()]}`;
+    return `${d.getMonth() + 1}月${d.getDate()}日 · 周${WK_ZH[d.getDay()]}`;
   }
 
   /* ----------------------------- Hero ----------------------------- */
@@ -36,8 +60,11 @@
     }
     $('#heroName').textContent = PROFILE.name;
     $('#heroTagline').textContent = PROFILE.tagline || '';
-    $('#heroLocation').textContent = PROFILE.location || '';
-    $('#heroSince').textContent = PROFILE.since || new Date().getFullYear();
+    const since = PROFILE.since || new Date().getFullYear();
+    const subParts = [];
+    if (PROFILE.location) subParts.push(PROFILE.location);
+    subParts.push(t('heroSince').replace('{year}', since));
+    $('#heroSub').textContent = subParts.join(' · ');
 
     const years = availableYears();
     const thisYear = years.length ? years[0] : new Date().getFullYear();
@@ -47,10 +74,10 @@
     const streak = calcStreak(ACTIVITIES.map((a) => a.date));
 
     const stats = [
-      { num: totalKm.toFixed(0), lbl: `${thisYear} 里程(km)` },
-      { num: yActs.length, lbl: `${thisYear} 活动` },
-      { num: fmtDuration(totalTime), lbl: '总时长' },
-      { num: streak, lbl: '连续打卡(天)' },
+      { num: totalKm.toFixed(0), lbl: t('statYearKm').replace('{year}', thisYear) },
+      { num: yActs.length, lbl: t('statYearActs').replace('{year}', thisYear) },
+      { num: fmtDuration(totalTime), lbl: t('statTotalTime') },
+      { num: streak, lbl: t('statStreak') },
     ];
     $('#heroStats').innerHTML = stats
       .map((s) => `<div class="hero-stat"><span class="num">${s.num}</span><span class="lbl">${s.lbl}</span></div>`)
@@ -164,7 +191,7 @@
         if (km >= 15 || info.count >= 3) lv = 3;
         if (km >= 30 || info.count >= 4) lv = 4;
         cells.push(
-          `<div class="hm-cell lv${lv}" title="${key} · ${info.count} 项 · ${km.toFixed(1)}km"></div>`
+          `<div class="hm-cell lv${lv}" title="${key} · ${t('hmCell').replace('{count}', info.count).replace('{km}', km.toFixed(1))}"></div>`
         );
       }
 
@@ -180,7 +207,7 @@
       if (firstCalCol[mo] === undefined) continue;
       const c = firstDataCol[mo] !== undefined ? firstDataCol[mo] : firstCalCol[mo];
       if (c > lastLabelCol) {
-        monthLabels.push({ col: c, label: `${mo + 1}月` });
+        monthLabels.push({ col: c, label: LANG === 'en' ? MON_EN[mo] : `${mo + 1}月` });
         lastLabelCol = c;
       }
     }
@@ -207,28 +234,28 @@
     const sumEle = (arr) => arr.reduce((s, a) => s + (a.elevationM || 0), 0);
 
     const cards = [];
-    SPORT_ORDER.forEach((t) => {
-      const cfg = SPORT[t];
-      const arr = byType[t] || [];
-      if (t === 'workout') {
+    SPORT_ORDER.forEach((type) => {
+      const cfg = SPORT[type];
+      const arr = byType[type] || [];
+      if (type === 'workout') {
         cards.push({
-          color: cfg.color, title: `${cfg.icon} ${cfg.label}`,
-          big: arr.length, unit: '次',
-          sub: `时长 ${fmtDuration(sumTime(arr))}`,
+          color: cfg.color, title: `${cfg.icon} ${sportLabel(type)}`,
+          big: arr.length, unit: t('statWorkoutUnit'),
+          sub: `${t('actDuration')} ${fmtDuration(sumTime(arr))}`,
         });
       } else {
         cards.push({
-          color: cfg.color, title: `${cfg.icon} ${cfg.label}`,
+          color: cfg.color, title: `${cfg.icon} ${sportLabel(type)}`,
           big: sumKm(arr).toFixed(0), unit: 'km',
-          sub: `${arr.length} 次 · 爬升 ${sumEle(arr)}m`,
+          sub: `${arr.length} ${t('statTimes')} · ${t('statElev').replace('{n}', sumEle(arr))}m`,
         });
       }
     });
 
     cards.push({
-      color: 'var(--accent)', title: '📊 年度合计',
-      big: acts.length, unit: '次',
-      sub: `总里程 ${sumKm(acts).toFixed(0)}km · 时长 ${fmtDuration(sumTime(acts))}`,
+      color: 'var(--accent)', title: t('statTotal'),
+      big: acts.length, unit: t('statWorkoutUnit'),
+      sub: t('statTotalSub').replace('{km}', sumKm(acts).toFixed(0)).replace('{dur}', fmtDuration(sumTime(acts))),
     });
 
     $('#statCards').innerHTML = cards
@@ -254,7 +281,8 @@
     acts = acts.slice().sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 40);
 
     if (!acts.length) {
-      $('#activityList').innerHTML = `<li class="activity-item"><div class="activity-main">今年暂无「${actFilter === 'all' ? '运动' : SPORT[actFilter].label}」记录</div></li>`;
+      const msg = actFilter === 'all' ? t('actEmptyAll') : t('actEmpty').replace('{type}', sportLabel(actFilter));
+      $('#activityList').innerHTML = `<li class="activity-item"><div class="activity-main">${msg}</div></li>`;
       return;
     }
 
@@ -271,9 +299,9 @@
           </div>
           <div class="activity-metrics">
             ${a.distanceKm ? `<div><span class="v">${a.distanceKm.toFixed(1)}</span><span class="k">km</span></div>` : ''}
-            <div><span class="v">${fmtDuration(a.movingTimeSec)}</span><span class="k">时长</span></div>
-            ${a.elevationM ? `<div><span class="v">${a.elevationM}</span><span class="k">爬升m</span></div>` : ''}
-            ${a.avgHr ? `<div><span class="v">${a.avgHr}</span><span class="k">心率</span></div>` : ''}
+            <div><span class="v">${fmtDuration(a.movingTimeSec)}</span><span class="k">${t('actDuration')}</span></div>
+            ${a.elevationM ? `<div><span class="v">${a.elevationM}</span><span class="k">${t('actElev')}</span></div>` : ''}
+            ${a.avgHr ? `<div><span class="v">${a.avgHr}</span><span class="k">${t('actHr')}</span></div>` : ''}
           </div>
         </li>`;
       })
@@ -303,7 +331,7 @@
       .slice(0, 12);
 
     if (!acts.length) {
-      $('#tracksGrid').innerHTML = `<p class="muted">今年暂无带轨迹的运动记录。</p>`;
+      $('#tracksGrid').innerHTML = `<p class="muted">${t('tracksEmpty')}</p>`;
       return;
     }
 
@@ -313,7 +341,7 @@
         const color = SPORT[a.type].color;
         const svg = (a.track && a.track.length >= 2) ? realTrackSVG(a.track, color) : routeSVG(color, a.date);
         return `
-        <div class="track-card" data-idx="${i}" title="${a.date} · ${a.title} · ${a.distanceKm.toFixed(1)}km（点击在地图上聚焦）">
+        <div class="track-card" data-idx="${i}" title="${a.date} · ${a.title} · ${a.distanceKm.toFixed(1)}km ${t('tracksFocus')}">
           ${svg}
           <div class="t-title">${a.title}</div>
           <div class="t-meta">${a.distanceKm.toFixed(1)}km · ${fmtDate(a.date).split(' · ')[0]}</div>
@@ -402,7 +430,7 @@
     if (typeof L === 'undefined') {
       el.innerHTML =
         '<div style="height:100%;display:grid;place-items:center;text-align:center;padding:24px;color:var(--muted)">' +
-        '地图组件加载失败（需要联网加载 Leaflet 与地图瓦片）。<br>可继续使用上方「轨迹墙」查看路线轮廓。</div>';
+        t('mapError') + '</div>';
       return;
     }
     map = L.map(el, { zoomControl: true, attributionControl: true, scrollWheelZoom: false })
@@ -419,7 +447,7 @@
       const hint = $('.map-hint');
       if (tileErrors > 8 && hint && !hint.dataset.warn) {
         hint.dataset.warn = '1';
-        hint.textContent = '⚠️ 地图底图加载失败（当前网络无法访问瓦片服务）。轨迹线仍可显示，联网后底图会自动出现。';
+        hint.textContent = t('mapTileError');
       }
     });
     mapTrackGroup = L.layerGroup().addTo(map);
@@ -443,10 +471,10 @@
         `<div style="min-width:172px">
           <div style="font-size:15px;font-weight:700;margin-bottom:2px">${SPORT[a.type].icon} ${a.title}</div>
           <div style="color:#5b6675;font-size:12px;margin-bottom:6px">${fmtDate(a.date)}</div>
-          <div>距离 <b>${a.distanceKm ? a.distanceKm.toFixed(1) : '—'}</b> km</div>
-          <div>时长 <b>${fmtDuration(a.movingTimeSec)}</b></div>
-          ${a.elevationM ? `<div>爬升 <b>${a.elevationM}</b> m</div>` : ''}
-          ${a.avgHr ? `<div>心率 <b>${a.avgHr}</b> bpm</div>` : ''}
+          <div>${t('mapDistance')} <b>${a.distanceKm ? a.distanceKm.toFixed(1) : '—'}</b> km</div>
+          <div>${t('mapDuration')} <b>${fmtDuration(a.movingTimeSec)}</b></div>
+          ${a.elevationM ? `<div>${t('mapElev')} <b>${a.elevationM}</b> m</div>` : ''}
+          ${a.avgHr ? `<div>${t('mapHr')} <b>${a.avgHr}</b> bpm</div>` : ''}
         </div>`
       );
       layer.addTo(mapTrackGroup);
@@ -519,7 +547,7 @@
     const wrapper = $('#habitCards');
     const yearItems = CHECKINS.filter((c) => c.date.startsWith(year));
     if (!yearItems.length) {
-      wrapper.innerHTML = '<p class="muted">今年暂无习惯打卡记录。</p>';
+      wrapper.innerHTML = `<p class="muted">${t('habitEmpty')}</p>`;
       return;
     }
     wrapper.innerHTML = '';
@@ -551,13 +579,13 @@
       card.innerHTML = `
         <div class="habit-head">
           <span class="ico">${h.icon}</span>
-          <h3>${h.label}</h3>
-          <span class="streak">连续 <b>${streak}</b> 天</span>
+          <h3>${habitLabel(key)}</h3>
+          <span class="streak">${t('habitStreak').replace('{n}', streak)}</span>
         </div>
         <div class="habit-mini-grid">${cells.join('')}</div>
         <div class="habit-foot">
-          <div><b>${days}</b>打卡天数</div>
-          <div><b>${totalReps.toLocaleString()}</b>${key === 'coldshower' ? '次' : '个'}</div>
+          <div><b>${days}</b>${t('habitDays')}</div>
+          <div><b>${totalReps.toLocaleString()}</b>${key === 'coldshower' ? t('habitUnitTimes') : t('habitUnitReps')}</div>
         </div>`;
       wrapper.appendChild(card);
     });
@@ -578,8 +606,53 @@
     });
   }
 
+  /* ----------------------------- 语言切换 ----------------------------- */
+  function fillFilterChips(container) {
+    $$(container + ' .chip[data-type]').forEach((chip) => {
+      const ty = chip.dataset.type;
+      if (ty === 'all') { chip.textContent = t('filterAll'); return; }
+      const s = SPORT[ty];
+      if (s) chip.textContent = s.icon + ' ' + sportLabel(ty);
+    });
+  }
+
+  function applyStaticLang() {
+    document.documentElement.lang = LANG === 'en' ? 'en' : 'zh-CN';
+    document.title = t('title');
+    const meta = document.getElementById('metaDesc');
+    if (meta) meta.setAttribute('content', t('desc'));
+    $$('[data-i18n]').forEach((el) => { el.textContent = t(el.getAttribute('data-i18n')); });
+    const lb = document.getElementById('langToggle');
+    if (lb) lb.textContent = LANG === 'en' ? '中' : 'EN';
+    fillFilterChips('#activityFilters');
+    fillFilterChips('#mapFilters');
+    const reset = document.getElementById('mapReset');
+    if (reset) reset.textContent = t('mapReset');
+  }
+
+  function setLanguage(lang) {
+    if (lang !== 'en' && lang !== 'zh') return;
+    LANG = lang;
+    try { localStorage.setItem('workouts-lang', lang); } catch (e) {}
+    applyStaticLang();
+    renderHero();
+    renderHeatmap();
+    renderStats();
+    renderActivities();
+    renderTracks();
+    renderHabits();
+    renderMap();
+  }
+
+  function bindLang() {
+    const lb = document.getElementById('langToggle');
+    if (lb) lb.addEventListener('click', () => setLanguage(LANG === 'en' ? 'zh' : 'en'));
+  }
+
   /* ----------------------------- 初始化 ----------------------------- */
   function init() {
+    applyStaticLang();
+    bindLang();
     renderHero();
     renderYearTabs();
     renderHeatmap();

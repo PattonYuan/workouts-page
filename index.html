@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>我的运动主页 · Workouts</title>
-  <meta name="description" content="个人运动记录主页 · 跑步 / 骑行 / 训练 / 习惯打卡" />
+  <title>My Workouts</title>
+  <meta id="metaDesc" name="description" content="Personal workout journal · Running / Cycling / Training / Habits" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏃</text></svg>" />
   <link rel="stylesheet" href="assets/css/style.css" />
   <!-- Leaflet 地图库（轨迹地图底图） -->
@@ -17,16 +17,17 @@
     <div class="container header-inner">
       <a class="brand" href="#top">
         <span class="brand-logo">🏃</span>
-        <span class="brand-name">我的运动主页</span>
+        <span class="brand-name" data-i18n="brand">My Workouts</span>
       </a>
       <nav class="nav">
-        <a href="#heatmap">热力图</a>
-        <a href="#stats">统计</a>
-        <a href="#activities">活动</a>
-        <a href="#tracks">轨迹</a>
-        <a href="#trackmap">地图</a>
-        <a href="#habits">习惯</a>
+        <a href="#heatmap" data-i18n="navHeatmap">Heatmap</a>
+        <a href="#stats" data-i18n="navStats">Stats</a>
+        <a href="#activities" data-i18n="navActivities">Activities</a>
+        <a href="#tracks" data-i18n="navTracks">Tracks</a>
+        <a href="#trackmap" data-i18n="navMap">Map</a>
+        <a href="#habits" data-i18n="navHabits">Habits</a>
       </nav>
+      <button id="langToggle" class="theme-toggle" aria-label="切换语言">中</button>
       <button id="themeToggle" class="theme-toggle" aria-label="切换主题">🌙</button>
     </div>
   </header>
@@ -39,10 +40,7 @@
         <div class="hero-meta">
           <h1 id="heroName">阿涛</h1>
           <p class="hero-tagline" id="heroTagline"></p>
-          <p class="hero-sub">
-            <span id="heroLocation"></span> ·
-            自 <span id="heroSince"></span> 起记录
-          </p>
+          <p class="hero-sub" id="heroSub"></p>
         </div>
         <div class="hero-stats" id="heroStats"><!-- JS 填充 --></div>
       </div>
@@ -51,42 +49,42 @@
     <!-- ===================== 年度热力图 ===================== -->
     <section id="heatmap" class="section container">
       <div class="section-head">
-        <h2>年度热力图</h2>
+        <h2 data-i18n="secHeatmap">Annual Heatmap</h2>
         <div class="year-tabs" id="yearTabs"><!-- JS 填充 --></div>
       </div>
       <div class="heatmap-wrap">
         <div class="heatmap-months" id="heatmapMonths"></div>
         <div class="heatmap-grid" id="heatmapGrid"></div>
         <div class="heatmap-legend">
-          <span>少</span>
+          <span data-i18n="less">Less</span>
           <span class="lg lg-0"></span>
           <span class="lg lg-1"></span>
           <span class="lg lg-2"></span>
           <span class="lg lg-3"></span>
           <span class="lg lg-4"></span>
-          <span>多</span>
+          <span data-i18n="more">More</span>
         </div>
       </div>
     </section>
 
     <!-- ===================== 数据统计 ===================== -->
     <section id="stats" class="section container">
-      <div class="section-head"><h2>数据统计</h2></div>
+      <div class="section-head"><h2 data-i18n="secStats">Statistics</h2></div>
       <div class="stat-cards" id="statCards"><!-- JS 填充 --></div>
     </section>
 
     <!-- ===================== 最近活动 ===================== -->
     <section id="activities" class="section container">
       <div class="section-head">
-        <h2>最近活动</h2>
+        <h2 data-i18n="secActivities">Recent Activities</h2>
         <div class="filters" id="activityFilters">
-          <button class="chip active" data-type="all">全部</button>
-          <button class="chip" data-type="run">🏃 跑步</button>
-          <button class="chip" data-type="walk">🚶 步行</button>
-          <button class="chip" data-type="ride">🚴 骑行</button>
-          <button class="chip" data-type="hike">🥾 徒步</button>
-          <button class="chip" data-type="moto">🏍️ 摩托</button>
-          <button class="chip" data-type="workout">🏋️ 训练</button>
+          <button class="chip active" data-type="all"></button>
+          <button class="chip" data-type="run"></button>
+          <button class="chip" data-type="walk"></button>
+          <button class="chip" data-type="ride"></button>
+          <button class="chip" data-type="hike"></button>
+          <button class="chip" data-type="moto"></button>
+          <button class="chip" data-type="workout"></button>
         </div>
       </div>
       <ul class="activity-list" id="activityList"><!-- JS 填充 --></ul>
@@ -94,38 +92,38 @@
 
     <!-- ===================== 轨迹墙 ===================== -->
     <section id="tracks" class="section container">
-      <div class="section-head"><h2>轨迹墙</h2></div>
+      <div class="section-head"><h2 data-i18n="secTracks">Track Wall</h2></div>
       <div class="tracks-grid" id="tracksGrid"><!-- JS 填充 --></div>
     </section>
 
     <!-- ===================== 轨迹地图 ===================== -->
     <section id="trackmap" class="section container">
       <div class="section-head">
-        <h2>轨迹地图</h2>
+        <h2 data-i18n="secMap">Track Map</h2>
         <div class="filters" id="mapFilters">
-          <button class="chip active" data-type="run">🏃 跑步</button>
-          <button class="chip active" data-type="walk">🚶 步行</button>
-          <button class="chip active" data-type="ride">🚴 骑行</button>
-          <button class="chip active" data-type="hike">🥾 徒步</button>
-          <button class="chip active" data-type="moto">🏍️ 摩托</button>
-          <button class="chip" id="mapReset">↺ 重置视图</button>
+          <button class="chip active" data-type="run"></button>
+          <button class="chip active" data-type="walk"></button>
+          <button class="chip active" data-type="ride"></button>
+          <button class="chip active" data-type="hike"></button>
+          <button class="chip active" data-type="moto"></button>
+          <button class="chip" id="mapReset"></button>
         </div>
       </div>
       <div id="trackMap" class="track-map"></div>
-      <p class="map-hint muted">真实 GPS 轨迹叠加在地图上 · 点击轨迹查看详情 · 点击上方「轨迹墙」卡片可在地图上聚焦</p>
+      <p class="map-hint muted" data-i18n="mapHint">Real GPS tracks overlaid on the map · click a track for details · click a "Track Wall" card above to focus it on the map</p>
     </section>
 
     <!-- ===================== 习惯打卡 ===================== -->
     <section id="habits" class="section container">
-      <div class="section-head"><h2>习惯打卡</h2></div>
+      <div class="section-head"><h2 data-i18n="secHabits">Habits</h2></div>
       <div class="habit-cards" id="habitCards"><!-- JS 填充 --></div>
     </section>
   </main>
 
   <footer class="site-footer">
     <div class="container">
-      <p>用 ♥ 记录每一步 · 数据本地生成，可替换为真实记录</p>
-      <p class="muted">灵感来自 <a href="https://github.com/zhaohongxuan/workouts" target="_blank" rel="noopener">zhaohongxuan/workouts</a></p>
+      <p data-i18n="footer1">Every step counted with ♥ · Data generated locally, swap in your own anytime</p>
+      <p class="muted"><span data-i18n="footerBy">Inspired by</span> <a href="https://github.com/zhaohongxuan/workouts" target="_blank" rel="noopener">zhaohongxuan/workouts</a></p>
     </div>
   </footer>
 
