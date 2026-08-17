@@ -48,6 +48,48 @@
     return `${d.getMonth() + 1}月${d.getDate()}日 · 周${WK_ZH[d.getDay()]}`;
   }
 
+  /* ------------------- 活动标题中英翻译 ------------------- */
+  // 导入的 Coros/Keep 标题多为中文（如「深圳市 跑步」「7k轻松跑」），
+  // 英文模式下尽量翻译；已为英文/缩写（如 E60+6ST、LSD）则原样保留。
+  const CITY_EN = {
+    '深圳市': 'Shenzhen', '河南省': 'Henan', '广州市': 'Guangzhou', '长沙市': 'Changsha',
+    '新乡市': 'Xinxiang', '清远市': 'Qingyuan', '绍兴市': 'Shaoxing', '杭州市': 'Hangzhou',
+    '香港特别行政区': 'Hong Kong',
+  };
+  const SPORT_EN = {
+    '徒步': 'Hike', '跑步': 'Run', '健走': 'Walk', '骑行': 'Ride', '公路骑行': 'Road Cycling',
+    '摩托骑行': 'Motorcycle Ride', '呼狗崖徒步': 'Hugouya Hike',
+  };
+  const PHRASE_EN = {
+    '跑步能力测试': 'Running Ability Test', '室内有氧': 'Indoor Cardio', '羽毛球': 'Badminton',
+    '5公里测试': '5K Test', '5km测试': '5km Test', '上肢力量徒手训练': 'Upper Body Bodyweight Strength',
+    '跑者日常核心组合': 'Runner Daily Core Routine', '10K测试日': '10K Test Day', '训练': 'Training',
+    '法特莱克跑': 'Fartlek', '下肢力量': 'Lower Body Strength', '核心力量': 'Core Strength',
+    '跑步机': 'Treadmill', 'T强度倒金字塔跑': 'T-pace Descending Pyramid Run',
+    '晨跑': 'Morning Run', '夜跑': 'Night Run', '轻松跑': 'Easy Run', '间歇训练': 'Interval Training',
+    '长距离 LSD': 'Long Run LSD', '通勤跑': 'Commute Run', '骑行通勤': 'Cycle Commute',
+    '周末长途': 'Weekend Long Ride', '爬坡训练': 'Hill Training', '环湖骑行': 'Lakeside Ride',
+    '力量训练': 'Strength Training', '核心训练': 'Core Training', '自重训练': 'Bodyweight Training',
+  };
+  function translateTitleEn(title) {
+    if (!title || !/[一-鿿]/.test(title)) return title || '';
+    if (PHRASE_EN[title]) return PHRASE_EN[title];
+    // 「城市 运动类型/英文短语」模式：深圳市 跑步 → Shenzhen Run；广州市 GPS Cardio → Guangzhou GPS Cardio
+    const m = title.match(/^(\S+?)\s+(.+)$/);
+    if (m && CITY_EN[m[1]]) return CITY_EN[m[1]] + ' ' + (SPORT_EN[m[2]] || m[2]);
+    // 其余模式：轻松跑→Easy Run、长距离跑→Long Run、热身跑→Warm-up Run
+    const out = title
+      .replace(/轻松跑/g, ' Easy Run')
+      .replace(/长距离跑/g, ' Long Run')
+      .replace(/热身跑/g, 'Warm-up Run')
+      .replace(/\s+/g, ' ').trim();
+    return /[一-鿿]/.test(out) ? (title || '') : out;
+  }
+  function actTitle(a) {
+    const t0 = (a && a.title) || '';
+    return LANG === 'en' ? translateTitleEn(t0) : t0;
+  }
+
   /* ----------------------------- Hero ----------------------------- */
   function renderHero() {
     const av = PROFILE.avatar || '🏃';
@@ -294,7 +336,7 @@
         <li class="activity-item">
           <div class="activity-icon" style="background:${iconBg};color:${s.color}">${s.icon}</div>
           <div class="activity-main">
-            <div class="activity-title">${a.title}</div>
+            <div class="activity-title">${actTitle(a)}</div>
             <div class="activity-date">${fmtDate(a.date)}</div>
           </div>
           <div class="activity-metrics">
@@ -341,9 +383,9 @@
         const color = SPORT[a.type].color;
         const svg = (a.track && a.track.length >= 2) ? realTrackSVG(a.track, color) : routeSVG(color, a.date);
         return `
-        <div class="track-card" data-idx="${i}" title="${a.date} · ${a.title} · ${a.distanceKm.toFixed(1)}km ${t('tracksFocus')}">
+        <div class="track-card" data-idx="${i}" title="${a.date} · ${actTitle(a)} · ${a.distanceKm.toFixed(1)}km ${t('tracksFocus')}">
           ${svg}
-          <div class="t-title">${a.title}</div>
+          <div class="t-title">${actTitle(a)}</div>
           <div class="t-meta">${a.distanceKm.toFixed(1)}km · ${fmtDate(a.date).split(' · ')[0]}</div>
         </div>`;
       })
@@ -469,7 +511,7 @@
       const layer = L.polyline(latlngs, { color, weight: 3, opacity: 0.85, lineCap: 'round', lineJoin: 'round' });
       layer.bindPopup(
         `<div style="min-width:172px">
-          <div style="font-size:15px;font-weight:700;margin-bottom:2px">${SPORT[a.type].icon} ${a.title}</div>
+          <div style="font-size:15px;font-weight:700;margin-bottom:2px">${SPORT[a.type].icon} ${actTitle(a)}</div>
           <div style="color:#5b6675;font-size:12px;margin-bottom:6px">${fmtDate(a.date)}</div>
           <div>${t('mapDistance')} <b>${a.distanceKm ? a.distanceKm.toFixed(1) : '—'}</b> km</div>
           <div>${t('mapDuration')} <b>${fmtDuration(a.movingTimeSec)}</b></div>
