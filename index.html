@@ -26,6 +26,9 @@
         <a href="#tracks" data-i18n="navTracks">Tracks</a>
         <a href="#trackmap" data-i18n="navMap">Map</a>
         <a href="#habits" data-i18n="navHabits">Habits</a>
+        <a href="#insights" data-i18n="navInsights">Consistency</a>
+        <a href="#pb" data-i18n="navPB">PB</a>
+        <a href="#funfacts" data-i18n="navFun">Fun</a>
       </nav>
       <button id="langToggle" class="theme-toggle" aria-label="切换语言">中</button>
       <button id="themeToggle" class="theme-toggle" aria-label="切换主题">🌙</button>
@@ -44,6 +47,12 @@
         </div>
         <div class="hero-stats" id="heroStats"><!-- JS 填充 --></div>
       </div>
+    </section>
+
+    <!-- ===================== 坚持度（连续打卡 / 最爱星期） ===================== -->
+    <section id="insights" class="section container">
+      <div class="section-head"><h2 data-i18n="secInsights">Consistency</h2></div>
+      <div class="stat-cards" id="insightCards"><!-- JS 填充 --></div>
     </section>
 
     <!-- ===================== 年度热力图 ===================== -->
@@ -69,8 +78,26 @@
 
     <!-- ===================== 数据统计 ===================== -->
     <section id="stats" class="section container">
-      <div class="section-head"><h2 data-i18n="secStats">Statistics</h2></div>
+      <div class="section-head">
+        <h2 data-i18n="secStats">Statistics</h2>
+        <div class="filters" id="statScopeTabs">
+          <button class="chip active" data-scope="year"></button>
+          <button class="chip" data-scope="all"></button>
+        </div>
+      </div>
       <div class="stat-cards" id="statCards"><!-- JS 填充 --></div>
+    </section>
+
+    <!-- ===================== 个人最佳 ===================== -->
+    <section id="pb" class="section container">
+      <div class="section-head"><h2 data-i18n="secPB">Personal Bests</h2></div>
+      <div class="stat-cards" id="pbCards"><!-- JS 填充 --></div>
+    </section>
+
+    <!-- ===================== 趣味数据 ===================== -->
+    <section id="funfacts" class="section container">
+      <div class="section-head"><h2 data-i18n="secFun">Fun Facts</h2></div>
+      <div class="stat-cards" id="funCards"><!-- JS 填充 --></div>
     </section>
 
     <!-- ===================== 最近活动 ===================== -->

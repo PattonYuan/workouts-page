@@ -205,6 +205,18 @@ a:hover { text-decoration: underline; }
 .stat-card .big { font-size: 30px; font-weight: 800; }
 .stat-card .unit { font-size: 14px; color: var(--muted); font-weight: 500; margin-left: 4px; }
 .stat-card .sub { font-size: 13px; color: var(--muted); margin-top: 6px; }
+.stat-card.clickable { cursor: pointer; transition: transform .15s, border-color .15s; }
+.stat-card.clickable:hover { transform: translateY(-3px); border-color: var(--accent); }
+
+/* 热力图自定义悬停提示（浮动，避开原生 title） */
+.hm-tip {
+  position: fixed; z-index: 999; pointer-events: none;
+  background: var(--text); color: var(--bg-soft);
+  padding: 6px 10px; border-radius: 8px; font-size: 12px; line-height: 1.45;
+  box-shadow: var(--shadow); white-space: nowrap; opacity: 0; transition: opacity .1s;
+  transform: translate(-50%, calc(-100% - 12px));
+}
+.hm-tip.show { opacity: 1; }
 
 /* --------------------------- 活动列表 --------------------------- */
 .filters { display: flex; gap: 8px; flex-wrap: wrap; }

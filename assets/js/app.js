@@ -141,6 +141,46 @@
     return streak;
   }
 
+  /* 历史最长连续天数 */
+  function calcLongestStreak(dateStrs) {
+    if (!dateStrs.length) return 0;
+    const dates = Array.from(new Set(dateStrs)).sort();
+    let best = 0, run = 0, prev = null;
+    for (const ds of dates) {
+      if (prev && isNextDay(prev, ds)) run++;
+      else run = 1;
+      if (run > best) best = run;
+      prev = ds;
+    }
+    return best;
+  }
+  function isNextDay(a, b) {
+    const d1 = new Date(a + 'T00:00:00');
+    const d2 = new Date(b + 'T00:00:00');
+    return Math.round((d2 - d1) / 86400000) === 1;
+  }
+
+  /* 最常运动的星期几 */
+  function favoriteWeekday(acts) {
+    const cnt = [0, 0, 0, 0, 0, 0, 0];
+    acts.forEach((a) => { cnt[new Date(a.date + 'T00:00:00').getDay()]++; });
+    let mi = 0;
+    for (let i = 1; i < 7; i++) if (cnt[i] > cnt[mi]) mi = i;
+    return LANG === 'en' ? WK_EN[mi] : WK_ZH[mi];
+  }
+
+  /* 按当前「年度 / 累计」作用域筛选活动 */
+  function actsInScope() {
+    if (statScope === 'all') return ACTIVITIES.slice();
+    return ACTIVITIES.filter((a) => a.date.startsWith(String(currentYear)));
+  }
+
+  function fmtDateShort(s) {
+    const d = new Date(s + 'T00:00:00');
+    if (LANG === 'en') return `${MON_EN[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+    return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+  }
+
   /* ----------------------------- 轨迹地图状态 ----------------------------- */
   let map = null;
   let mapTile = null;
@@ -151,6 +191,7 @@
 
   /* ----------------------------- 热力图 ----------------------------- */
   let currentYear = new Date().getFullYear();
+  let statScope = 'year';   // 'year'（跟随 currentYear）或 'all'（累计全部）
 
   function availableYears() {
     const ys = new Set(ACTIVITIES.map((a) => a.date.slice(0, 4)));
@@ -167,9 +208,14 @@
     $$('#yearTabs button').forEach((b) =>
       b.addEventListener('click', () => {
         currentYear = +b.dataset.year;
+        statScope = 'year';
         renderYearTabs();
+        updateScopeChips();
         renderHeatmap();
         renderStats();
+        renderInsights();
+        renderPB();
+        renderFunFacts();
         renderActivities();
         renderTracks();
         renderMap();
@@ -224,7 +270,7 @@
       }
 
       if (!inYear || !info) {
-        cells.push(`<div class="hm-cell empty" title="${key}"></div>`);
+        cells.push(`<div class="hm-cell empty" data-empty="1" data-date="${key}" title="${key}"></div>`);
       } else {
         const km = info.km;
         let lv = 0;
@@ -233,7 +279,7 @@
         if (km >= 15 || info.count >= 3) lv = 3;
         if (km >= 30 || info.count >= 4) lv = 4;
         cells.push(
-          `<div class="hm-cell lv${lv}" title="${key} · ${t('hmCell').replace('{count}', info.count).replace('{km}', km.toFixed(1))}"></div>`
+          `<div class="hm-cell lv${lv}" data-date="${key}" data-count="${info.count}" data-km="${km.toFixed(1)}" title="${key} · ${t('hmCell').replace('{count}', info.count).replace('{km}', km.toFixed(1))}"></div>`
         );
       }
 
@@ -266,10 +312,40 @@
     $('#heatmapGrid').innerHTML = cells.join('');
   }
 
+  /* 自定义悬停提示：比原生 title 更美观，显示日期 + 活动数/距离 */
+  function hmTipContent(cell) {
+    const date = cell.dataset.date;
+    if (cell.dataset.empty) return `${fmtDateShort(date)}<br><span style="opacity:.7">${t('hmNoActivity')}</span>`;
+    return `${fmtDateShort(date)}<br>${t('hmCell').replace('{count}', cell.dataset.count).replace('{km}', cell.dataset.km)}`;
+  }
+  function initHeatmapTip() {
+    let tip = document.getElementById('hmTip');
+    if (!tip) {
+      tip = document.createElement('div');
+      tip.id = 'hmTip';
+      tip.className = 'hm-tip';
+      document.body.appendChild(tip);
+    }
+    const grid = $('#heatmapGrid');
+    if (!grid) return;
+    grid.addEventListener('mouseover', (e) => {
+      const cell = e.target.closest('.hm-cell');
+      if (!cell) return;
+      tip.innerHTML = hmTipContent(cell);
+      tip.classList.add('show');
+    });
+    grid.addEventListener('mousemove', (e) => {
+      tip.style.left = e.clientX + 'px';
+      tip.style.top = e.clientY + 'px';
+    });
+    grid.addEventListener('mouseout', (e) => {
+      if (e.target.closest('.hm-cell')) tip.classList.remove('show');
+    });
+  }
+
   /* ----------------------------- 统计卡片 ----------------------------- */
   function renderStats() {
-    const year = currentYear;
-    const acts = ACTIVITIES.filter((a) => a.date.startsWith(year));
+    const acts = actsInScope();
 
     const byType = {};
     SPORT_ORDER.forEach((t) => (byType[t] = []));
@@ -299,7 +375,7 @@
     });
 
     cards.push({
-      color: 'var(--accent)', title: t('statTotal'),
+      color: 'var(--accent)', title: statScope === 'all' ? t('statTotalAll') : t('statTotal'),
       big: acts.length, unit: t('statWorkoutUnit'),
       sub: t('statTotalSub').replace('{km}', sumKm(acts).toFixed(0)).replace('{dur}', fmtDuration(sumTime(acts))),
     });
@@ -317,14 +393,148 @@
       .join('');
   }
 
+  /* ------------------- 坚持度（连续打卡 / 最长连续 / 最爱星期） ------------------- */
+  function renderInsights() {
+    const acts = actsInScope();
+    const allDates = ACTIVITIES.map((a) => a.date);
+    const curStreak = calcStreak(allDates);
+    const longest = calcLongestStreak(acts.map((a) => a.date));
+    const fav = favoriteWeekday(acts);
+    const activeDays = new Set(acts.map((a) => a.date)).size;
+    const cards = [
+      { color: 'var(--accent)', ico: '🔥', title: t('insCurrentStreak'), big: curStreak, unit: t('insDays'), sub: t('heroSince').replace('{year}', PROFILE.since) },
+      { color: 'var(--accent-2)', ico: '📈', title: t('insLongestStreak'), big: longest, unit: t('insDays'), sub: t('insActiveDays').replace('{n}', activeDays) },
+      { color: '#e8a33d', ico: '📅', title: t('insFavoriteDay'), big: fav, unit: '', sub: t('insFavoriteSub') },
+    ];
+    $('#insightCards').innerHTML = cards
+      .map(
+        (c) => `
+        <div class="stat-card">
+          <div class="bar" style="background:${c.color}"></div>
+          <h3>${c.ico} ${c.title}</h3>
+          <div><span class="big">${c.big}</span><span class="unit">${c.unit}</span></div>
+          <div class="sub">${c.sub}</div>
+        </div>`
+      )
+      .join('');
+  }
+
+  /* ----------------------------- 个人最佳（PB） ----------------------------- */
+  let pbRefs = [];   // 与渲染顺序对应的活动引用，供点击跳转
+
+  function renderPB() {
+    const acts = actsInScope();
+    const runs = acts.filter((a) => a.type === 'run');
+    const bestIn = (lo, hi) => {
+      let pick = null;
+      runs.forEach((a) => {
+        if (a.distanceKm >= lo && a.distanceKm <= hi) {
+          if (!pick || a.movingTimeSec < pick.movingTimeSec) pick = a;
+        }
+      });
+      return pick;
+    };
+    const f5 = bestIn(4.8, 5.3);
+    const f10 = bestIn(9.5, 10.5);
+    const longest = acts.reduce((m, a) => (a.distanceKm > (m ? m.distanceKm : 0) ? a : m), null);
+    const climb = acts.reduce((m, a) => ((a.elevationM || 0) > (m ? (m.elevationM || 0) : 0) ? a : m), null);
+
+    const items = [];
+    if (f5) items.push({ label: t('pb5k'), act: f5, big: fmtDuration(f5.movingTimeSec), unit: '', color: '#2f80ed' });
+    if (f10) items.push({ label: t('pb10k'), act: f10, big: fmtDuration(f10.movingTimeSec), unit: '', color: '#27ae60' });
+    if (longest) items.push({ label: t('pbLongest'), act: longest, big: longest.distanceKm.toFixed(1), unit: 'km', color: '#e8a33d' });
+    if (climb && climb.elevationM) items.push({ label: t('pbClimb'), act: climb, big: String(climb.elevationM), unit: 'm', color: '#8e44ad' });
+
+    const wrap = $('#pbCards');
+    if (!items.length) {
+      wrap.innerHTML = `<p class="muted">${t('pbEmpty')}</p>`;
+      pbRefs = [];
+      return;
+    }
+    pbRefs = items.map((i) => i.act);
+    wrap.innerHTML = items
+      .map(
+        (it, i) => `
+        <div class="stat-card clickable" data-idx="${i}">
+          <div class="bar" style="background:${it.color}"></div>
+          <h3>🏅 ${it.label}</h3>
+          <div><span class="big">${it.big}</span><span class="unit">${it.unit}</span></div>
+          <div class="sub">${it.act.date} · ${t('pbDist').replace('{km}', it.act.distanceKm.toFixed(1))}</div>
+        </div>`
+      )
+      .join('');
+    $$('#pbCards .stat-card.clickable').forEach((el) =>
+      el.addEventListener('click', () => jumpToActivity(pbRefs[+el.dataset.idx]))
+    );
+  }
+
+  // 点击 PB 卡片 → 过滤到该类型、滚动到活动列表并高亮
+  function jumpToActivity(act) {
+    if (!act) return;
+    const yr = +act.date.slice(0, 4);
+    if (yr !== currentYear) { currentYear = yr; statScope = 'year'; renderYearTabs(); updateScopeChips(); }
+    actFilter = act.type;
+    actLimit = 600;   // 放大上限，确保目标活动出现在列表
+    renderActivities();
+    const sec = document.getElementById('activities');
+    if (sec && sec.scrollIntoView) sec.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  /* ----------------------------- 趣味数据 ----------------------------- */
+  function renderFunFacts() {
+    const acts = actsInScope();
+    const totalKm = acts.reduce((s, a) => s + (a.distanceKm || 0), 0);
+    const totalTime = acts.reduce((s, a) => s + a.movingTimeSec, 0);
+    const totalEle = acts.reduce((s, a) => s + (a.elevationM || 0), 0);
+    const count = acts.length;
+    const cards = [
+      { ico: '🏅', title: t('funMarathon'), big: (totalKm / 42.195).toFixed(1), unit: '', sub: t('funMarathonSub') },
+      { ico: '🌍', title: t('funEquator'), big: (totalKm / 40075).toFixed(2), unit: '', sub: t('funEquatorSub') },
+      { ico: '⛰️', title: t('funEverest'), big: (totalEle / 8849).toFixed(2), unit: '', sub: t('funEverestSub') },
+      { ico: '📊', title: t('funSummaryTitle'), big: String(count), unit: t('statWorkoutUnit'), sub: t('funSummary').replace('{dur}', fmtDuration(totalTime)) },
+    ];
+    $('#funCards').innerHTML = cards
+      .map(
+        (c) => `
+        <div class="stat-card">
+          <div class="bar" style="background:var(--accent)"></div>
+          <h3>${c.ico} ${c.title}</h3>
+          <div><span class="big">${c.big}</span><span class="unit">${c.unit}</span></div>
+          <div class="sub">${c.sub}</div>
+        </div>`
+      )
+      .join('');
+  }
+
+  /* ----------------------------- 统计作用域切换（本年 / 累计） ----------------------------- */
+  function updateScopeChips() {
+    $$('#statScopeTabs .chip').forEach((chip) =>
+      chip.classList.toggle('active', chip.dataset.scope === statScope)
+    );
+  }
+  function bindStatScope() {
+    $$('#statScopeTabs .chip').forEach((chip) =>
+      chip.addEventListener('click', () => {
+        statScope = chip.dataset.scope;
+        updateScopeChips();
+        renderStats();
+        renderInsights();
+        renderPB();
+        renderFunFacts();
+      })
+    );
+    updateScopeChips();
+  }
+
   /* ----------------------------- 活动列表 ----------------------------- */
   let actFilter = 'all';
+  let actLimit = 40;   // 点击 PB 跳转时临时放大，确保目标活动出现在列表里
 
   function renderActivities() {
     const year = currentYear;
     let acts = ACTIVITIES.filter((a) => a.date.startsWith(year));
     if (actFilter !== 'all') acts = acts.filter((a) => a.type === actFilter);
-    acts = acts.slice().sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 40);
+    acts = acts.slice().sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, actLimit);
 
     if (!acts.length) {
       const msg = actFilter === 'all' ? t('actEmptyAll') : t('actEmpty').replace('{type}', sportLabel(actFilter));
@@ -674,6 +884,11 @@
     fillFilterChips('#mapFilters');
     const reset = document.getElementById('mapReset');
     if (reset) reset.textContent = t('mapReset');
+    // 统计作用域切换按钮文案（本年 / 累计）
+    const sc1 = document.querySelector('#statScopeTabs .chip[data-scope="year"]');
+    const sc2 = document.querySelector('#statScopeTabs .chip[data-scope="all"]');
+    if (sc1) sc1.textContent = t('statScopeYear');
+    if (sc2) sc2.textContent = t('statScopeAll');
   }
 
   function setLanguage(lang) {
@@ -684,6 +899,9 @@
     renderHero();
     renderHeatmap();
     renderStats();
+    renderInsights();
+    renderPB();
+    renderFunFacts();
     renderActivities();
     renderTracks();
     renderHabits();
@@ -703,6 +921,9 @@
     renderYearTabs();
     renderHeatmap();
     renderStats();
+    renderInsights();
+    renderPB();
+    renderFunFacts();
     bindActivityFilters();
     renderActivities();
     renderTracks();
@@ -710,6 +931,8 @@
     bindTheme();        // 先应用主题（含深色模式），再初始化地图底图
     renderMap();
     renderHabits();
+    bindStatScope();    // 统计作用域（本年 / 累计）切换
+    initHeatmapTip();   // 热力图自定义悬停提示
   }
 
   document.addEventListener('DOMContentLoaded', init);
