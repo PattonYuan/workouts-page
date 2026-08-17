@@ -26,7 +26,14 @@
 
   /* ----------------------------- Hero ----------------------------- */
   function renderHero() {
-    $('#heroAvatar').textContent = PROFILE.avatar || '🏃';
+    const av = PROFILE.avatar || '🏃';
+    const avEl = $('#heroAvatar');
+    // 头像为图片路径（含 / 或 . 或 http）时渲染 <img>，否则显示 emoji 占位
+    if (/[/.]|^https?:/.test(av)) {
+      avEl.innerHTML = '<img src="' + av + '" alt="头像" />';
+    } else {
+      avEl.textContent = av;
+    }
     $('#heroName').textContent = PROFILE.name;
     $('#heroTagline').textContent = PROFILE.tagline || '';
     $('#heroLocation').textContent = PROFILE.location || '';

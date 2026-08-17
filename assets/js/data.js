@@ -17,7 +17,7 @@
 const PROFILE = {
   name: '阿涛',
   tagline: 'Run free · Ride far · Train hard',
-  avatar: '🏃',            // 可替换为头像图片 URL
+  avatar: 'assets/images/avatar.png',  // 头像图片路径（留 emoji 则显示占位图标）
   location: 'Shanghai, CN',
   since: 2022,
 };
