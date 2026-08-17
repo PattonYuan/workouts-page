@@ -32,6 +32,16 @@ function mulberry32(seed) {
   };
 }
 
+/* 用「本地」年月日生成日期字符串（YYYY-MM-DD）。
+ * 注意：绝不能用 d.toISOString().slice(0,10)——那是 UTC 时间，
+ * 在 GMT+8 下会把每个日期回退 1 天，导致热力图彩色格子落在错误的工作日（整体偏移）。*/
+function ymdLocal(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 /* ------------------------- 生成运动记录 ------------------------- */
 function buildActivities() {
   const rnd = mulberry32(20260816);
@@ -47,7 +57,7 @@ function buildActivities() {
   start.setDate(start.getDate() - 364); // 近一年
 
   for (let d = new Date(start); d <= today; d.setDate(d.getDate() + 1)) {
-    const dateStr = d.toISOString().slice(0, 10);
+    const dateStr = ymdLocal(d);
     const dow = d.getDay(); // 0=周日
     // 工作日跑步概率低一些，周末高一些
     const baseP = (dow === 0 || dow === 6) ? 0.55 : 0.32;
@@ -99,7 +109,7 @@ function buildCheckins() {
   start.setDate(start.getDate() - 364);
 
   for (let d = new Date(start); d <= today; d.setDate(d.getDate() + 1)) {
-    const dateStr = d.toISOString().slice(0, 10);
+    const dateStr = ymdLocal(d);
     // 俯卧撑
     if (rnd() > 0.45) {
       checkins.push({ date: dateStr, item: 'pushup', reps: 20 + Math.floor(rnd() * 60) });

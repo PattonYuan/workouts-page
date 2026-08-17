@@ -267,6 +267,9 @@
     $('#heatmapMonths').innerHTML = monthLabels
       .map((m) => `<span style="grid-column:${m.col + 1}">${m.label}</span>`)
       .join('');
+    // 热力图网格必须与月份标签网格使用完全相同的列定义（列数 + 列宽 + 间距），
+    // 否则两网格列结构由不同机制生成，会出现横向错位。
+    $('#heatmapGrid').style.gridTemplateColumns = `repeat(${col + 1}, 13px)`;
     $('#heatmapGrid').innerHTML = cells.join('');
   }
 
