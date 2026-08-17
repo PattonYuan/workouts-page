@@ -200,21 +200,15 @@
     const start = new Date(first);
     start.setDate(start.getDate() - first.getDay()); // 回退到周日
 
-    // 当前年份只渲染到「今天」，避免把尚未发生的未来月份（如 9 月）画成空白热力图；
-    // 历史年份仍展示完整一年。
-    const now = new Date();
-    let end;
-    if (String(year) === String(now.getFullYear())) {
-      end = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // 今天（含）
-    } else {
-      const last = new Date(year, 11, 31);
-      end = new Date(last);
-      end.setDate(end.getDate() + (6 - last.getDay())); // 补齐到周六
-    }
+    // 所有年份（含当前年份）均展示完整一年：从 1 月所在周的周日开始，
+    // 到 12 月 31 日所在周的周六结束。当前年份尚未发生的月份为空白格子，
+    // 与其它年份保持一致的完整布局（不再截断到「今天」）。
+    const last = new Date(year, 11, 31);
+    const end = new Date(last);
+    end.setDate(end.getDate() + (6 - last.getDay())); // 补齐到周六
 
     const cells = [];
-    const firstDataCol = {};   // 每月首个「有数据」的列
-    const firstCalCol = {};    // 每月 1 号所在列（无数据时兜底）
+    const firstCalCol = {};    // 每月 1 号所在列（同时作为月份标签对齐列）
     let cursor = new Date(start);
     let lastMonth = -1;
     let col = 0;
@@ -227,8 +221,6 @@
       if (inYear) {
         const mo = cursor.getMonth();
         if (mo !== lastMonth) { firstCalCol[mo] = col; lastMonth = mo; }
-        // 标签对齐到「当月首个有数据的列」，避免月底活动贴着下月标签造成歧义
-        if (info && firstDataCol[mo] === undefined) firstDataCol[mo] = col;
       }
 
       if (!inYear || !info) {
@@ -249,13 +241,14 @@
       if (cursor.getDay() === 0) col++;
     }
 
-    // 月份标签对齐：优先落在「当月首个有数据的列」，无数据则回退到 1 号所在列；
-    // 仅当与上一个标签不在同一列时才显示，避免重叠
+    // 月份标签对齐到「当月 1 号所在列」：相邻月份天然相隔 4 周以上，
+    // 标签列距 ≥4 列（约 64px），远大于文字宽度，彻底避免相邻月份（如 Mar/Apr）文字重叠。
+    // 同时仅当严格大于上一标签列时才显示，作为兜底。
     const monthLabels = [];
     let lastLabelCol = -1;
     for (let mo = 0; mo < 12; mo++) {
       if (firstCalCol[mo] === undefined) continue;
-      const c = firstDataCol[mo] !== undefined ? firstDataCol[mo] : firstCalCol[mo];
+      const c = firstCalCol[mo];
       if (c > lastLabelCol) {
         monthLabels.push({ col: c, label: LANG === 'en' ? MON_EN[mo] : `${mo + 1}月` });
         lastLabelCol = c;
