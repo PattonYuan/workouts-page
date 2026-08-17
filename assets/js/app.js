@@ -200,9 +200,17 @@
     const start = new Date(first);
     start.setDate(start.getDate() - first.getDay()); // 回退到周日
 
-    const last = new Date(year, 11, 31);
-    const end = new Date(last);
-    end.setDate(end.getDate() + (6 - last.getDay())); // 补齐到周六
+    // 当前年份只渲染到「今天」，避免把尚未发生的未来月份（如 9 月）画成空白热力图；
+    // 历史年份仍展示完整一年。
+    const now = new Date();
+    let end;
+    if (String(year) === String(now.getFullYear())) {
+      end = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // 今天（含）
+    } else {
+      const last = new Date(year, 11, 31);
+      end = new Date(last);
+      end.setDate(end.getDate() + (6 - last.getDay())); // 补齐到周六
+    }
 
     const cells = [];
     const firstDataCol = {};   // 每月首个「有数据」的列
