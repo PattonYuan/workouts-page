@@ -129,7 +129,8 @@
     end.setDate(end.getDate() + (6 - last.getDay())); // 补齐到周六
 
     const cells = [];
-    const monthLabels = [];
+    const firstDataCol = {};   // 每月首个「有数据」的列
+    const firstCalCol = {};    // 每月 1 号所在列（无数据时兜底）
     let cursor = new Date(start);
     let lastMonth = -1;
     let col = 0;
@@ -139,9 +140,11 @@
       const key = ymd(cursor);
       const info = dayMap[key];
 
-      if (inYear && cursor.getMonth() !== lastMonth) {
-        monthLabels.push({ col, label: `${cursor.getMonth() + 1}月` });
-        lastMonth = cursor.getMonth();
+      if (inYear) {
+        const mo = cursor.getMonth();
+        if (mo !== lastMonth) { firstCalCol[mo] = col; lastMonth = mo; }
+        // 标签对齐到「当月首个有数据的列」，避免月底活动贴着下月标签造成歧义
+        if (info && firstDataCol[mo] === undefined) firstDataCol[mo] = col;
       }
 
       if (!inYear || !info) {
@@ -160,6 +163,19 @@
 
       cursor.setDate(cursor.getDate() + 1);
       if (cursor.getDay() === 0) col++;
+    }
+
+    // 月份标签对齐：优先落在「当月首个有数据的列」，无数据则回退到 1 号所在列；
+    // 仅当与上一个标签不在同一列时才显示，避免重叠
+    const monthLabels = [];
+    let lastLabelCol = -1;
+    for (let mo = 0; mo < 12; mo++) {
+      if (firstCalCol[mo] === undefined) continue;
+      const c = firstDataCol[mo] !== undefined ? firstDataCol[mo] : firstCalCol[mo];
+      if (c > lastLabelCol) {
+        monthLabels.push({ col: c, label: `${mo + 1}月` });
+        lastLabelCol = c;
+      }
     }
 
     // 月份标签列对齐（53 列）
