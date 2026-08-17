@@ -118,6 +118,13 @@ a:hover { text-decoration: underline; }
   display: grid; place-items: center; font-size: 44px;
   background: linear-gradient(135deg, #2f80ed22, #27ae6022);
   border: 1px solid var(--border);
+  overflow: hidden;
+}
+.hero-avatar img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  display: block;
 }
 .hero-meta { flex: 1; min-width: 200px; }
 .hero-meta h1 { font-size: 30px; letter-spacing: .5px; }
