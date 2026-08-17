@@ -15,7 +15,7 @@
 
 /* ----------------------------- 个人资料 ----------------------------- */
 const PROFILE = {
-  name: '阿涛',
+  name: 'Tao',
   tagline: 'Run free · Ride far · Train hard',
   avatar: 'assets/images/avatar.png',  // 头像图片路径（留 emoji 则显示占位图标）
   location: 'Shanghai, CN',
@@ -182,7 +182,6 @@ const I18N = {
     habitEmpty: '今年暂无习惯打卡记录。',
     habitStreak: '连续 {n} 天', habitDays: '打卡天数',
     habitUnitReps: '个', habitUnitTimes: '次',
-    footer1: '用 ♥ 记录每一步 · 数据本地生成，可替换为真实记录',
     footerBy: '灵感来自',
   },
   en: {
@@ -215,7 +214,6 @@ const I18N = {
     habitEmpty: 'No habit check-ins this year.',
     habitStreak: 'Streak {n} days', habitDays: 'Days',
     habitUnitReps: 'reps', habitUnitTimes: 'times',
-    footer1: 'Every step counted with ♥ · Data generated locally, swap in your own anytime',
     footerBy: 'Inspired by',
   },
 };
