@@ -318,7 +318,10 @@ def fetch_type(client, page_type):
         page_parsed = 0
         for rec in data.get("records", []):
             for log in rec.get("logs", []):
-                rid = log.get("stats", {}).get("id")
+                st = log.get("stats")
+                if not isinstance(st, dict):
+                    continue  # 跳过 type=steps 的计步摘要（无 id，且 .get 会崩）
+                rid = st.get("id")
                 if rid and rid not in seen_ids:
                     seen_ids.add(rid)
                     act = parse_run_log(client, rid, page_type)
@@ -341,6 +344,86 @@ def fetch_type(client, page_type):
             print(f"  ⚠️ 类型 {page_type} 连续 {consecutive_fail} 条请求失败且无一成功解析，"
                   f"判定为不可解析（可能 RUN_LOG_API 不支持该类型），提前跳过。")
             break
+    return out
+
+
+# ----------------------------- 步行专用拉取 -----------------------------
+# Keep 的 "walking" 接口其实是「全量活动流」：跑步/骑行/徒步/爬楼/HIIT/羽毛球/拉伸/步行…
+# 全混在一起（共 7500+ 条），且其中步行(_hk 后缀)详情 RUN_LOG_API 返回 HTTP 400，取不到
+# 轨迹/心率。但活动列表的 stats 摘要已自带 distance/duration/startTime/name，足以记录步行
+# 本身（无 GPS 轨迹，Keep 对步行本就不提供）。因此单独实现：只挑真正的步行，用摘要直接构造，
+# 不调 RUN_LOG_API，也不把同流的跑步/骑行误标成 walk。
+WALK_NAME_HINTS = ("步行", "行走", "健走", "走路")
+
+
+def _is_walk(st):
+    dt = st.get("dataType")
+    if dt in ("outdoorWalking", "indoorWalking"):
+        return True
+    nm = st.get("name") or ""
+    return any(h in nm for h in WALK_NAME_HINTS)
+
+
+def _walk_from_stats(st):
+    ms = st.get("startTime") or 0
+    if not ms:
+        dd = st.get("doneDate")
+        if dd:
+            try:
+                ms = int(datetime.fromisoformat(dd.replace("Z", "+00:00")).timestamp() * 1000)
+            except Exception:  # noqa: BLE001
+                ms = 0
+    if not ms:
+        return None
+    dt = datetime.fromtimestamp(ms / 1000, tz=timezone.utc)
+    date_str = dt.strftime("%Y-%m-%d")
+    dist_m = st.get("distance")
+    dist = round(float(dist_m) / 1000.0, 2) if isinstance(dist_m, (int, float)) else 0.0
+    dur = int(st.get("duration") or 0)
+    name = st.get("name") or "健走"
+    return {
+        "date": date_str,
+        "type": "walk",
+        "title": name,
+        "distanceKm": dist,
+        "movingTimeSec": dur,
+        "elevationM": 0.0,
+        "avgHr": 0,
+        "track": [],
+        "source": "keep",
+    }
+
+
+def fetch_walks(client):
+    """从 walking 全量活动流中挑出真正的步行（其余类型由各自接口/高驰覆盖）。"""
+    out = []
+    last = 0
+    seen = set()
+    while True:
+        r = client._req(STATS_API.format(type="walking", last_date=last))
+        if not r or not r.get("data"):
+            break
+        data = r["data"]
+        for rec in data.get("records", []):
+            for log in rec.get("logs", []):
+                st = log.get("stats")
+                if not isinstance(st, dict):
+                    continue
+                rid = st.get("id")
+                if not rid or rid in seen:
+                    continue
+                if not _is_walk(st):
+                    continue
+                seen.add(rid)
+                act = _walk_from_stats(st)
+                if act:
+                    out.append(act)
+                    print(f"  + {act['date']} [walk] {act['title']} {act['distanceKm']}km")
+        nl = data.get("lastTimestamp", 0)
+        if not nl:
+            break
+        last = nl
+        time.sleep(0.4)
     return out
 
 
@@ -367,11 +450,18 @@ def main():
 
     all_acts = []
     for page_type in FETCH_TYPES:
+        if page_type == "walking":
+            continue  # walking 接口是全量活动流，单独用 fetch_walks 处理（避免误标/崩溃）
         print(f"── 拉取 {TYPE_LABEL.get(page_type, page_type)} …")
         try:
             all_acts.extend(fetch_type(client, page_type))
         except Exception as e:  # noqa: BLE001
             print(f"  ⚠️ 类型 {page_type} 拉取失败（接口可能不支持）：{e}")
+    print("── 拉取 健走（从全量活动流筛选） …")
+    try:
+        all_acts.extend(fetch_walks(client))
+    except Exception as e:  # noqa: BLE001
+        print(f"  ⚠️ 健走拉取失败：{e}")
 
     if not all_acts:
         print("⚠️ 未拉取到任何 Keep 活动（可能接口失效，或该账号无对应类型数据）。保留现有数据。")
