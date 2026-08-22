@@ -17,7 +17,8 @@ fetch_keep.py — 通过 Keep 非官方接口自动拉取运动数据，合并�
   python tools/fetch_keep.py
   （凭据读取顺序：环境变量 KEEP_MOBILE / KEEP_PASSWORD → 同目录 .env 文件）
 
-依赖：仅 Python 标准库（urllib / json / zlib / base64），无需 pip 安装。
+依赖：Python 标准库（urllib / json / zlib / base64）+ pycryptodome（AES 解密轨迹，
+      pip install pycryptodome）。无 pycryptodome 时轨迹退化为空，但距离/时长/爬升仍正确。
 """
 import base64
 import json
@@ -30,6 +31,11 @@ from datetime import datetime, timezone
 from urllib import request as ureq
 from urllib.parse import urlencode
 import http.cookiejar
+
+try:
+    from Crypto.Cipher import AES as _AES
+except Exception:  # noqa: BLE001
+    _AES = None
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from realdata import merge_and_write  # noqa: E402
@@ -47,6 +53,21 @@ FETCH_TYPES = {
     "walking": "walk",
 }
 TYPE_LABEL = {"running": "跑步", "cycling": "骑行", "hiking": "徒步", "walking": "健走"}
+
+# 轨迹降采样上限（与 sync_fit.py 一致）：高驰侧已限制 150 点；Keep 原始 GPS 点极多，
+# 不降采样会让 real_data.js 膨胀到十几 MB 并拖慢地图渲染。每条约保留 200 点足矣。
+MAX_TRACK_POINTS = 200
+
+
+def _downsample_track(track, cap=MAX_TRACK_POINTS):
+    """均匀降采样轨迹点到 cap 个以内（保留首尾），避免文件过大/地图卡顿。"""
+    if not track or len(track) <= cap:
+        return track
+    step = max(1, math.ceil(len(track) / cap))
+    out = [track[i] for i in range(0, len(track), step)]
+    if out and out[-1] != track[-1]:
+        out.append(track[-1])
+    return out
 
 UA = ("Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0")
 
@@ -73,6 +94,7 @@ class KeepClient:
         self.opener = ureq.build_opener(ureq.HTTPCookieProcessor(self.cj))
         self.headers = {"User-Agent": UA, "Content-Type": "application/x-www-form-urlencoded;charset=utf-8"}
         self.token = None
+        self.track_blocked = False  # 轨迹 CDN 首次 403/失败后自适应关闭，避免每条记录白等数秒
 
     def _req(self, url, data=None, headers=None, retries=3):
         h = dict(self.headers)
@@ -88,6 +110,14 @@ class KeepClient:
                 with self.opener.open(req, timeout=20) as resp:
                     raw = resp.read().decode("utf-8", "ignore")
                 return json.loads(raw)
+            except ureq.HTTPError as e:
+                # 4xx = 请求本身有误（如失效/非法的 run_id、接口不支持该类型），
+                # 重试无意义，直接跳过该条记录，避免每条白白等数秒/陷入慢循环。
+                if 400 <= getattr(e, "code", 0) < 500:
+                    print(f"  ⚠️ 请求 4xx 跳过 {url[:60]}…：HTTP {getattr(e, 'code', '?')}")
+                    return None
+                last_err = e
+                time.sleep(1.0 * (i + 1))
             except Exception as e:  # noqa: BLE001
                 last_err = e
                 time.sleep(1.5 * (i + 1))
@@ -146,15 +176,28 @@ def gcj02_to_wgs84(lng, lat):
 
 
 # ----------------------------- 轨迹解码 -----------------------------
-def _decode_runmap(text):
-    """Keep 的 rawDataURL 返回 base64(zlib) 的 GPS 点序列，解出 [[lat,lon], ...]（GCJ-02）。"""
+# Keep 的 GPS(geoPoints) / 心率(heartRates) 采用：base64 → [AES-CBC] → zlib → JSON。
+# 解密 key/iv 来自 yihong0618/running_page（公开硬编码，与官方 App 一致）。
+_KEEP_KEY = base64.b64decode("NTZmZTU5OzgyZzpkODczYw==")
+_KEEP_IV = base64.b64decode("MjM0Njg5MjQzMjkyMDMwMA==")
+
+
+def _decode_runmap(text, is_geo=False):
+    """解码 Keep 的 GPS/心率数据。
+    - 心率(heartRates)：base64(zlib) 直接解压，is_geo=False
+    - 轨迹(geoPoints)：base64 → AES-CBC 解密 → zlib 解压，is_geo=True
+    返回 JSON 对象（GPS 为 [{latitude, longitude, ...}]，GCJ-02 坐标）。
+    """
     try:
-        raw = zlib.decompress(base64.b64decode(text), 16 + zlib.MAX_WBITS)
-        pts = json.loads(raw)
-        return pts
+        b = base64.b64decode(text)
+        if is_geo:
+            if _AES is None:
+                return None
+            b = _AES.new(_KEEP_KEY, _AES.MODE_CBC, _KEEP_IV).decrypt(b)
+        return json.loads(zlib.decompress(b, 16 + zlib.MAX_WBITS))
     except Exception as e:  # noqa: BLE001
-        print(f"  ⚠️ 轨迹解码失败：{e}")
-        return []
+        print(f"  ⚠️ 轨迹/心率解码失败：{e}")
+        return None
 
 
 def _haversine_km(lats, lons):
@@ -186,15 +229,24 @@ def parse_run_log(client, run_id, page_type):
         tz = d.get("timezone", "")
         dt = datetime.fromtimestamp(start, tz=timezone.utc)
         date_str = dt.strftime("%Y-%m-%d")
-        dur = int(end - start) if end > start else 0
+        # 时长优先用接口直接给的 duration（秒），缺失时回退到 end-start
+        dur = int(d.get("duration") or 0)
+        if not dur and end > start:
+            dur = int(end - start)
 
-        # 轨迹（GCJ-02 → WGS-84）
+        # 距离：Keep 接口直接返回 distance（单位：米），优先使用，避免依赖被防盗链挡掉的轨迹 CDN。
+        # 轨迹 CDN（rawDataURL）在本机/部分网络下返回 403，track 可能为空；距离改由接口字段保证正确。
+        dist_m = d.get("distance")
+        dist = round(float(dist_m) / 1000.0, 2) if isinstance(dist_m, (int, float)) else 0.0
+
+        # 轨迹（GCJ-02 → WGS-84）：优先用接口直接返回的 geoPoints（加密 GPS 点序列），
+        # 无需依赖被防盗链挡掉的 CDN(rawDataURL)。仅当 geoPoints 缺失时才回退到 rawDataURL。
+        # 室内运动（跑步机/室内训练）本身无 GPS，geoPoints 为空，track 自然为空。
         track = []
-        raw_url = d.get("rawDataURL")
-        if raw_url:
-            resp = client._req(raw_url)
-            if resp and isinstance(resp, str):
-                pts = _decode_runmap(resp)
+        geo = d.get("geoPoints")
+        if geo:
+            pts = _decode_runmap(geo, is_geo=True)
+            if pts:
                 for p in pts:
                     lat = p.get("latitude")
                     lng = p.get("longitude")
@@ -202,9 +254,27 @@ def parse_run_log(client, run_id, page_type):
                         continue
                     wlon, wlat = gcj02_to_wgs84(float(lng), float(lat))
                     track.append([round(wlat, 6), round(wlon, 6)])
-        lats = [t[0] for t in track]
-        lons = [t[1] for t in track]
-        dist = _haversine_km(lats, lons) if track else 0.0
+        if not track:
+            # 回退：部分老活动只有 rawDataURL（CDN），可能 403，失败则留空。
+            raw_url = d.get("rawDataURL")
+            if raw_url and not client.track_blocked:
+                resp = client._req(raw_url, retries=1)
+                if resp and isinstance(resp, str):
+                    pts = _decode_runmap(resp)
+                    if pts:
+                        for p in pts:
+                            lat = p.get("latitude")
+                            lng = p.get("longitude")
+                            if lat is None or lng is None:
+                                continue
+                            wlon, wlat = gcj02_to_wgs84(float(lng), float(lat))
+                            track.append([round(wlat, 6), round(wlon, 6)])
+                else:
+                    client.track_blocked = True
+
+        # 爬升：接口直接给 accumulativeUpliftedHeight（米）
+        elev = d.get("accumulativeUpliftedHeight")
+        elev = round(float(elev), 1) if isinstance(elev, (int, float)) else 0.0
 
         hr = (d.get("heartRate") or {}).get("averageHeartRate")
         if isinstance(hr, (int, float)) and hr < 0:
@@ -217,9 +287,9 @@ def parse_run_log(client, run_id, page_type):
             "title": name,
             "distanceKm": dist,
             "movingTimeSec": dur,
-            "elevationM": 0,
+            "elevationM": elev,
             "avgHr": int(hr) if hr else 0,
-            "track": track,
+            "track": _downsample_track(track),
             "source": "keep",
         }
     except Exception as e:  # noqa: BLE001
@@ -228,15 +298,24 @@ def parse_run_log(client, run_id, page_type):
 
 
 def fetch_type(client, page_type):
-    """分页拉取某类型的活动 id 列表，再逐条解析。返回活动 dict 列表。"""
+    """分页拉取某类型的活动 id 列表，再逐条解析。返回活动 dict 列表。
+
+    健壮性：若某类型整批请求都失败（如骑行/徒步在 RUN_LOG_API 上系统性返回
+    HTTP 400，无法解析），则在该类型连续失败达到阈值后提前中止，避免对几百条
+    注定失败的记录逐条空跑（既慢又无意义）。这类运动通常由高驰(Coros)覆盖。
+    """
     out = []
     last_date = 0
     seen_ids = set()
+    prev_last = None
+    consecutive_fail = 0
+    FAIL_ABORT = 20  # 连续失败（无一条成功解析）达到此数 → 提前中止该类型
     while True:
         r = client._req(STATS_API.format(type=page_type, last_date=last_date))
         if not r or not r.get("data"):
             break
         data = r["data"]
+        page_parsed = 0
         for rec in data.get("records", []):
             for log in rec.get("logs", []):
                 rid = log.get("stats", {}).get("id")
@@ -245,17 +324,35 @@ def fetch_type(client, page_type):
                     act = parse_run_log(client, rid, page_type)
                     if act:
                         out.append(act)
+                        page_parsed += 1
+                        consecutive_fail = 0
                         print(f"  + {act['date']} [{act['type']}] {act['title']} {act['distanceKm']}km")
-        last_date = data.get("lastTimestamp", 0)
-        if not last_date:
+                    else:
+                        consecutive_fail += 1
+        # 分页未推进（lastTimestamp 不变）→ 防止某些接口返回的死循环
+        new_last = data.get("lastTimestamp", 0)
+        if not new_last or new_last == prev_last:
             break
+        prev_last = new_last
+        last_date = new_last
         time.sleep(0.6)  # 轻量限速
+        # 该类型连续失败过多且尚无成功解析 → 整批不可解析，提前中止
+        if consecutive_fail >= FAIL_ABORT and page_parsed == 0 and not out:
+            print(f"  ⚠️ 类型 {page_type} 连续 {consecutive_fail} 条请求失败且无一成功解析，"
+                  f"判定为不可解析（可能 RUN_LOG_API 不支持该类型），提前跳过。")
+            break
     return out
 
 
 # ----------------------------- 主流程 -----------------------------
+# 用户于 2026-08-22 明确：暂时只用 Coros，Keep 暂不接入（Keep 登录接口持续 HTTP 400，
+# 且凭据为占位符）。设置 KEEP_ENABLED=true 可重新启用；否则脚本直接跳过。
 def main():
     _load_dotenv()
+    if os.environ.get("KEEP_ENABLED", "").strip().lower() not in ("1", "true", "yes", "on"):
+        print("⏭️  Keep 同步已禁用（KEEP_ENABLED 未开启）。本次仅使用 Coros 数据，跳过 Keep。")
+        return
+
     mobile = os.environ.get("KEEP_MOBILE")
     password = os.environ.get("KEEP_PASSWORD")
     if not (mobile and password):
