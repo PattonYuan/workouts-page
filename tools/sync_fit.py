@@ -136,7 +136,7 @@ def _parse_with_fitparse(path, coros_type=None, name=None):
 
 
 def _build_activity(session, track, fname, coros_type=None, name=None):
-    sport = (session.get("sport") or "training").lower()
+    sport = str(session.get("sport") or "training").lower()
     stype = SPORT_MAP.get(sport, "workout")
     # 优先用高驰 sportType（权威）：摩托骑行(9807)等 FIT 标为 generic 的活动可正确归类
     if coros_type is not None and coros_type in COROS_TYPE_MAP:
