@@ -12,3 +12,7 @@ __pycache__/
 .env
 tools/.env
 
+# 本机自动化脚本与日志（本地工具，不进仓库）
+tools/auto_sync.sh
+logs/
+
