@@ -102,7 +102,9 @@ class Coros:
             "referer": "https://t.coros.com/",
             "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
         }
-        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+        # 高驰中国域名 teamcnapi.coros.com 国内直连即可（走代理反而被重置），
+        # 故 trust_env=False 忽略环境 http_proxy/https_proxy。
+        async with httpx.AsyncClient(timeout=TIMEOUT, trust_env=False) as client:
             resp = await client.post(
                 COROS_URL["LOGIN_URL"],
                 json={"account": self.account, "accountType": 2, "pwd": self.password},
@@ -116,7 +118,7 @@ class Coros:
                 "accesstoken": token,
                 "cookie": f"CPL-coros-region=2; CPL-coros-token={token}",
             }
-            self.req = httpx.AsyncClient(timeout=TIMEOUT, headers=self.headers)
+            self.req = httpx.AsyncClient(timeout=TIMEOUT, headers=self.headers, trust_env=False)
 
     async def fetch_activities(self):
         """返回账号内全部活动 [(labelId, sportType, name), ...]，翻页拉全。"""
