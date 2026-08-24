@@ -44,6 +44,19 @@ from realdata import merge_and_write  # noqa: E402
 LOGIN_API = "https://api.gotokeep.com/v1.1/users/login"
 STATS_API = "https://api.gotokeep.com/pd/v3/stats/detail?dateUnit=all&type={type}&lastDate={last_date}"
 RUN_LOG_API = "https://api.gotokeep.com/pd/v3/runninglog/{run_id}"
+# 训练类（力量/核心/自重）详情走 traininglog 接口，runninglog 对其返回 400
+TRAININGLOG_API = "https://api.gotokeep.com/pd/v3/traininglog/{log_id}"
+
+# 训练动作名 → 习惯打卡 item 键（用于 HABIT 打卡板块）
+# 注意：这些在 Keep 里 dataType 多为 manualStrengthTraining / trainingStretching / hiit 等，
+# 全混在 training 流里，只能靠 name 关键词识别。
+TRAINING_HABIT_MAP = {
+    "平板支撑": "plank",
+    "俯卧撑": "pushup",
+    "卷腹": "situp",
+    "仰卧起坐": "situp",
+    "深蹲": "squat",
+}
 
 # 要拉取的类型：Keep 类型 → 主页类型
 FETCH_TYPES = {
@@ -427,6 +440,114 @@ def fetch_walks(client):
     return out
 
 
+# ----------------------------- 训练/核心类拉取 -----------------------------
+# Keep 的训练、核心、自重动作（平板支撑/俯卧撑/卷腹/深蹲等）全混在 training 流里，
+# 详情接口用 traininglog（非 runninglog，后者对训练类返回 400）。
+# traininglog 的 groups[].actualRep = 当次个数，actualSec = 当次秒数（平板支撑靠它）。
+# 这些动作作为「每日习惯打卡」记录：返回 (activities, checkins) 两套数据。
+HABIT_KEYWORDS = {  # 动作名片段 → HABIT item 键
+    "平板支撑": "plank",
+    "俯卧撑": "pushup",
+    "卷腹": "situp",
+    "仰卧起坐": "situp",
+    "深蹲": "squat",
+}
+
+
+def _training_item_key(name):
+    for kw, key in HABIT_KEYWORDS.items():
+        if kw in (name or ""):
+            return key
+    return None
+
+
+def _training_from_summary(st):
+    """用列表摘要直接构造（无需调详情接口，避免 400）。返回 (activity, checkin) 或 None。"""
+    ms = st.get("startTime") or 0
+    if not ms:
+        dd = st.get("doneDate")
+        if dd:
+            try:
+                ms = int(datetime.fromisoformat(dd.replace("Z", "+00:00")).timestamp() * 1000)
+            except Exception:
+                ms = 0
+    if not ms:
+        return None
+    dt = datetime.fromtimestamp(ms / 1000, tz=timezone.utc)
+    date_str = dt.strftime("%Y-%m-%d")
+    dur = int(st.get("duration") or st.get("accurateDuration") or 0)
+    name = st.get("name") or "训练"
+    act = {
+        "date": date_str,
+        "type": "workout",
+        "title": name,
+        "distanceKm": 0.0,
+        "movingTimeSec": dur,
+        "elevationM": 0.0,
+        "avgHr": 0,
+        "track": [],
+        "source": "keep",
+    }
+    key = _training_item_key(name)
+    checkin = None
+    if key:
+        # 优先取详情里的 actualRep / actualSec；摘要拿不到，用 duration 兜底（平板支撑）
+        checkin = {"item": key, "date": date_str, "reps": dur or 1}
+    return act, checkin
+
+
+def fetch_training(client):
+    """从 training 全量流里挑训练/核心动作，构造活动 + 打卡。"""
+    acts, checkins = [], []
+    last = 0
+    seen = set()
+    while True:
+        r = client._req(STATS_API.format(type="training", last_date=last))
+        if not r or not r.get("data"):
+            break
+        data = r["data"]
+        for rec in data.get("records", []):
+            for log in rec.get("logs", []):
+                st = log.get("stats")
+                if not isinstance(st, dict):
+                    continue
+                rid = st.get("id")
+                if not rid or rid in seen:
+                    continue
+                # 只处理能识别为习惯动作的训练（其余训练如 HIIT/拉伸不进打卡）
+                if not _training_item_key(st.get("name")):
+                    seen.add(rid)
+                    continue
+                seen.add(rid)
+                res = _training_from_summary(st)
+                if not res:
+                    continue
+                act, checkin = res
+                # 尝试用 traininglog 详情补全 reps（actualRep/actualSec）
+                if checkin is not None:
+                    d = client._req(TRAININGLOG_API.format(log_id=rid))
+                    dd = (d or {}).get("data") if d else None
+                    if dd:
+                        reps = None
+                        for g in (dd.get("groups") or []):
+                            if g.get("actualRep"):
+                                reps = int(g["actualRep"])
+                                break
+                        if reps is None and dd.get("duration"):
+                            reps = int(dd.get("duration") or 0) or None
+                        if reps:
+                            checkin["reps"] = reps
+                acts.append(act)
+                checkins.append(checkin)
+                print(f"  + {act['date']} [workout] {act['title']} -> {checkin['item']} x{checkin['reps']}")
+        nl = data.get("lastTimestamp", 0)
+        if not nl or nl == last:
+            break
+        last = nl
+        time.sleep(0.4)
+    return acts, checkins
+
+
 # ----------------------------- 主流程 -----------------------------
 # 用户于 2026-08-22 明确：暂时只用 Coros，Keep 暂不接入（Keep 登录接口持续 HTTP 400，
 # 且凭据为占位符）。设置 KEEP_ENABLED=true 可重新启用；否则脚本直接跳过。
@@ -463,12 +584,22 @@ def main():
     except Exception as e:  # noqa: BLE001
         print(f"  ⚠️ 健走拉取失败：{e}")
 
+    all_checkins = []
+    print("── 拉取 训练/核心动作（平板支撑/俯卧撑/卷腹/深蹲，作为每日打卡） …")
+    try:
+        tr_acts, tr_checkins = fetch_training(client)
+        all_acts.extend(tr_acts)
+        all_checkins.extend(tr_checkins)
+    except Exception as e:  # noqa: BLE001
+        print(f"  ⚠️ 训练动作拉取失败：{e}")
+
     if not all_acts:
         print("⚠️ 未拉取到任何 Keep 活动（可能接口失效，或该账号无对应类型数据）。保留现有数据。")
         return
 
-    merge_and_write(all_acts, source="keep")
-    print(f"✅ Keep 同步完成，本次拉取 {len(all_acts)} 条（已与高驰等合并并按平台去重）。")
+    merge_and_write(all_acts, checkins=all_checkins, source="keep")
+    print(f"✅ Keep 同步完成，本次拉取 {len(all_acts)} 条活动 + {len(all_checkins)} 条打卡"
+          f"（已与高驰等合并并按平台去重）。")
 
 
 if __name__ == "__main__":

@@ -37,6 +37,46 @@ def _rank(src):
     return _SOURCE_RANK.get(src or "", 0)
 
 
+# 训练动作名片段 → 习惯打卡 item 键（与 fetch_keep.TRAINING_HABIT_MAP 保持一致）
+_HABIT_NAME_MAP = {
+    "平板支撑": "plank",
+    "俯卧撑": "pushup",
+    "卷腹": "situp",
+    "仰卧起坐": "situp",
+    "深蹲": "squat",
+}
+
+
+def _habit_key_from_name(name):
+    for kw, key in _HABIT_NAME_MAP.items():
+        if kw in (name or ""):
+            return key
+    return None
+
+
+def derive_checkins(activities):
+    """兜底：从已有 activities 按动作名关键词派生打卡记录。
+
+    保证即使 fetch_keep 未传 checkins（或训练类来自高驰），打卡板块仍有数据。
+    返回 [{item, date, reps}, ...]，按 (item,date) 去重。
+    """
+    out = []
+    seen = set()
+    for a in activities:
+        key = _habit_key_from_name(a.get("title"))
+        if not key:
+            continue
+        date = a.get("date")
+        ck = (key, date)
+        if ck in seen:
+            continue
+        seen.add(ck)
+        # reps：优先活动自带（Keep 详情已填 actualRep/actualSec），否则用时长兜底
+        reps = a.get("reps") or a.get("movingTimeSec") or 1
+        out.append({"item": key, "date": date, "reps": int(reps)})
+    return out
+
+
 def _fuzzy_dup(new, existing):
     """跨平台重复判定（用于 Coros→Keep 同步场景）。
 
@@ -118,6 +158,13 @@ def merge_and_write(new_activities, profile=None, checkins=None, out_path=None, 
             if _key(c) not in cseen:
                 data["checkins"].append(c)
                 cseen.add(_key(c))
+
+    # 兜底：若最终仍无打卡数据，从已有活动按动作名派生（保证训练类总能打卡）
+    if not data.get("checkins"):
+        derived = derive_checkins(merged)
+        if derived:
+            data["checkins"] = derived
+            print(f"↪ 从活动派生 {len(derived)} 条打卡（未从上游接收到 checkins）")
 
     with open(out_path, "w", encoding="utf-8") as f:
         f.write("// 由 tools/sync_*.py 自动生成，请勿手动编辑\n")

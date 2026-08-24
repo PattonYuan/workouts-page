@@ -155,6 +155,8 @@ const SPORT_ORDER = ['run', 'walk', 'ride', 'hike', 'moto', 'workout'];
 const HABIT = {
   pushup:     { label: '俯卧撑', en: 'Push-ups',  color: '#f2994a', icon: '💪' },
   squat:      { label: '深蹲',   en: 'Squats',    color: '#9b51e0', icon: '🦵' },
+  plank:      { label: '平板支撑', en: 'Plank',   color: '#27ae60', icon: '🧘' },
+  situp:      { label: '卷腹',   en: 'Sit-ups',   color: '#eb5757', icon: '🔥' },
   coldshower: { label: '冷水澡', en: 'Cold Shower', color: '#56ccf2', icon: '🚿' },
 };
 
