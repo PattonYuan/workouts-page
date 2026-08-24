@@ -71,6 +71,41 @@ TYPE_LABEL = {"running": "跑步", "cycling": "骑行", "hiking": "徒步", "wal
 # 不降采样会让 real_data.js 膨胀到十几 MB 并拖慢地图渲染。每条约保留 200 点足矣。
 MAX_TRACK_POINTS = 200
 
+# 增量同步状态文件：记录上次成功同步的时间游标（毫秒时间戳），
+# 下次只拉取该时间之后的活动，避免每次全量扫 7500+ 条历史记录。
+STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".keep_state.json")
+
+
+def load_state():
+    """读取上次同步游标（毫秒时间戳）。不存在返回 0（首次全量）。"""
+    try:
+        with open(STATE_FILE, encoding="utf-8") as f:
+            return int(json.load(f).get("last_sync_ts", 0))
+    except Exception:
+        return 0
+
+
+def save_state(ts):
+    """写入同步游标。ts 为本次处理到的最早时间戳（毫秒）。"""
+    try:
+        with open(STATE_FILE, "w", encoding="utf-8") as f:
+            json.dump({"last_sync_ts": int(ts)}, f)
+    except Exception as e:  # noqa: BLE001
+        print(f"  ⚠️ 写入 Keep 同步状态失败（不影响本次数据）：{e}")
+
+
+def _rec_start_ms(st):
+    """取一条 stats 记录的开始时间（毫秒），用于增量游标判定。"""
+    ms = st.get("startTime") or 0
+    if not ms:
+        dd = st.get("doneDate")
+        if dd:
+            try:
+                ms = int(datetime.fromisoformat(dd.replace("Z", "+00:00")).timestamp() * 1000)
+            except Exception:  # noqa: BLE001
+                ms = 0
+    return int(ms)
+
 
 def _downsample_track(track, cap=MAX_TRACK_POINTS):
     """均匀降采样轨迹点到 cap 个以内（保留首尾），避免文件过大/地图卡顿。"""
@@ -310,18 +345,21 @@ def parse_run_log(client, run_id, page_type):
         return None
 
 
-def fetch_type(client, page_type):
-    """分页拉取某类型的活动 id 列表，再逐条解析。返回活动 dict 列表。
+def fetch_type(client, page_type, since_ts=0):
+    """分页拉取某类型的活动 id 列表，再逐条解析。返回 (活动dict列表, 最早时间戳ms)。
 
+    增量：since_ts>0 时，只拉取开始时间晚于 since_ts 的活动；因接口按时间倒序
+    返回，一旦遇到 startTime<=since_ts 的旧记录即停止翻页，避免全量扫历史。
     健壮性：若某类型整批请求都失败（如骑行/徒步在 RUN_LOG_API 上系统性返回
     HTTP 400，无法解析），则在该类型连续失败达到阈值后提前中止，避免对几百条
     注定失败的记录逐条空跑（既慢又无意义）。这类运动通常由高驰(Coros)覆盖。
     """
     out = []
-    last_date = 0
+    last_date = since_ts
     seen_ids = set()
     prev_last = None
     consecutive_fail = 0
+    oldest_ms = since_ts or None  # 本次处理到的最早时间戳
     FAIL_ABORT = 20  # 连续失败（无一条成功解析）达到此数 → 提前中止该类型
     while True:
         r = client._req(STATS_API.format(type=page_type, last_date=last_date))
@@ -334,12 +372,18 @@ def fetch_type(client, page_type):
                 st = log.get("stats")
                 if not isinstance(st, dict):
                     continue  # 跳过 type=steps 的计步摘要（无 id，且 .get 会崩）
+                ms = _rec_start_ms(st)
+                # 增量：见到不晚于游标的旧记录 → 本类型已到底，停止翻页
+                if since_ts and ms and ms <= since_ts:
+                    return out, oldest_ms or since_ts
                 rid = st.get("id")
                 if rid and rid not in seen_ids:
                     seen_ids.add(rid)
                     act = parse_run_log(client, rid, page_type)
                     if act:
                         out.append(act)
+                        if oldest_ms is None or (ms and ms < oldest_ms):
+                            oldest_ms = ms
                         page_parsed += 1
                         consecutive_fail = 0
                         print(f"  + {act['date']} [{act['type']}] {act['title']} {act['distanceKm']}km")
@@ -357,7 +401,7 @@ def fetch_type(client, page_type):
             print(f"  ⚠️ 类型 {page_type} 连续 {consecutive_fail} 条请求失败且无一成功解析，"
                   f"判定为不可解析（可能 RUN_LOG_API 不支持该类型），提前跳过。")
             break
-    return out
+    return out, oldest_ms or since_ts
 
 
 # ----------------------------- 步行专用拉取 -----------------------------
@@ -407,11 +451,15 @@ def _walk_from_stats(st):
     }
 
 
-def fetch_walks(client):
-    """从 walking 全量活动流中挑出真正的步行（其余类型由各自接口/高驰覆盖）。"""
+def fetch_walks(client, since_ts=0):
+    """从 walking 全量活动流中挑出真正的步行（其余类型由各自接口/高驰覆盖）。
+
+    增量：since_ts>0 时遇到 startTime<=since_ts 的旧记录即停止翻页。
+    """
     out = []
-    last = 0
+    last = since_ts
     seen = set()
+    oldest_ms = since_ts or None
     while True:
         r = client._req(STATS_API.format(type="walking", last_date=last))
         if not r or not r.get("data"):
@@ -422,6 +470,9 @@ def fetch_walks(client):
                 st = log.get("stats")
                 if not isinstance(st, dict):
                     continue
+                ms = _rec_start_ms(st)
+                if since_ts and ms and ms <= since_ts:
+                    return out, oldest_ms or since_ts
                 rid = st.get("id")
                 if not rid or rid in seen:
                     continue
@@ -431,13 +482,15 @@ def fetch_walks(client):
                 act = _walk_from_stats(st)
                 if act:
                     out.append(act)
+                    if oldest_ms is None or (ms and ms < oldest_ms):
+                        oldest_ms = ms
                     print(f"  + {act['date']} [walk] {act['title']} {act['distanceKm']}km")
         nl = data.get("lastTimestamp", 0)
         if not nl:
             break
         last = nl
         time.sleep(0.4)
-    return out
+    return out, oldest_ms or since_ts
 
 
 # ----------------------------- 训练/核心类拉取 -----------------------------
@@ -496,11 +549,15 @@ def _training_from_summary(st):
     return act, checkin
 
 
-def fetch_training(client):
-    """从 training 全量流里挑训练/核心动作，构造活动 + 打卡。"""
+def fetch_training(client, since_ts=0):
+    """从 training 全量流里挑训练/核心动作，构造活动 + 打卡。
+
+    增量：since_ts>0 时遇到 startTime<=since_ts 的旧记录即停止翻页。
+    """
     acts, checkins = [], []
-    last = 0
+    last = since_ts
     seen = set()
+    oldest_ms = since_ts or None
     while True:
         r = client._req(STATS_API.format(type="training", last_date=last))
         if not r or not r.get("data"):
@@ -511,6 +568,9 @@ def fetch_training(client):
                 st = log.get("stats")
                 if not isinstance(st, dict):
                     continue
+                ms = _rec_start_ms(st)
+                if since_ts and ms and ms <= since_ts:
+                    return acts, checkins, oldest_ms or since_ts
                 rid = st.get("id")
                 if not rid or rid in seen:
                     continue
@@ -539,18 +599,20 @@ def fetch_training(client):
                             checkin["reps"] = reps
                 acts.append(act)
                 checkins.append(checkin)
+                if oldest_ms is None or (ms and ms < oldest_ms):
+                    oldest_ms = ms
                 print(f"  + {act['date']} [workout] {act['title']} -> {checkin['item']} x{checkin['reps']}")
         nl = data.get("lastTimestamp", 0)
         if not nl or nl == last:
             break
         last = nl
         time.sleep(0.4)
-    return acts, checkins
+    return acts, checkins, oldest_ms or since_ts
 
 
 # ----------------------------- 主流程 -----------------------------
-# 用户于 2026-08-22 明确：暂时只用 Coros，Keep 暂不接入（Keep 登录接口持续 HTTP 400，
-# 且凭据为占位符）。设置 KEEP_ENABLED=true 可重新启用；否则脚本直接跳过。
+# Keep 同步默认禁用（KEEP_ENABLED 未开启时跳过）。启用后首次全量，之后自动按
+# .keep_state.json 游标做增量（只拉取上次同步之后的新活动），大幅减少接口读取。
 def main():
     _load_dotenv()
     if os.environ.get("KEEP_ENABLED", "").strip().lower() not in ("1", "true", "yes", "on"):
@@ -563,6 +625,13 @@ def main():
         sys.exit("❌ 未找到 Keep 凭据：请设置环境变量 KEEP_MOBILE / KEEP_PASSWORD，"
                  "或在 tools/.env 中填写（参见 .env.example）。")
 
+    # 增量游标：上次成功同步到的时间戳（毫秒）。首次为 0（全量）。
+    since_ts = load_state()
+    if since_ts:
+        print(f"🔖 Keep 增量模式：只拉取 {datetime.fromtimestamp(since_ts/1000, tz=timezone.utc).strftime('%Y-%m-%d')} 之后的活动")
+    else:
+        print("🔖 Keep 首次全量同步（之后自动转为增量）")
+
     client = KeepClient()
     try:
         client.login(mobile, password)
@@ -570,36 +639,52 @@ def main():
         sys.exit(f"❌ {e}")
 
     all_acts = []
+    oldest_ms = since_ts or None  # 跟踪本次处理到的最早时间戳，用于更新游标
     for page_type in FETCH_TYPES:
         if page_type == "walking":
             continue  # walking 接口是全量活动流，单独用 fetch_walks 处理（避免误标/崩溃）
         print(f"── 拉取 {TYPE_LABEL.get(page_type, page_type)} …")
         try:
-            all_acts.extend(fetch_type(client, page_type))
+            acts, om = fetch_type(client, page_type, since_ts=since_ts)
+            all_acts.extend(acts)
+            if om and (oldest_ms is None or om < oldest_ms):
+                oldest_ms = om
         except Exception as e:  # noqa: BLE001
             print(f"  ⚠️ 类型 {page_type} 拉取失败（接口可能不支持）：{e}")
     print("── 拉取 健走（从全量活动流筛选） …")
     try:
-        all_acts.extend(fetch_walks(client))
+        acts, om = fetch_walks(client, since_ts=since_ts)
+        all_acts.extend(acts)
+        if om and (oldest_ms is None or om < oldest_ms):
+            oldest_ms = om
     except Exception as e:  # noqa: BLE001
         print(f"  ⚠️ 健走拉取失败：{e}")
 
     all_checkins = []
     print("── 拉取 训练/核心动作（平板支撑/俯卧撑/卷腹/深蹲，作为每日打卡） …")
     try:
-        tr_acts, tr_checkins = fetch_training(client)
+        tr_acts, tr_checkins, om = fetch_training(client, since_ts=since_ts)
         all_acts.extend(tr_acts)
         all_checkins.extend(tr_checkins)
+        if om and (oldest_ms is None or om < oldest_ms):
+            oldest_ms = om
     except Exception as e:  # noqa: BLE001
         print(f"  ⚠️ 训练动作拉取失败：{e}")
 
     if not all_acts:
         print("⚠️ 未拉取到任何 Keep 活动（可能接口失效，或该账号无对应类型数据）。保留现有数据。")
+        # 即便无新增，也把游标推进到当前时间，避免下次又从头扫
+        if since_ts == 0:
+            save_state(int(time.time() * 1000))
         return
 
     merge_and_write(all_acts, checkins=all_checkins, source="keep")
+    # 更新增量游标：用本次处理到的最早时间戳（若有），否则当前时间
+    new_ts = int(oldest_ms) if oldest_ms else int(time.time() * 1000)
+    save_state(new_ts)
     print(f"✅ Keep 同步完成，本次拉取 {len(all_acts)} 条活动 + {len(all_checkins)} 条打卡"
-          f"（已与高驰等合并并按平台去重）。")
+          f"（已与高驰等合并并按平台去重）。游标已更新至 "
+          f"{datetime.fromtimestamp(new_ts/1000, tz=timezone.utc).strftime('%Y-%m-%d')}。")
 
 
 if __name__ == "__main__":
