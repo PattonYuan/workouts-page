@@ -19,7 +19,7 @@ const PROFILE = {
   tagline: 'Run free · Ride far · Train hard',
   avatar: 'assets/images/avatar.png',  // 头像图片路径（留 emoji 则显示占位图标）
   location: 'Shanghai, CN',
-  since: 2022,
+  since: 2017,
 };
 
 /* ----------------------- 确定性随机（可复现） ----------------------- */

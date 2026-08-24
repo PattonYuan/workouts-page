@@ -111,7 +111,9 @@
     }
     $('#heroName').textContent = PROFILE.name;
     $('#heroTagline').textContent = PROFILE.tagline || '';
-    const since = PROFILE.since || new Date().getFullYear();
+    // 记录起始年：优先从真实活动数据推断最早年份（如 2017），无数据才回退 PROFILE.since
+    const sinceYears = ACTIVITIES.map((a) => parseInt((a.date || '').slice(0, 4), 10)).filter((y) => y > 0);
+    const since = sinceYears.length ? Math.min(...sinceYears) : (PROFILE.since || new Date().getFullYear());
     const subParts = [];
     if (PROFILE.location) subParts.push(PROFILE.location);
     subParts.push(t('heroSince').replace('{year}', since));
@@ -410,8 +412,11 @@
     const longest = calcLongestStreak(acts.map((a) => a.date));
     const fav = favoriteWeekday(acts);
     const activeDays = new Set(acts.map((a) => a.date)).size;
+    // 记录起始年：与 Hero 一致，从真实活动数据推断最早年份
+    const _sinceYears = ACTIVITIES.map((a) => parseInt((a.date || '').slice(0, 4), 10)).filter((y) => y > 0);
+    const _since = _sinceYears.length ? Math.min(..._sinceYears) : (PROFILE.since || new Date().getFullYear());
     const cards = [
-      { color: 'var(--accent)', ico: '🔥', title: t('insCurrentStreak'), big: curStreak, unit: t('insDays'), sub: t('heroSince').replace('{year}', PROFILE.since) },
+      { color: 'var(--accent)', ico: '🔥', title: t('insCurrentStreak'), big: curStreak, unit: t('insDays'), sub: t('heroSince').replace('{year}', _since) },
       { color: 'var(--accent-2)', ico: '📈', title: t('insLongestStreak'), big: longest, unit: t('insDays'), sub: t('insActiveDays').replace('{n}', activeDays) },
       { color: '#e8a33d', ico: '📅', title: t('insFavoriteDay'), big: fav, unit: '', sub: t('insFavoriteSub') },
     ];
@@ -820,6 +825,8 @@
     Object.keys(HABIT).forEach((key) => {
       const h = HABIT[key];
       const items = CHECKINS.filter((c) => c.item === key && c.date.startsWith(year));
+      // 该习惯当年无任何打卡记录 → 跳过，不渲染卡片（如冷水澡暂未记录则隐藏）
+      if (!items.length) return;
       const daySet = new Set(items.map((i) => i.date));
       const totalReps = items.reduce((s, i) => s + i.reps, 0);
       const days = items.length;
