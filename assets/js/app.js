@@ -57,9 +57,11 @@
     '香港特别行政区': 'Hong Kong',
   };
   const SPORT_EN = {
-    '徒步': 'Hike', '跑步': 'Run', '健走': 'Walk', '骑行': 'Ride', '公路骑行': 'Road Cycling',
-    '摩托骑行': 'Motorcycle Ride', '呼狗崖徒步': 'Hugouya Hike',
+    '徒步': 'Hike', '跑步': 'Run', '健走': 'Walk', '步行': 'Walk', '行走': 'Walk',
+    '骑行': 'Ride', '公路骑行': 'Road Cycling', '摩托骑行': 'Motorcycle Ride',
+    '呼狗崖徒步': 'Hugouya Hike',
   };
+  // Keep 训练课程名 → 英文（高频 + 一次性短语）
   const PHRASE_EN = {
     '跑步能力测试': 'Running Ability Test', '室内有氧': 'Indoor Cardio', '羽毛球': 'Badminton',
     '5公里测试': '5K Test', '5km测试': '5km Test', '上肢力量徒手训练': 'Upper Body Bodyweight Strength',
@@ -70,6 +72,13 @@
     '长距离 LSD': 'Long Run LSD', '通勤跑': 'Commute Run', '骑行通勤': 'Cycle Commute',
     '周末长途': 'Weekend Long Ride', '爬坡训练': 'Hill Training', '环湖骑行': 'Lakeside Ride',
     '力量训练': 'Strength Training', '核心训练': 'Core Training', '自重训练': 'Bodyweight Training',
+    // —— Keep 高频运动 / 训练课程 ——
+    '户外行走': 'Outdoor Walk', '户外步行': 'Outdoor Walk', '户外健走': 'Outdoor Walk',
+    '室内步行': 'Indoor Walk', '室内5000步走路燃脂，大体重友好！': 'Indoor 5000-step Fat-burn Walk (Plus-size Friendly)',
+    'Keep跑步': 'Keep Run', '卷腹': 'Sit-ups', '90°卷腹': '90° Sit-ups',
+    '俯卧撑': 'Push-ups', '俯卧撑入门': 'Push-ups for Beginners',
+    '平板支撑': 'Plank', '深蹲': 'Squats',
+    '7 分钟平板支撑·安小雨的马甲线秘籍': "7-min Plank · An Xiaoyu's Abs Routine",
   };
   function translateTitleEn(title) {
     if (!title || !/[一-鿿]/.test(title)) return title || '';
