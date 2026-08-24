@@ -71,7 +71,13 @@ else
   if [ "$PUSH" = "1" ]; then
     # 探测本机代理（Clash/Shadowrocket/ghlper 等），找到才 push
     PROXY_PORT=""
-    for p in 7890 7891 7892 7893 1080 1081 8080 33210 33211 52074 63863 62459; do
+    # 1) 优先读 macOS 系统代理配置（networksetup 里填的端口，如 7890）
+    for svc in "Wi-Fi" "Ethernet" "Thunderbolt Bridge"; do
+      sp=$(networksetup -getwebproxy "$svc" 2>/dev/null | awk -F': ' '/Port/{print $2}')
+      [ -n "$sp" ] && PROXY_PORT="$sp"
+    done
+    # 2) 兜底扫描常见端口（含 WorkBuddy 沙箱代理 50715 及历史随机端口）
+    for p in 7890 7891 7892 7893 1080 1081 8080 33210 33211 52074 63863 62459 50715 8888 8118 3128 9090; do
       if (exec 3<>/dev/tcp/127.0.0.1/$p) 2>/dev/null; then
         exec 3>&-
         code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 -x "http://127.0.0.1:$p" https://github.com 2>/dev/null)
