@@ -542,7 +542,7 @@
 
   /* ----------------------------- 活动列表 ----------------------------- */
   let actFilter = 'all';
-  let actLimit = 40;   // 点击 PB 跳转时临时放大，确保目标活动出现在列表里
+  let actLimit = 10;   // 最近活动列表只显示最近的 10 条；点击 PB 跳转时临时放大，确保目标活动出现在列表里
 
   function renderActivities() {
     const year = currentYear;
