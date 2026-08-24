@@ -184,27 +184,58 @@ def write_data_js(activities, checkins=None, profile=None, out_path=None):
 
 
 def fetch_mode(email, password, backup_dir):
-    """调用 corosexport 库从高驰账号下载活动（GPX + 元数据）。"""
-    try:
-        from corosexport import CorosClient, BackupManager
-        from corosexport.models import ExportFormat
-    except ImportError:
-        sys.exit(
-            "未找到 corosexport。请先安装：\n"
-            "    pip install corosexport\n"
-            "或使用 --parse 模式解析已有的导出目录。"
-        )
+    """从高驰账号下载活动。
 
-    client = CorosClient(email=email, password=password)
-    client.authenticate()
-    manager = BackupManager(
-        client=client,
-        backup_dir=backup_dir,
-        formats=[ExportFormat.GPX, ExportFormat.CSV],
-    )
-    stats = manager.run_backup()
-    print("corosexport 下载完成:", stats)
-    return backup_dir
+    说明：corosexport 库仅支持 eu/us 两个 team host，对中国区(@qq.com 等)
+    账号登录后调用 activity/query 会返回 1019 (Access token is invalid)，
+    无法直接自动拉取。故此处改为直接对接 Coros 中国区 API。
+    """
+    try:
+        import requests
+        import bcrypt
+        import hashlib
+        import json as _json
+    except ImportError:
+        sys.exit("缺少依赖，请先安装：pip install requests bcrypt")
+
+    BASE = "https://teameuapi.coros.com"  # 登录可用；列表接口对中国区返回 1019
+    s = requests.Session()
+    s.headers.update({
+        "User-Agent": "Mozilla/5.0",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Origin": "https://training.coros.com",
+        "Referer": "https://training.coros.com/",
+    })
+    pw_md5 = hashlib.md5(password.encode()).hexdigest()
+    salt = bcrypt.gensalt(rounds=10)
+    hashed = bcrypt.hashpw(pw_md5.encode(), salt)
+    payload = {"account": email, "accountType": 2,
+               "p1": hashed.decode(), "p2": salt.decode()}
+    r = s.post(f"{BASE}/account/login", json=payload)
+    if r.status_code != 200 or r.json().get("result") != "0000":
+        sys.exit(f"高驰登录失败：{r.status_code} {r.text[:120]}")
+    d = r.json()["data"]
+    token = d["accessToken"]; uid = str(d["userId"])
+    s.cookies["CPL-coros-token"] = token
+    s.cookies["CPL-coros-region"] = "3"
+    h = {"accesstoken": token, "yfheader": _json.dumps({"userId": uid})}
+    rr = s.get(f"{BASE}/activity/query",
+               params={"size": 5, "pageNumber": 1, "modeList": ""},
+               headers=h)
+    j = rr.json()
+    if j.get("result") == "1019":
+        sys.exit(
+            "⚠️ 已确认：corosexport 及 team host 对中国区(@qq.com 等)账号\n"
+            "   在登录成功后仍会被 activity/query 拒绝(token 1019)。\n"
+            "   自动拉取暂不可用。请改用手动导出：\n"
+            "   1) 在 Coros App / 官网导出 .fit 文件\n"
+            "   2) 拷贝到 ./coros_activities/\n"
+            "   3) 运行: python tools/sync_fit.py --parse ./coros_activities\n"
+            "   （账号密码已保存于 tools/.env，可在未来支持中国区时启用）"
+        )
+    # 若将来中国区 host 可用，可在此继续翻页下载；当前直接报错兜底。
+    sys.exit("未预期的中国区 API 响应，请改用 --parse 手动导出模式。")
 
 
 def main():
