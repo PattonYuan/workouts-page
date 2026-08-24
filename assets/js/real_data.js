@@ -350638,6 +350638,17 @@ window.REALDATA = {
       "avgHr": 0,
       "track": [],
       "source": "keep"
+    },
+    {
+      "date": "2026-08-24",
+      "type": "workout",
+      "title": "深蹲",
+      "distanceKm": 0.0,
+      "movingTimeSec": 78,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "track": [],
+      "source": "keep"
     }
   ],
   "checkins": [
@@ -351730,6 +351741,11 @@ window.REALDATA = {
       "item": "situp",
       "date": "2019-07-03",
       "reps": 30
+    },
+    {
+      "item": "squat",
+      "date": "2026-08-24",
+      "reps": 22
     }
   ]
 };
