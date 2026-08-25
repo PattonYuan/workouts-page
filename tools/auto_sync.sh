@@ -28,8 +28,41 @@ done
 mkdir -p "$PROJ/logs"
 cd "$PROJ" || exit 1
 
-# 0. 基础设置（绕过沙箱 HTTP2 报错）
+# 0. 基础设置 + 代理探测（探测一次，全局导出，供 Keep 拉取与 git 推送共用）
 git config --global http.version HTTP/1.1
+
+# 代理探测：优先沿用已设置的环境变量，否则读 macOS 系统代理 / 扫描常见端口
+detect_proxy() {
+  local p sp
+  # 1) 沿用已设置的环境变量（若可达）
+  if [ -n "${http_proxy:-}" ]; then
+    code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 -x "$http_proxy" https://github.com 2>/dev/null)
+    [ "$code" != "000" ] && [ -n "$code" ] && { echo "${http_proxy#*//}"; return; }
+  fi
+  # 2) 读 macOS 系统代理（networksetup 里填的端口，如 7890）
+  for svc in "Wi-Fi" "Ethernet" "Thunderbolt Bridge"; do
+    sp=$(networksetup -getwebproxy "$svc" 2>/dev/null | awk -F': ' '/Port/{print $2}')
+    [ -n "$sp" ] && { echo "$sp"; return; }
+  done
+  # 3) 兜底扫描常见端口（含本机常开的 7877/7890 及 WorkBuddy 沙箱代理 50715）
+  for p in 7890 7891 7892 7893 7877 1080 1081 8080 8888 8118 3128 9090 33210 33211 52074 63863 62459 50715; do
+    if (exec 3<>/dev/tcp/127.0.0.1/$p) 2>/dev/null; then
+      exec 3>&-
+      code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 -x "http://127.0.0.1:$p" https://github.com 2>/dev/null)
+      [ "$code" != "000" ] && [ -n "$code" ] && { echo "$p"; return; }
+    fi
+  done
+}
+PROXY_PORT="$(detect_proxy)"
+if [ -n "$PROXY_PORT" ]; then
+  export HTTP_PROXY="http://127.0.0.1:$PROXY_PORT"
+  export HTTPS_PROXY="http://127.0.0.1:$PROXY_PORT"
+  export http_proxy="$HTTP_PROXY"
+  export https_proxy="$HTTPS_PROXY"
+  echo "🔌 使用代理 127.0.0.1:$PROXY_PORT"
+else
+  echo "⚠️ 未检测到可用代理（Keep 拉取与 git 推送可能失败）"
+fi
 
 echo "=============================="
 echo "[$TS] 开始自动同步"
@@ -69,31 +102,10 @@ else
     && echo "    已提交" \
     || echo "    ⚠️ 提交失败"
   if [ "$PUSH" = "1" ]; then
-    # 探测本机代理（Clash/Shadowrocket/ghlper 等），找到才 push
-    PROXY_PORT=""
-    # 1) 优先读 macOS 系统代理配置（networksetup 里填的端口，如 7890）
-    for svc in "Wi-Fi" "Ethernet" "Thunderbolt Bridge"; do
-      sp=$(networksetup -getwebproxy "$svc" 2>/dev/null | awk -F': ' '/Port/{print $2}')
-      [ -n "$sp" ] && PROXY_PORT="$sp"
-    done
-    # 2) 兜底扫描常见端口（含 WorkBuddy 沙箱代理 50715 及历史随机端口）
-    for p in 7890 7891 7892 7893 1080 1081 8080 33210 33211 52074 63863 62459 50715 8888 8118 3128 9090; do
-      if (exec 3<>/dev/tcp/127.0.0.1/$p) 2>/dev/null; then
-        exec 3>&-
-        code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 -x "http://127.0.0.1:$p" https://github.com 2>/dev/null)
-        if [ "$code" != "000" ] && [ -n "$code" ]; then
-          PROXY_PORT=$p; break
-        fi
-      fi
-    done
     if [ -z "$PROXY_PORT" ]; then
       echo "    ⚠️ 未检测到本机代理（Clash/Shadowrocket 未运行？），已提交本地，待代理开启后重跑可补推"
     else
-      echo "    使用代理 127.0.0.1:$PROXY_PORT 推送中 ..."
-      export HTTP_PROXY="http://127.0.0.1:$PROXY_PORT"
-      export HTTPS_PROXY="http://127.0.0.1:$PROXY_PORT"
-      export http_proxy="$HTTP_PROXY"
-      export https_proxy="$HTTPS_PROXY"
+      echo "    通过代理 127.0.0.1:$PROXY_PORT 推送中 ..."
       ok=0
       for i in $(seq 1 15); do
         if git push origin "$REMOTE_BRANCH" >> "$PROJ/logs/auto_sync.log" 2>&1; then
@@ -102,13 +114,10 @@ else
         sleep 20
       done
       [ "$ok" = "0" ] && echo "    ⚠️ 推送失败（代理 502 或不稳），本地已提交，可稍后手动 git push"
-      unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy
     fi
   else
     echo "    ℹ️ 已跳过推送（--no-push）"
   fi
-else
-  echo "    ✅ 无新增数据，无需提交/推送"
 fi
 
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] 自动同步结束"

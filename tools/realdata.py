@@ -106,44 +106,40 @@ def merge_and_write(new_activities, profile=None, checkins=None, out_path=None, 
 
     data = load_existing(out_path)
 
-    # 同源替换：重新解析（如分类规则变更/重拉）时，先丢弃旧的同源活动，
-    # 再写入新解析结果，避免旧分类（如摩托骑行被误判为训练）残留。
-    # 不同源（如 coros + keep）则保留其它源，本源重新写入。
-    if source:
-        existing_others = [a for a in data["activities"] if a.get("source") != source]
-    else:
-        # 兼容旧调用（不带 source）：整文件由本次结果替换
-        existing_others = []
-
-    # 跨平台去重（核心）：以 higher-rank 平台为准，且「直接替换」低优先级平台的
-    # 重复记录，而不是让两者共存——否则热力图/统计会重复计数。
-    #   · 高驰(coros, rank2) 重跑撞上 keep(rank1) 已存在记录 → 用高驰覆盖 keep；
-    #   · keep 新拉撞上高驰已存在记录 → 丢弃 keep，保留高驰。
-    # 即「高驰的轨迹优先」：同一场运动在两平台都有记录时，最终只保留高驰那条（含真实 GPS）。
-    merged = list(existing_others)
+    # 合并策略（增量友好）：
+    #   · 保留全部既有活动（含本源历史），不再「整源丢弃」——
+    #     否则增量同步时本源只返回新活动，会把历史全清掉（曾导致 Keep 3500+ 记录丢失）。
+    #   · 遍历本次新增活动，按以下规则并入 merged（初始为全部既有记录）：
+    #       - 同源(模糊相同) → 用新拉取的覆盖旧记录（允许更新/重分类）；
+    #       - 跨源模糊重复 → 既有优先级 >= 本次则丢弃本次，否则用本次覆盖既有。
+    #   即「高驰的轨迹优先」：同场运动两平台都有时只保留高驰那条；本源重拉则原地更新。
+    merged = list(data["activities"])
     for a in new_activities:
-        a_rank = _rank(source) if source else 0
-        skip = False
-        replace_idx = None
+        a_src = source or a.get("source") or ""
+        a_rank = _rank(a_src)
+        handled = False
         for i, o in enumerate(merged):
-            if _fuzzy_dup(a, o):
-                o_rank = _rank(o.get("source"))
-                if o_rank >= a_rank:
-                    # 既有记录优先级更高或相等 → 丢弃本次（保留既有）
-                    print(f"↺ 去重跳过（与 {o.get('source')} 重复）: {a.get('date')} {a.get('title')} "
-                          f"{a.get('distanceKm')}km")
-                    skip = True
-                    break
-                # 本次优先级更高（如 coros 覆盖 keep）→ 替换既有记录
-                replace_idx = i
+            if not _fuzzy_dup(a, o):
+                continue
+            o_src = o.get("source") or ""
+            o_rank = _rank(o_src)
+            if o_src == a_src:
+                # 同源：以新拉取的覆盖旧记录（允许更新/重分类）
+                merged[i] = a
+            elif o_rank >= a_rank:
+                # 跨源且既有优先级更高或相等 → 丢弃本次，保留既有
+                print(f"↺ 去重跳过（与 {o_src} 重复）: {a.get('date')} {a.get('title')} "
+                      f"{a.get('distanceKm')}km")
+                handled = True
                 break
-        if skip:
-            continue
-        if replace_idx is not None:
-            print(f"⇄ 以高优先级 {source} 覆盖 {merged[replace_idx].get('source')}: "
-                  f"{a.get('date')} {a.get('title')} {a.get('distanceKm')}km")
-            merged[replace_idx] = a
-        else:
+            else:
+                # 跨源且本次优先级更高 → 替换既有记录
+                print(f"⇄ 以高优先级 {a_src} 覆盖 {o_src}: "
+                      f"{a.get('date')} {a.get('title')} {a.get('distanceKm')}km")
+                merged[i] = a
+            handled = True
+            break
+        if not handled:
             merged.append(a)
 
     data["activities"] = merged
