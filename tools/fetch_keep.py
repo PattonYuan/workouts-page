@@ -75,6 +75,13 @@ MAX_TRACK_POINTS = 200
 # 下次只拉取该时间之后的活动，避免每次全量扫 7500+ 条历史记录。
 STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".keep_state.json")
 
+# 增量扫描的「宽限期」：游标之前的这段时间窗口内仍会重新拉取，用于兜底「补录/倒签」
+# 活动（用户后补记、但 Keep 把日期标成较早的情况）。此前代码用 `ms <= since_ts` 直接
+# 停止翻页，会把游标当天、但时间戳早于游标的最近活动（如同一天稍早补记的卷腹/俯卧撑）
+# 误判为「已同步」而丢弃。改为 `ms < since_ts - GRACE_MS` 才停止，既有历史仍在窗口外被
+# 跳过（保证增量效率），窗口内的重复记录由 merge_and_write 按 id/模糊去重，不会重复。
+GRACE_MS = 30 * 24 * 3600 * 1000  # 30 天
+
 
 def load_state():
     """读取上次同步游标（毫秒时间戳）。不存在返回 0（首次全量）。"""
@@ -374,7 +381,7 @@ def fetch_type(client, page_type, since_ts=0):
                     continue  # 跳过 type=steps 的计步摘要（无 id，且 .get 会崩）
                 ms = _rec_start_ms(st)
                 # 增量：接口按时间倒序返回，见到不晚于游标的旧记录即已到底，停止翻页
-                if since_ts and ms and ms <= since_ts:
+                if since_ts and ms and ms < since_ts - GRACE_MS:
                     return out, newest_ms or since_ts
                 rid = st.get("id")
                 if rid and rid not in seen_ids:
@@ -471,7 +478,7 @@ def fetch_walks(client, since_ts=0):
                 if not isinstance(st, dict):
                     continue
                 ms = _rec_start_ms(st)
-                if since_ts and ms and ms <= since_ts:
+                if since_ts and ms and ms < since_ts - GRACE_MS:
                     return out, newest_ms or since_ts
                 rid = st.get("id")
                 if not rid or rid in seen:
@@ -569,7 +576,7 @@ def fetch_training(client, since_ts=0):
                 if not isinstance(st, dict):
                     continue
                 ms = _rec_start_ms(st)
-                if since_ts and ms and ms <= since_ts:
+                if since_ts and ms and ms < since_ts - GRACE_MS:
                     return acts, checkins, newest_ms or since_ts
                 rid = st.get("id")
                 if not rid or rid in seen:

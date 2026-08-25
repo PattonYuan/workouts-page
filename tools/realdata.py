@@ -95,7 +95,47 @@ def _fuzzy_dup(new, existing):
     # 时长容差：120s 或 5%，取较大者
     if abs(nt - et) > max(120, 0.05 * max(nt, et, 1)):
         return False
+    # 无距离的活动（训练/核心动作，distance≈0）必须按动作名去重：同日同类但不同动作
+    # （如 卷腹 vs 俯卧撑）时长往往相近，若只靠时间容差会被误判为同一条而互相覆盖、丢失记录。
+    if max(nd, ed) < 0.01:
+        nk = _habit_key_from_name(new.get("title")) or (new.get("title") or "").strip()
+        ek = _habit_key_from_name(existing.get("title")) or (existing.get("title") or "").strip()
+        if nk and ek and nk != ek:
+            return False
     return True
+
+
+def _rebuild_checkins(activities, existing_checkins, incoming_checkins):
+    """由合并后的活动重建打卡列表（按 动作+日期 去重）。
+
+    reps 优先采用既有/本次传入打卡里的精确个数（Keep traininglog 的 actualRep），
+    缺失时回退到活动时长。既修复「同日多条打卡被合并为一条」的 bug，
+    又保留历史已记录的精确次数。
+    """
+    reps = {}
+    for c in (existing_checkins or []):
+        ik = (c.get("item"), c.get("date"))
+        if c.get("reps") is not None:
+            reps[ik] = c.get("reps")
+    for c in (incoming_checkins or []):
+        ik = (c.get("item"), c.get("date"))
+        if c.get("reps") is not None:
+            reps[ik] = c.get("reps")
+    out = []
+    seen = set()
+    for a in activities:
+        hk = _habit_key_from_name(a.get("title"))
+        if not hk:
+            continue
+        ck = (hk, a.get("date"))
+        if ck in seen:
+            continue
+        seen.add(ck)
+        r = reps.get(ck)
+        if r is None:
+            r = a.get("reps") or a.get("movingTimeSec") or 1
+        out.append({"item": hk, "date": a.get("date"), "reps": int(r)})
+    return out
 
 
 def merge_and_write(new_activities, profile=None, checkins=None, out_path=None, source=None):
@@ -148,15 +188,12 @@ def merge_and_write(new_activities, profile=None, checkins=None, out_path=None, 
     if profile:
         data["profile"] = profile
 
-    if checkins:
-        cseen = {_key(c) for c in data["checkins"]}
-        for c in checkins:
-            if _key(c) not in cseen:
-                data["checkins"].append(c)
-                cseen.add(_key(c))
-
-    # 兜底：若最终仍无打卡数据，从已有活动按动作名派生（保证训练类总能打卡）
-    if not data.get("checkins"):
+    # 重建打卡：由合并后的全部活动按「动作 + 日期」去重派生；reps 优先用既有/本次传入
+    # 打卡里的精确值（Keep traininglog 的 actualRep），缺失时回退到活动时长。
+    # 此前用 title|距离|时长 作去重键，而打卡记录无这些字段，导致同一天多条打卡被错误
+    # 合并成一条（如 2026-08-24 只留下深蹲，卷腹/俯卧撑/平板支撑丢失）。
+    data["checkins"] = _rebuild_checkins(merged, data.get("checkins", []), checkins)
+    if not data["checkins"]:
         derived = derive_checkins(merged)
         if derived:
             data["checkins"] = derived

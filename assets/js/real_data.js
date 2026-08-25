@@ -352136,1037 +352136,125 @@ window.REALDATA = {
       "avgHr": 0,
       "track": [],
       "source": "keep"
+    },
+    {
+      "date": "2026-08-24",
+      "type": "workout",
+      "title": "俯卧撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 63,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "track": [],
+      "source": "keep"
+    },
+    {
+      "date": "2026-08-24",
+      "type": "workout",
+      "title": "卷腹",
+      "distanceKm": 0.0,
+      "movingTimeSec": 109,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "track": [],
+      "source": "keep"
+    },
+    {
+      "date": "2026-08-24",
+      "type": "workout",
+      "title": "平板支撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 122,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "track": [],
+      "source": "keep"
     }
   ],
   "checkins": [
     {
       "item": "situp",
-      "date": "2026-05-27",
-      "reps": 47
-    },
-    {
-      "item": "situp",
-      "date": "2026-05-26",
-      "reps": 28
-    },
-    {
-      "item": "situp",
-      "date": "2026-01-12",
-      "reps": 40
-    },
-    {
-      "item": "situp",
-      "date": "2025-11-20",
-      "reps": 18
-    },
-    {
-      "item": "situp",
-      "date": "2025-04-10",
-      "reps": 34
-    },
-    {
-      "item": "plank",
-      "date": "2025-04-01",
-      "reps": 426
-    },
-    {
-      "item": "situp",
-      "date": "2025-03-31",
-      "reps": 60
-    },
-    {
-      "item": "situp",
-      "date": "2025-02-11",
-      "reps": 66
-    },
-    {
-      "item": "plank",
-      "date": "2025-01-24",
-      "reps": 10
-    },
-    {
-      "item": "situp",
-      "date": "2025-01-23",
-      "reps": 60
-    },
-    {
-      "item": "situp",
-      "date": "2025-01-18",
-      "reps": 63
-    },
-    {
-      "item": "pushup",
-      "date": "2025-01-16",
-      "reps": 34
-    },
-    {
-      "item": "plank",
-      "date": "2024-12-30",
-      "reps": 15
-    },
-    {
-      "item": "situp",
-      "date": "2024-12-04",
-      "reps": 40
-    },
-    {
-      "item": "situp",
-      "date": "2024-12-03",
-      "reps": 31
-    },
-    {
-      "item": "pushup",
-      "date": "2024-11-21",
-      "reps": 20
-    },
-    {
-      "item": "plank",
-      "date": "2024-10-14",
-      "reps": 12
-    },
-    {
-      "item": "situp",
-      "date": "2024-07-09",
-      "reps": 61
-    },
-    {
-      "item": "situp",
-      "date": "2024-07-06",
-      "reps": 23
-    },
-    {
-      "item": "situp",
-      "date": "2024-06-27",
-      "reps": 78
-    },
-    {
-      "item": "situp",
-      "date": "2024-06-26",
-      "reps": 32
-    },
-    {
-      "item": "plank",
-      "date": "2024-06-24",
-      "reps": 17
-    },
-    {
-      "item": "situp",
-      "date": "2024-06-23",
-      "reps": 30
-    },
-    {
-      "item": "plank",
-      "date": "2024-06-21",
-      "reps": 15
-    },
-    {
-      "item": "pushup",
-      "date": "2024-06-17",
-      "reps": 9
-    },
-    {
-      "item": "situp",
-      "date": "2024-06-16",
+      "date": "2019-07-03",
       "reps": 30
     },
     {
       "item": "situp",
-      "date": "2024-06-15",
-      "reps": 30
-    },
-    {
-      "item": "plank",
-      "date": "2024-06-14",
-      "reps": 17
-    },
-    {
-      "item": "plank",
-      "date": "2024-06-13",
-      "reps": 15
-    },
-    {
-      "item": "plank",
-      "date": "2024-06-12",
-      "reps": 19
-    },
-    {
-      "item": "plank",
-      "date": "2024-06-11",
-      "reps": 16
-    },
-    {
-      "item": "plank",
-      "date": "2024-06-04",
-      "reps": 16
-    },
-    {
-      "item": "plank",
-      "date": "2024-05-31",
-      "reps": 16
-    },
-    {
-      "item": "pushup",
-      "date": "2024-05-27",
-      "reps": 19
-    },
-    {
-      "item": "pushup",
-      "date": "2024-05-23",
-      "reps": 19
-    },
-    {
-      "item": "pushup",
-      "date": "2024-05-21",
-      "reps": 19
-    },
-    {
-      "item": "plank",
-      "date": "2024-05-17",
-      "reps": 16
-    },
-    {
-      "item": "pushup",
-      "date": "2024-05-15",
-      "reps": 10
-    },
-    {
-      "item": "situp",
-      "date": "2024-05-14",
-      "reps": 29
-    },
-    {
-      "item": "situp",
-      "date": "2024-05-13",
-      "reps": 73
-    },
-    {
-      "item": "pushup",
-      "date": "2024-05-10",
-      "reps": 11
-    },
-    {
-      "item": "situp",
-      "date": "2024-05-08",
-      "reps": 29
-    },
-    {
-      "item": "plank",
-      "date": "2024-05-04",
-      "reps": 16
-    },
-    {
-      "item": "situp",
-      "date": "2024-04-25",
-      "reps": 26
-    },
-    {
-      "item": "plank",
-      "date": "2024-04-24",
-      "reps": 15
-    },
-    {
-      "item": "plank",
-      "date": "2024-04-23",
-      "reps": 18
-    },
-    {
-      "item": "situp",
-      "date": "2024-04-22",
-      "reps": 93
-    },
-    {
-      "item": "plank",
-      "date": "2024-04-21",
-      "reps": 14
-    },
-    {
-      "item": "pushup",
-      "date": "2024-04-19",
-      "reps": 12
-    },
-    {
-      "item": "pushup",
-      "date": "2024-04-18",
-      "reps": 9
-    },
-    {
-      "item": "pushup",
-      "date": "2024-03-29",
-      "reps": 10
-    },
-    {
-      "item": "pushup",
-      "date": "2024-03-27",
-      "reps": 9
-    },
-    {
-      "item": "pushup",
-      "date": "2024-03-26",
-      "reps": 11
-    },
-    {
-      "item": "plank",
-      "date": "2024-03-25",
-      "reps": 15
-    },
-    {
-      "item": "pushup",
-      "date": "2024-03-12",
-      "reps": 9
-    },
-    {
-      "item": "plank",
-      "date": "2024-03-11",
-      "reps": 21
-    },
-    {
-      "item": "plank",
-      "date": "2024-03-10",
-      "reps": 15
-    },
-    {
-      "item": "pushup",
-      "date": "2024-03-06",
-      "reps": 14
-    },
-    {
-      "item": "pushup",
-      "date": "2024-03-05",
-      "reps": 14
-    },
-    {
-      "item": "pushup",
-      "date": "2024-03-04",
-      "reps": 19
-    },
-    {
-      "item": "plank",
-      "date": "2024-03-03",
-      "reps": 18
-    },
-    {
-      "item": "pushup",
-      "date": "2024-03-02",
-      "reps": 15
-    },
-    {
-      "item": "pushup",
-      "date": "2024-03-01",
-      "reps": 9
-    },
-    {
-      "item": "plank",
-      "date": "2024-02-29",
-      "reps": 16
-    },
-    {
-      "item": "situp",
-      "date": "2024-02-28",
-      "reps": 29
-    },
-    {
-      "item": "pushup",
-      "date": "2024-02-27",
-      "reps": 20
-    },
-    {
-      "item": "situp",
-      "date": "2024-02-25",
-      "reps": 45
-    },
-    {
-      "item": "pushup",
-      "date": "2024-02-02",
-      "reps": 11
-    },
-    {
-      "item": "plank",
-      "date": "2024-02-01",
-      "reps": 14
-    },
-    {
-      "item": "pushup",
-      "date": "2024-01-31",
-      "reps": 9
-    },
-    {
-      "item": "plank",
-      "date": "2024-01-30",
-      "reps": 16
-    },
-    {
-      "item": "plank",
-      "date": "2024-01-28",
-      "reps": 15
-    },
-    {
-      "item": "plank",
-      "date": "2024-01-26",
-      "reps": 18
-    },
-    {
-      "item": "pushup",
-      "date": "2024-01-25",
-      "reps": 28
-    },
-    {
-      "item": "pushup",
-      "date": "2024-01-24",
-      "reps": 9
-    },
-    {
-      "item": "pushup",
-      "date": "2024-01-23",
-      "reps": 10
-    },
-    {
-      "item": "pushup",
-      "date": "2024-01-21",
-      "reps": 9
-    },
-    {
-      "item": "pushup",
-      "date": "2024-01-19",
-      "reps": 11
-    },
-    {
-      "item": "pushup",
-      "date": "2024-01-18",
-      "reps": 9
-    },
-    {
-      "item": "plank",
-      "date": "2024-01-17",
-      "reps": 14
-    },
-    {
-      "item": "pushup",
-      "date": "2024-01-16",
-      "reps": 19
-    },
-    {
-      "item": "situp",
-      "date": "2024-01-15",
-      "reps": 35
-    },
-    {
-      "item": "situp",
-      "date": "2024-01-14",
-      "reps": 34
-    },
-    {
-      "item": "situp",
-      "date": "2024-01-13",
-      "reps": 31
-    },
-    {
-      "item": "plank",
-      "date": "2024-01-12",
-      "reps": 15
-    },
-    {
-      "item": "situp",
-      "date": "2024-01-11",
-      "reps": 31
-    },
-    {
-      "item": "plank",
-      "date": "2024-01-10",
-      "reps": 15
-    },
-    {
-      "item": "situp",
-      "date": "2024-01-09",
-      "reps": 31
-    },
-    {
-      "item": "pushup",
-      "date": "2024-01-08",
-      "reps": 9
-    },
-    {
-      "item": "pushup",
-      "date": "2024-01-07",
-      "reps": 19
-    },
-    {
-      "item": "pushup",
-      "date": "2024-01-06",
-      "reps": 12
-    },
-    {
-      "item": "pushup",
-      "date": "2024-01-05",
-      "reps": 9
-    },
-    {
-      "item": "pushup",
-      "date": "2024-01-04",
-      "reps": 9
-    },
-    {
-      "item": "plank",
-      "date": "2024-01-03",
-      "reps": 14
-    },
-    {
-      "item": "situp",
-      "date": "2024-01-02",
-      "reps": 29
-    },
-    {
-      "item": "situp",
-      "date": "2024-01-01",
-      "reps": 29
-    },
-    {
-      "item": "plank",
-      "date": "2023-12-31",
-      "reps": 15
-    },
-    {
-      "item": "plank",
-      "date": "2023-12-28",
-      "reps": 15
-    },
-    {
-      "item": "pushup",
-      "date": "2023-12-27",
-      "reps": 9
-    },
-    {
-      "item": "pushup",
-      "date": "2023-12-26",
-      "reps": 45
-    },
-    {
-      "item": "plank",
-      "date": "2023-12-21",
-      "reps": 14
-    },
-    {
-      "item": "situp",
-      "date": "2023-12-17",
+      "date": "2019-07-04",
       "reps": 30
     },
     {
       "item": "pushup",
-      "date": "2023-12-15",
-      "reps": 9
-    },
-    {
-      "item": "situp",
-      "date": "2023-12-14",
-      "reps": 29
-    },
-    {
-      "item": "situp",
-      "date": "2023-12-06",
-      "reps": 30
-    },
-    {
-      "item": "situp",
-      "date": "2023-12-04",
-      "reps": 117
-    },
-    {
-      "item": "situp",
-      "date": "2023-11-28",
-      "reps": 32
-    },
-    {
-      "item": "pushup",
-      "date": "2023-11-23",
-      "reps": 9
+      "date": "2019-07-04",
+      "reps": 709
     },
     {
       "item": "plank",
-      "date": "2023-11-21",
-      "reps": 14
-    },
-    {
-      "item": "situp",
-      "date": "2023-11-20",
-      "reps": 29
-    },
-    {
-      "item": "pushup",
-      "date": "2023-11-19",
-      "reps": 9
-    },
-    {
-      "item": "plank",
-      "date": "2023-11-18",
-      "reps": 12
-    },
-    {
-      "item": "pushup",
-      "date": "2023-11-16",
-      "reps": 11
-    },
-    {
-      "item": "pushup",
-      "date": "2023-11-15",
-      "reps": 11
-    },
-    {
-      "item": "pushup",
-      "date": "2023-11-07",
-      "reps": 9
-    },
-    {
-      "item": "pushup",
-      "date": "2023-11-06",
-      "reps": 9
-    },
-    {
-      "item": "pushup",
-      "date": "2023-11-05",
-      "reps": 19
-    },
-    {
-      "item": "pushup",
-      "date": "2023-11-04",
-      "reps": 19
-    },
-    {
-      "item": "pushup",
-      "date": "2023-11-02",
-      "reps": 10
-    },
-    {
-      "item": "plank",
-      "date": "2023-11-01",
-      "reps": 7
-    },
-    {
-      "item": "situp",
-      "date": "2023-10-31",
-      "reps": 32
-    },
-    {
-      "item": "situp",
-      "date": "2023-10-25",
-      "reps": 29
-    },
-    {
-      "item": "pushup",
-      "date": "2023-10-24",
-      "reps": 10
-    },
-    {
-      "item": "situp",
-      "date": "2023-10-19",
-      "reps": 31
-    },
-    {
-      "item": "situp",
-      "date": "2023-06-28",
-      "reps": 23
-    },
-    {
-      "item": "pushup",
-      "date": "2023-06-08",
-      "reps": 15
-    },
-    {
-      "item": "plank",
-      "date": "2023-06-07",
-      "reps": 14
-    },
-    {
-      "item": "situp",
-      "date": "2023-05-30",
-      "reps": 61
-    },
-    {
-      "item": "plank",
-      "date": "2023-05-29",
-      "reps": 15
-    },
-    {
-      "item": "plank",
-      "date": "2023-05-28",
-      "reps": 14
-    },
-    {
-      "item": "plank",
-      "date": "2023-04-23",
-      "reps": 14
-    },
-    {
-      "item": "situp",
-      "date": "2023-04-20",
+      "date": "2019-07-09",
       "reps": 99
     },
     {
-      "item": "situp",
-      "date": "2023-03-15",
-      "reps": 62
+      "item": "plank",
+      "date": "2019-07-10",
+      "reps": 107
     },
     {
-      "item": "plank",
-      "date": "2023-03-14",
-      "reps": 14
-    },
-    {
-      "item": "plank",
-      "date": "2023-03-12",
-      "reps": 15
-    },
-    {
-      "item": "plank",
-      "date": "2023-03-11",
-      "reps": 15
-    },
-    {
-      "item": "plank",
-      "date": "2023-03-09",
-      "reps": 14
-    },
-    {
-      "item": "plank",
-      "date": "2023-03-08",
-      "reps": 14
+      "item": "squat",
+      "date": "2021-09-13",
+      "reps": 40
     },
     {
       "item": "situp",
-      "date": "2022-12-24",
-      "reps": 77
-    },
-    {
-      "item": "situp",
-      "date": "2022-12-23",
-      "reps": 60
+      "date": "2022-03-27",
+      "reps": 30
     },
     {
       "item": "pushup",
-      "date": "2022-12-21",
-      "reps": 15
-    },
-    {
-      "item": "situp",
-      "date": "2022-12-20",
-      "reps": 61
-    },
-    {
-      "item": "situp",
-      "date": "2022-12-19",
-      "reps": 72
+      "date": "2022-03-27",
+      "reps": 652
     },
     {
       "item": "pushup",
-      "date": "2022-12-15",
-      "reps": 16
-    },
-    {
-      "item": "pushup",
-      "date": "2022-12-14",
+      "date": "2022-04-02",
       "reps": 16
     },
     {
       "item": "situp",
-      "date": "2022-12-13",
-      "reps": 60
-    },
-    {
-      "item": "plank",
-      "date": "2022-09-08",
-      "reps": 120
-    },
-    {
-      "item": "pushup",
-      "date": "2022-09-06",
-      "reps": 12
-    },
-    {
-      "item": "plank",
-      "date": "2022-09-03",
-      "reps": 120
-    },
-    {
-      "item": "pushup",
-      "date": "2022-08-11",
-      "reps": 20
-    },
-    {
-      "item": "plank",
-      "date": "2022-08-02",
-      "reps": 120
-    },
-    {
-      "item": "plank",
-      "date": "2022-07-31",
-      "reps": 120
-    },
-    {
-      "item": "situp",
-      "date": "2022-07-25",
+      "date": "2022-04-05",
       "reps": 60
     },
     {
       "item": "pushup",
-      "date": "2022-07-22",
-      "reps": 20
-    },
-    {
-      "item": "pushup",
-      "date": "2022-07-21",
-      "reps": 20
-    },
-    {
-      "item": "situp",
-      "date": "2022-07-20",
-      "reps": 60
+      "date": "2022-04-05",
+      "reps": 75
     },
     {
       "item": "plank",
-      "date": "2022-07-19",
-      "reps": 120
-    },
-    {
-      "item": "situp",
-      "date": "2022-07-18",
-      "reps": 60
-    },
-    {
-      "item": "pushup",
-      "date": "2022-07-17",
-      "reps": 10
-    },
-    {
-      "item": "pushup",
-      "date": "2022-07-02",
-      "reps": 20
-    },
-    {
-      "item": "situp",
-      "date": "2022-07-01",
-      "reps": 60
-    },
-    {
-      "item": "plank",
-      "date": "2022-06-30",
-      "reps": 120
-    },
-    {
-      "item": "pushup",
-      "date": "2022-06-29",
-      "reps": 20
-    },
-    {
-      "item": "pushup",
-      "date": "2022-06-28",
-      "reps": 20
-    },
-    {
-      "item": "situp",
-      "date": "2022-06-23",
-      "reps": 60
-    },
-    {
-      "item": "pushup",
-      "date": "2022-06-22",
-      "reps": 20
-    },
-    {
-      "item": "pushup",
-      "date": "2022-06-20",
-      "reps": 20
-    },
-    {
-      "item": "pushup",
-      "date": "2022-06-19",
-      "reps": 20
-    },
-    {
-      "item": "pushup",
-      "date": "2022-06-15",
-      "reps": 20
-    },
-    {
-      "item": "pushup",
-      "date": "2022-06-12",
-      "reps": 20
-    },
-    {
-      "item": "pushup",
-      "date": "2022-06-11",
-      "reps": 20
-    },
-    {
-      "item": "plank",
-      "date": "2022-06-10",
-      "reps": 120
-    },
-    {
-      "item": "plank",
-      "date": "2022-05-31",
-      "reps": 120
-    },
-    {
-      "item": "plank",
-      "date": "2022-05-30",
-      "reps": 120
-    },
-    {
-      "item": "situp",
-      "date": "2022-05-29",
-      "reps": 60
-    },
-    {
-      "item": "plank",
-      "date": "2022-05-28",
-      "reps": 120
-    },
-    {
-      "item": "situp",
-      "date": "2022-05-27",
-      "reps": 60
-    },
-    {
-      "item": "plank",
-      "date": "2022-05-26",
-      "reps": 180
-    },
-    {
-      "item": "pushup",
-      "date": "2022-05-25",
-      "reps": 20
-    },
-    {
-      "item": "situp",
-      "date": "2022-05-24",
-      "reps": 62
-    },
-    {
-      "item": "plank",
-      "date": "2022-05-23",
-      "reps": 90
-    },
-    {
-      "item": "pushup",
-      "date": "2022-05-20",
-      "reps": 20
-    },
-    {
-      "item": "pushup",
-      "date": "2022-05-19",
-      "reps": 20
-    },
-    {
-      "item": "plank",
-      "date": "2022-05-17",
-      "reps": 90
-    },
-    {
-      "item": "pushup",
-      "date": "2022-05-15",
-      "reps": 20
-    },
-    {
-      "item": "pushup",
-      "date": "2022-05-14",
-      "reps": 20
-    },
-    {
-      "item": "situp",
-      "date": "2022-05-13",
-      "reps": 62
-    },
-    {
-      "item": "plank",
-      "date": "2022-05-12",
-      "reps": 90
-    },
-    {
-      "item": "pushup",
-      "date": "2022-05-11",
-      "reps": 20
-    },
-    {
-      "item": "pushup",
-      "date": "2022-05-10",
-      "reps": 20
-    },
-    {
-      "item": "pushup",
-      "date": "2022-05-09",
-      "reps": 20
-    },
-    {
-      "item": "plank",
-      "date": "2022-05-04",
-      "reps": 70
-    },
-    {
-      "item": "plank",
-      "date": "2022-05-03",
-      "reps": 70
-    },
-    {
-      "item": "situp",
-      "date": "2022-05-02",
-      "reps": 60
-    },
-    {
-      "item": "plank",
-      "date": "2022-05-01",
-      "reps": 70
-    },
-    {
-      "item": "pushup",
-      "date": "2022-04-27",
-      "reps": 17
-    },
-    {
-      "item": "plank",
-      "date": "2022-04-26",
-      "reps": 70
-    },
-    {
-      "item": "plank",
-      "date": "2022-04-25",
-      "reps": 70
-    },
-    {
-      "item": "situp",
-      "date": "2022-04-24",
+      "date": "2022-04-10",
       "reps": 60
     },
     {
       "item": "situp",
-      "date": "2022-04-23",
-      "reps": 60
+      "date": "2022-04-10",
+      "reps": 221
     },
     {
-      "item": "plank",
-      "date": "2022-04-22",
-      "reps": 70
+      "item": "squat",
+      "date": "2022-04-12",
+      "reps": 149
     },
     {
       "item": "situp",
-      "date": "2022-04-21",
+      "date": "2022-04-12",
+      "reps": 223
+    },
+    {
+      "item": "situp",
+      "date": "2022-04-13",
       "reps": 60
     },
     {
       "item": "plank",
-      "date": "2022-04-18",
-      "reps": 70
-    },
-    {
-      "item": "plank",
-      "date": "2022-04-17",
-      "reps": 70
-    },
-    {
-      "item": "plank",
-      "date": "2022-04-16",
-      "reps": 60
-    },
-    {
-      "item": "plank",
-      "date": "2022-04-15",
+      "date": "2022-04-13",
       "reps": 60
     },
     {
@@ -353176,63 +352264,1428 @@ window.REALDATA = {
     },
     {
       "item": "situp",
-      "date": "2022-04-13",
-      "reps": 60
+      "date": "2022-04-14",
+      "reps": 218
     },
     {
       "item": "plank",
-      "date": "2022-04-12",
-      "reps": 60
-    },
-    {
-      "item": "plank",
-      "date": "2022-04-10",
+      "date": "2022-04-15",
       "reps": 60
     },
     {
       "item": "situp",
-      "date": "2022-04-05",
+      "date": "2022-04-15",
+      "reps": 237
+    },
+    {
+      "item": "plank",
+      "date": "2022-04-16",
+      "reps": 60
+    },
+    {
+      "item": "situp",
+      "date": "2022-04-16",
+      "reps": 232
+    },
+    {
+      "item": "plank",
+      "date": "2022-04-17",
+      "reps": 70
+    },
+    {
+      "item": "situp",
+      "date": "2022-04-17",
+      "reps": 231
+    },
+    {
+      "item": "plank",
+      "date": "2022-04-18",
+      "reps": 70
+    },
+    {
+      "item": "situp",
+      "date": "2022-04-18",
+      "reps": 218
+    },
+    {
+      "item": "situp",
+      "date": "2022-04-21",
+      "reps": 60
+    },
+    {
+      "item": "plank",
+      "date": "2022-04-21",
+      "reps": 70
+    },
+    {
+      "item": "plank",
+      "date": "2022-04-22",
+      "reps": 70
+    },
+    {
+      "item": "situp",
+      "date": "2022-04-22",
+      "reps": 575
+    },
+    {
+      "item": "situp",
+      "date": "2022-04-23",
+      "reps": 60
+    },
+    {
+      "item": "plank",
+      "date": "2022-04-24",
+      "reps": 70
+    },
+    {
+      "item": "plank",
+      "date": "2022-04-25",
+      "reps": 70
+    },
+    {
+      "item": "situp",
+      "date": "2022-04-25",
+      "reps": 200
+    },
+    {
+      "item": "plank",
+      "date": "2022-04-26",
+      "reps": 70
+    },
+    {
+      "item": "situp",
+      "date": "2022-04-26",
+      "reps": 220
+    },
+    {
+      "item": "plank",
+      "date": "2022-04-27",
+      "reps": 70
+    },
+    {
+      "item": "situp",
+      "date": "2022-04-27",
+      "reps": 219
+    },
+    {
+      "item": "plank",
+      "date": "2022-05-01",
+      "reps": 70
+    },
+    {
+      "item": "situp",
+      "date": "2022-05-01",
+      "reps": 423
+    },
+    {
+      "item": "situp",
+      "date": "2022-05-02",
+      "reps": 60
+    },
+    {
+      "item": "plank",
+      "date": "2022-05-02",
+      "reps": 70
+    },
+    {
+      "item": "plank",
+      "date": "2022-05-03",
+      "reps": 70
+    },
+    {
+      "item": "situp",
+      "date": "2022-05-03",
+      "reps": 214
+    },
+    {
+      "item": "plank",
+      "date": "2022-05-04",
+      "reps": 70
+    },
+    {
+      "item": "plank",
+      "date": "2022-05-09",
+      "reps": 70
+    },
+    {
+      "item": "situp",
+      "date": "2022-05-09",
+      "reps": 219
+    },
+    {
+      "item": "plank",
+      "date": "2022-05-10",
+      "reps": 80
+    },
+    {
+      "item": "situp",
+      "date": "2022-05-10",
+      "reps": 216
+    },
+    {
+      "item": "plank",
+      "date": "2022-05-11",
+      "reps": 80
+    },
+    {
+      "item": "situp",
+      "date": "2022-05-11",
+      "reps": 213
+    },
+    {
+      "item": "pushup",
+      "date": "2022-05-12",
+      "reps": 77
+    },
+    {
+      "item": "situp",
+      "date": "2022-05-12",
+      "reps": 232
+    },
+    {
+      "item": "situp",
+      "date": "2022-05-13",
+      "reps": 62
+    },
+    {
+      "item": "pushup",
+      "date": "2022-05-13",
+      "reps": 90
+    },
+    {
+      "item": "plank",
+      "date": "2022-05-14",
+      "reps": 90
+    },
+    {
+      "item": "situp",
+      "date": "2022-05-14",
+      "reps": 223
+    },
+    {
+      "item": "plank",
+      "date": "2022-05-15",
+      "reps": 90
+    },
+    {
+      "item": "situp",
+      "date": "2022-05-15",
+      "reps": 226
+    },
+    {
+      "item": "pushup",
+      "date": "2022-05-17",
+      "reps": 78
+    },
+    {
+      "item": "situp",
+      "date": "2022-05-17",
+      "reps": 219
+    },
+    {
+      "item": "plank",
+      "date": "2022-05-19",
+      "reps": 90
+    },
+    {
+      "item": "situp",
+      "date": "2022-05-19",
+      "reps": 221
+    },
+    {
+      "item": "plank",
+      "date": "2022-05-20",
+      "reps": 90
+    },
+    {
+      "item": "situp",
+      "date": "2022-05-20",
+      "reps": 229
+    },
+    {
+      "item": "plank",
+      "date": "2022-05-23",
+      "reps": 90
+    },
+    {
+      "item": "situp",
+      "date": "2022-05-24",
+      "reps": 62
+    },
+    {
+      "item": "plank",
+      "date": "2022-05-24",
+      "reps": 90
+    },
+    {
+      "item": "plank",
+      "date": "2022-05-25",
+      "reps": 90
+    },
+    {
+      "item": "situp",
+      "date": "2022-05-25",
+      "reps": 222
+    },
+    {
+      "item": "plank",
+      "date": "2022-05-26",
+      "reps": 180
+    },
+    {
+      "item": "situp",
+      "date": "2022-05-26",
+      "reps": 228
+    },
+    {
+      "item": "situp",
+      "date": "2022-05-27",
+      "reps": 60
+    },
+    {
+      "item": "plank",
+      "date": "2022-05-27",
+      "reps": 62
+    },
+    {
+      "item": "plank",
+      "date": "2022-05-28",
+      "reps": 120
+    },
+    {
+      "item": "situp",
+      "date": "2022-05-28",
+      "reps": 216
+    },
+    {
+      "item": "plank",
+      "date": "2022-05-29",
+      "reps": 120
+    },
+    {
+      "item": "pushup",
+      "date": "2022-05-29",
+      "reps": 78
+    },
+    {
+      "item": "plank",
+      "date": "2022-05-30",
+      "reps": 120
+    },
+    {
+      "item": "plank",
+      "date": "2022-05-31",
+      "reps": 120
+    },
+    {
+      "item": "plank",
+      "date": "2022-06-10",
+      "reps": 120
+    },
+    {
+      "item": "plank",
+      "date": "2022-06-11",
+      "reps": 120
+    },
+    {
+      "item": "plank",
+      "date": "2022-06-12",
+      "reps": 120
+    },
+    {
+      "item": "pushup",
+      "date": "2022-06-15",
+      "reps": 20
+    },
+    {
+      "item": "plank",
+      "date": "2022-06-19",
+      "reps": 120
+    },
+    {
+      "item": "plank",
+      "date": "2022-06-20",
+      "reps": 120
+    },
+    {
+      "item": "situp",
+      "date": "2022-06-20",
+      "reps": 223
+    },
+    {
+      "item": "situp",
+      "date": "2022-06-22",
+      "reps": 216
+    },
+    {
+      "item": "plank",
+      "date": "2022-06-23",
+      "reps": 120
+    },
+    {
+      "item": "pushup",
+      "date": "2022-06-23",
+      "reps": 79
+    },
+    {
+      "item": "situp",
+      "date": "2022-06-28",
+      "reps": 214
+    },
+    {
+      "item": "situp",
+      "date": "2022-06-29",
+      "reps": 222
+    },
+    {
+      "item": "plank",
+      "date": "2022-06-30",
+      "reps": 120
+    },
+    {
+      "item": "plank",
+      "date": "2022-07-01",
+      "reps": 120
+    },
+    {
+      "item": "pushup",
+      "date": "2022-07-01",
+      "reps": 79
+    },
+    {
+      "item": "plank",
+      "date": "2022-07-02",
+      "reps": 120
+    },
+    {
+      "item": "situp",
+      "date": "2022-07-02",
+      "reps": 215
+    },
+    {
+      "item": "pushup",
+      "date": "2022-07-17",
+      "reps": 10
+    },
+    {
+      "item": "plank",
+      "date": "2022-07-17",
+      "reps": 120
+    },
+    {
+      "item": "situp",
+      "date": "2022-07-18",
+      "reps": 60
+    },
+    {
+      "item": "plank",
+      "date": "2022-07-18",
+      "reps": 120
+    },
+    {
+      "item": "pushup",
+      "date": "2022-07-19",
+      "reps": 81
+    },
+    {
+      "item": "situp",
+      "date": "2022-07-19",
+      "reps": 222
+    },
+    {
+      "item": "situp",
+      "date": "2022-07-20",
       "reps": 60
     },
     {
       "item": "pushup",
-      "date": "2022-04-02",
-      "reps": 16
-    },
-    {
-      "item": "situp",
-      "date": "2022-03-27",
-      "reps": 30
-    },
-    {
-      "item": "squat",
-      "date": "2021-09-13",
-      "reps": 40
+      "date": "2022-07-20",
+      "reps": 81
     },
     {
       "item": "plank",
-      "date": "2019-07-10",
+      "date": "2022-07-21",
+      "reps": 120
+    },
+    {
+      "item": "situp",
+      "date": "2022-07-21",
+      "reps": 213
+    },
+    {
+      "item": "plank",
+      "date": "2022-07-22",
+      "reps": 120
+    },
+    {
+      "item": "situp",
+      "date": "2022-07-22",
+      "reps": 243
+    },
+    {
+      "item": "situp",
+      "date": "2022-07-25",
+      "reps": 60
+    },
+    {
+      "item": "plank",
+      "date": "2022-07-25",
+      "reps": 120
+    },
+    {
+      "item": "plank",
+      "date": "2022-07-31",
+      "reps": 120
+    },
+    {
+      "item": "situp",
+      "date": "2022-07-31",
+      "reps": 247
+    },
+    {
+      "item": "situp",
+      "date": "2022-08-02",
+      "reps": 211
+    },
+    {
+      "item": "situp",
+      "date": "2022-08-11",
+      "reps": 220
+    },
+    {
+      "item": "plank",
+      "date": "2022-09-03",
+      "reps": 120
+    },
+    {
+      "item": "plank",
+      "date": "2022-09-06",
+      "reps": 120
+    },
+    {
+      "item": "plank",
+      "date": "2022-09-08",
+      "reps": 120
+    },
+    {
+      "item": "plank",
+      "date": "2022-12-13",
+      "reps": 131
+    },
+    {
+      "item": "pushup",
+      "date": "2022-12-13",
+      "reps": 61
+    },
+    {
+      "item": "plank",
+      "date": "2022-12-14",
+      "reps": 134
+    },
+    {
+      "item": "situp",
+      "date": "2022-12-14",
+      "reps": 505
+    },
+    {
+      "item": "plank",
+      "date": "2022-12-15",
+      "reps": 152
+    },
+    {
+      "item": "situp",
+      "date": "2022-12-15",
+      "reps": 217
+    },
+    {
+      "item": "plank",
+      "date": "2022-12-19",
+      "reps": 141
+    },
+    {
+      "item": "pushup",
+      "date": "2022-12-19",
+      "reps": 63
+    },
+    {
+      "item": "pushup",
+      "date": "2022-12-20",
+      "reps": 62
+    },
+    {
+      "item": "plank",
+      "date": "2022-12-21",
+      "reps": 125
+    },
+    {
+      "item": "situp",
+      "date": "2022-12-21",
+      "reps": 210
+    },
+    {
+      "item": "plank",
+      "date": "2022-12-23",
+      "reps": 131
+    },
+    {
+      "item": "pushup",
+      "date": "2022-12-23",
+      "reps": 62
+    },
+    {
+      "item": "situp",
+      "date": "2022-12-23",
+      "reps": 60
+    },
+    {
+      "item": "situp",
+      "date": "2022-12-24",
+      "reps": 77
+    },
+    {
+      "item": "situp",
+      "date": "2023-03-08",
+      "reps": 215
+    },
+    {
+      "item": "pushup",
+      "date": "2023-03-08",
+      "reps": 64
+    },
+    {
+      "item": "situp",
+      "date": "2023-03-09",
+      "reps": 216
+    },
+    {
+      "item": "pushup",
+      "date": "2023-03-09",
+      "reps": 61
+    },
+    {
+      "item": "pushup",
+      "date": "2023-03-11",
+      "reps": 62
+    },
+    {
+      "item": "situp",
+      "date": "2023-03-11",
+      "reps": 212
+    },
+    {
+      "item": "pushup",
+      "date": "2023-03-12",
+      "reps": 77
+    },
+    {
+      "item": "situp",
+      "date": "2023-03-12",
+      "reps": 250
+    },
+    {
+      "item": "pushup",
+      "date": "2023-03-14",
+      "reps": 74
+    },
+    {
+      "item": "situp",
+      "date": "2023-03-14",
+      "reps": 254
+    },
+    {
+      "item": "plank",
+      "date": "2023-03-15",
+      "reps": 124
+    },
+    {
+      "item": "pushup",
+      "date": "2023-03-15",
+      "reps": 75
+    },
+    {
+      "item": "situp",
+      "date": "2023-04-20",
+      "reps": 99
+    },
+    {
+      "item": "pushup",
+      "date": "2023-04-20",
+      "reps": 58
+    },
+    {
+      "item": "pushup",
+      "date": "2023-04-23",
+      "reps": 59
+    },
+    {
+      "item": "situp",
+      "date": "2023-04-23",
+      "reps": 210
+    },
+    {
+      "item": "pushup",
+      "date": "2023-05-28",
+      "reps": 69
+    },
+    {
+      "item": "pushup",
+      "date": "2023-05-29",
+      "reps": 105
+    },
+    {
+      "item": "situp",
+      "date": "2023-05-29",
+      "reps": 265
+    },
+    {
+      "item": "pushup",
+      "date": "2023-05-30",
+      "reps": 27
+    },
+    {
+      "item": "pushup",
+      "date": "2023-06-07",
+      "reps": 58
+    },
+    {
+      "item": "situp",
+      "date": "2023-06-07",
+      "reps": 216
+    },
+    {
+      "item": "situp",
+      "date": "2023-06-08",
+      "reps": 157
+    },
+    {
+      "item": "plank",
+      "date": "2023-06-28",
+      "reps": 125
+    },
+    {
+      "item": "plank",
+      "date": "2023-10-19",
+      "reps": 64
+    },
+    {
+      "item": "situp",
+      "date": "2023-10-24",
+      "reps": 103
+    },
+    {
+      "item": "pushup",
+      "date": "2023-10-25",
+      "reps": 36
+    },
+    {
+      "item": "pushup",
+      "date": "2023-10-31",
+      "reps": 45
+    },
+    {
+      "item": "pushup",
+      "date": "2023-11-01",
+      "reps": 42
+    },
+    {
+      "item": "situp",
+      "date": "2023-11-02",
+      "reps": 110
+    },
+    {
+      "item": "situp",
+      "date": "2023-11-04",
+      "reps": 209
+    },
+    {
+      "item": "situp",
+      "date": "2023-11-05",
+      "reps": 104
+    },
+    {
+      "item": "situp",
+      "date": "2023-11-06",
+      "reps": 108
+    },
+    {
+      "item": "situp",
+      "date": "2023-11-07",
+      "reps": 104
+    },
+    {
+      "item": "situp",
+      "date": "2023-11-15",
+      "reps": 103
+    },
+    {
+      "item": "plank",
+      "date": "2023-11-16",
+      "reps": 109
+    },
+    {
+      "item": "situp",
+      "date": "2023-11-18",
+      "reps": 117
+    },
+    {
+      "item": "plank",
+      "date": "2023-11-19",
+      "reps": 102
+    },
+    {
+      "item": "pushup",
+      "date": "2023-11-20",
+      "reps": 39
+    },
+    {
+      "item": "plank",
+      "date": "2023-11-21",
+      "reps": 14
+    },
+    {
+      "item": "plank",
+      "date": "2023-11-23",
+      "reps": 126
+    },
+    {
+      "item": "situp",
+      "date": "2023-11-28",
+      "reps": 32
+    },
+    {
+      "item": "situp",
+      "date": "2023-12-04",
+      "reps": 117
+    },
+    {
+      "item": "plank",
+      "date": "2023-12-04",
+      "reps": 124
+    },
+    {
+      "item": "situp",
+      "date": "2023-12-06",
+      "reps": 30
+    },
+    {
+      "item": "situp",
+      "date": "2023-12-14",
+      "reps": 29
+    },
+    {
+      "item": "plank",
+      "date": "2023-12-15",
+      "reps": 122
+    },
+    {
+      "item": "plank",
+      "date": "2023-12-17",
+      "reps": 122
+    },
+    {
+      "item": "situp",
+      "date": "2023-12-21",
+      "reps": 148
+    },
+    {
+      "item": "plank",
+      "date": "2023-12-26",
+      "reps": 180
+    },
+    {
+      "item": "situp",
+      "date": "2023-12-27",
+      "reps": 120
+    },
+    {
+      "item": "situp",
+      "date": "2023-12-28",
+      "reps": 104
+    },
+    {
+      "item": "situp",
+      "date": "2023-12-31",
+      "reps": 110
+    },
+    {
+      "item": "situp",
+      "date": "2024-01-01",
+      "reps": 29
+    },
+    {
+      "item": "pushup",
+      "date": "2024-01-02",
+      "reps": 44
+    },
+    {
+      "item": "pushup",
+      "date": "2024-01-03",
+      "reps": 38
+    },
+    {
+      "item": "plank",
+      "date": "2024-01-04",
+      "reps": 131
+    },
+    {
+      "item": "situp",
+      "date": "2024-01-05",
+      "reps": 120
+    },
+    {
+      "item": "situp",
+      "date": "2024-01-06",
+      "reps": 104
+    },
+    {
+      "item": "situp",
+      "date": "2024-01-07",
+      "reps": 213
+    },
+    {
+      "item": "plank",
+      "date": "2024-01-08",
+      "reps": 132
+    },
+    {
+      "item": "pushup",
+      "date": "2024-01-09",
+      "reps": 73
+    },
+    {
+      "item": "situp",
+      "date": "2024-01-10",
+      "reps": 107
+    },
+    {
+      "item": "plank",
+      "date": "2024-01-11",
+      "reps": 137
+    },
+    {
+      "item": "pushup",
+      "date": "2024-01-12",
+      "reps": 44
+    },
+    {
+      "item": "situp",
+      "date": "2024-01-13",
+      "reps": 31
+    },
+    {
+      "item": "pushup",
+      "date": "2024-01-14",
+      "reps": 36
+    },
+    {
+      "item": "plank",
+      "date": "2024-01-14",
+      "reps": 192
+    },
+    {
+      "item": "situp",
+      "date": "2024-01-15",
+      "reps": 35
+    },
+    {
+      "item": "pushup",
+      "date": "2024-01-16",
+      "reps": 19
+    },
+    {
+      "item": "situp",
+      "date": "2024-01-16",
+      "reps": 210
+    },
+    {
+      "item": "situp",
+      "date": "2024-01-17",
+      "reps": 120
+    },
+    {
+      "item": "situp",
+      "date": "2024-01-18",
+      "reps": 105
+    },
+    {
+      "item": "situp",
+      "date": "2024-01-19",
+      "reps": 119
+    },
+    {
+      "item": "situp",
+      "date": "2024-01-21",
+      "reps": 103
+    },
+    {
+      "item": "plank",
+      "date": "2024-01-23",
+      "reps": 124
+    },
+    {
+      "item": "situp",
+      "date": "2024-01-24",
+      "reps": 149
+    },
+    {
+      "item": "situp",
+      "date": "2024-01-25",
+      "reps": 139
+    },
+    {
+      "item": "pushup",
+      "date": "2024-01-26",
+      "reps": 73
+    },
+    {
+      "item": "pushup",
+      "date": "2024-01-28",
+      "reps": 44
+    },
+    {
+      "item": "situp",
+      "date": "2024-01-28",
+      "reps": 367
+    },
+    {
+      "item": "situp",
+      "date": "2024-01-30",
+      "reps": 104
+    },
+    {
+      "item": "situp",
+      "date": "2024-01-31",
+      "reps": 104
+    },
+    {
+      "item": "situp",
+      "date": "2024-02-01",
+      "reps": 105
+    },
+    {
+      "item": "situp",
+      "date": "2024-02-02",
+      "reps": 105
+    },
+    {
+      "item": "plank",
+      "date": "2024-02-25",
+      "reps": 122
+    },
+    {
+      "item": "pushup",
+      "date": "2024-02-25",
+      "reps": 37
+    },
+    {
+      "item": "situp",
+      "date": "2024-02-27",
+      "reps": 121
+    },
+    {
+      "item": "pushup",
+      "date": "2024-02-28",
+      "reps": 37
+    },
+    {
+      "item": "pushup",
+      "date": "2024-02-29",
+      "reps": 55
+    },
+    {
+      "item": "plank",
+      "date": "2024-03-01",
+      "reps": 132
+    },
+    {
+      "item": "plank",
+      "date": "2024-03-02",
+      "reps": 132
+    },
+    {
+      "item": "situp",
+      "date": "2024-03-02",
+      "reps": 275
+    },
+    {
+      "item": "pushup",
+      "date": "2024-03-03",
+      "reps": 38
+    },
+    {
+      "item": "situp",
+      "date": "2024-03-04",
+      "reps": 105
+    },
+    {
+      "item": "situp",
+      "date": "2024-03-05",
+      "reps": 104
+    },
+    {
+      "item": "situp",
+      "date": "2024-03-06",
+      "reps": 116
+    },
+    {
+      "item": "pushup",
+      "date": "2024-03-10",
+      "reps": 113
+    },
+    {
+      "item": "situp",
+      "date": "2024-03-10",
+      "reps": 338
+    },
+    {
+      "item": "pushup",
+      "date": "2024-03-11",
+      "reps": 38
+    },
+    {
+      "item": "plank",
+      "date": "2024-03-12",
+      "reps": 152
+    },
+    {
+      "item": "situp",
+      "date": "2024-03-25",
       "reps": 107
     },
     {
       "item": "situp",
-      "date": "2019-07-09",
+      "date": "2024-03-26",
+      "reps": 105
+    },
+    {
+      "item": "situp",
+      "date": "2024-03-27",
+      "reps": 139
+    },
+    {
+      "item": "situp",
+      "date": "2024-03-29",
+      "reps": 106
+    },
+    {
+      "item": "situp",
+      "date": "2024-04-18",
+      "reps": 96
+    },
+    {
+      "item": "situp",
+      "date": "2024-04-19",
+      "reps": 104
+    },
+    {
+      "item": "pushup",
+      "date": "2024-04-21",
+      "reps": 109
+    },
+    {
+      "item": "situp",
+      "date": "2024-04-21",
+      "reps": 233
+    },
+    {
+      "item": "situp",
+      "date": "2024-04-22",
+      "reps": 93
+    },
+    {
+      "item": "pushup",
+      "date": "2024-04-22",
+      "reps": 75
+    },
+    {
+      "item": "pushup",
+      "date": "2024-04-23",
+      "reps": 37
+    },
+    {
+      "item": "situp",
+      "date": "2024-04-23",
+      "reps": 229
+    },
+    {
+      "item": "pushup",
+      "date": "2024-04-24",
+      "reps": 74
+    },
+    {
+      "item": "situp",
+      "date": "2024-04-24",
+      "reps": 262
+    },
+    {
+      "item": "plank",
+      "date": "2024-04-25",
+      "reps": 152
+    },
+    {
+      "item": "situp",
+      "date": "2024-05-04",
+      "reps": 142
+    },
+    {
+      "item": "pushup",
+      "date": "2024-05-08",
+      "reps": 37
+    },
+    {
+      "item": "situp",
+      "date": "2024-05-10",
+      "reps": 105
+    },
+    {
+      "item": "plank",
+      "date": "2024-05-13",
+      "reps": 169
+    },
+    {
+      "item": "pushup",
+      "date": "2024-05-13",
+      "reps": 70
+    },
+    {
+      "item": "pushup",
+      "date": "2024-05-14",
+      "reps": 74
+    },
+    {
+      "item": "plank",
+      "date": "2024-05-15",
+      "reps": 147
+    },
+    {
+      "item": "situp",
+      "date": "2024-05-15",
+      "reps": 210
+    },
+    {
+      "item": "pushup",
+      "date": "2024-05-17",
+      "reps": 83
+    },
+    {
+      "item": "situp",
+      "date": "2024-05-17",
+      "reps": 237
+    },
+    {
+      "item": "pushup",
+      "date": "2024-05-21",
+      "reps": 19
+    },
+    {
+      "item": "pushup",
+      "date": "2024-05-23",
+      "reps": 19
+    },
+    {
+      "item": "pushup",
+      "date": "2024-05-27",
+      "reps": 19
+    },
+    {
+      "item": "situp",
+      "date": "2024-05-31",
+      "reps": 130
+    },
+    {
+      "item": "situp",
+      "date": "2024-06-04",
+      "reps": 109
+    },
+    {
+      "item": "situp",
+      "date": "2024-06-11",
+      "reps": 107
+    },
+    {
+      "item": "pushup",
+      "date": "2024-06-12",
+      "reps": 74
+    },
+    {
+      "item": "situp",
+      "date": "2024-06-13",
+      "reps": 165
+    },
+    {
+      "item": "situp",
+      "date": "2024-06-14",
+      "reps": 164
+    },
+    {
+      "item": "pushup",
+      "date": "2024-06-15",
+      "reps": 75
+    },
+    {
+      "item": "situp",
+      "date": "2024-06-16",
+      "reps": 30
+    },
+    {
+      "item": "plank",
+      "date": "2024-06-17",
+      "reps": 125
+    },
+    {
+      "item": "pushup",
+      "date": "2024-06-21",
+      "reps": 75
+    },
+    {
+      "item": "situp",
+      "date": "2024-06-21",
+      "reps": 218
+    },
+    {
+      "item": "pushup",
+      "date": "2024-06-23",
+      "reps": 78
+    },
+    {
+      "item": "pushup",
+      "date": "2024-06-24",
+      "reps": 141
+    },
+    {
+      "item": "pushup",
+      "date": "2024-06-26",
+      "reps": 119
+    },
+    {
+      "item": "situp",
+      "date": "2024-06-27",
+      "reps": 78
+    },
+    {
+      "item": "pushup",
+      "date": "2024-07-06",
+      "reps": 76
+    },
+    {
+      "item": "situp",
+      "date": "2024-07-09",
+      "reps": 61
+    },
+    {
+      "item": "plank",
+      "date": "2024-10-14",
+      "reps": 12
+    },
+    {
+      "item": "situp",
+      "date": "2024-11-21",
+      "reps": 65
+    },
+    {
+      "item": "pushup",
+      "date": "2024-12-03",
+      "reps": 75
+    },
+    {
+      "item": "plank",
+      "date": "2024-12-04",
+      "reps": 124
+    },
+    {
+      "item": "situp",
+      "date": "2024-12-30",
+      "reps": 105
+    },
+    {
+      "item": "plank",
+      "date": "2025-01-16",
+      "reps": 156
+    },
+    {
+      "item": "situp",
+      "date": "2025-01-16",
+      "reps": 301
+    },
+    {
+      "item": "pushup",
+      "date": "2025-01-18",
+      "reps": 77
+    },
+    {
+      "item": "situp",
+      "date": "2025-01-23",
+      "reps": 60
+    },
+    {
+      "item": "plank",
+      "date": "2025-01-24",
       "reps": 10
     },
     {
       "item": "situp",
-      "date": "2019-07-04",
-      "reps": 30
+      "date": "2025-02-11",
+      "reps": 66
     },
     {
       "item": "situp",
-      "date": "2019-07-03",
-      "reps": 30
+      "date": "2025-03-31",
+      "reps": 60
+    },
+    {
+      "item": "plank",
+      "date": "2025-04-01",
+      "reps": 426
+    },
+    {
+      "item": "situp",
+      "date": "2025-04-01",
+      "reps": 240
+    },
+    {
+      "item": "plank",
+      "date": "2025-04-10",
+      "reps": 130
+    },
+    {
+      "item": "plank",
+      "date": "2025-11-20",
+      "reps": 123
+    },
+    {
+      "item": "plank",
+      "date": "2026-01-12",
+      "reps": 122
+    },
+    {
+      "item": "plank",
+      "date": "2026-05-26",
+      "reps": 73
+    },
+    {
+      "item": "plank",
+      "date": "2026-05-27",
+      "reps": 152
     },
     {
       "item": "squat",
       "date": "2026-08-24",
       "reps": 22
+    },
+    {
+      "item": "pushup",
+      "date": "2026-08-24",
+      "reps": 17
+    },
+    {
+      "item": "situp",
+      "date": "2026-08-24",
+      "reps": 31
+    },
+    {
+      "item": "plank",
+      "date": "2026-08-24",
+      "reps": 14
     }
   ]
 };
