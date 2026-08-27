@@ -352235,6 +352235,28 @@ window.REALDATA = {
       "avgHr": 0,
       "track": [],
       "source": "keep"
+    },
+    {
+      "date": "2026-08-27",
+      "type": "workout",
+      "title": "俯卧撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 90,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "track": [],
+      "source": "keep"
+    },
+    {
+      "date": "2026-08-27",
+      "type": "workout",
+      "title": "卷腹",
+      "distanceKm": 0.0,
+      "movingTimeSec": 140,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "track": [],
+      "source": "keep"
     }
   ],
   "checkins": [
@@ -353777,6 +353799,16 @@ window.REALDATA = {
       "item": "squat",
       "date": "2026-08-27",
       "reps": 33
+    },
+    {
+      "item": "pushup",
+      "date": "2026-08-27",
+      "reps": 25
+    },
+    {
+      "item": "situp",
+      "date": "2026-08-27",
+      "reps": 40
     }
   ]
 };
