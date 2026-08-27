@@ -146848,6 +146848,17 @@ window.REALDATA = {
       "source": "keep"
     },
     {
+      "date": "2023-12-11",
+      "type": "workout",
+      "title": "羽毛球",
+      "distanceKm": 0.0,
+      "movingTimeSec": 1126,
+      "elevationM": 0,
+      "avgHr": 116,
+      "source": "coros",
+      "track": []
+    },
+    {
       "date": "2023-12-12",
       "type": "run",
       "title": "E50+4ST",
@@ -352169,6 +352180,61 @@ window.REALDATA = {
       "avgHr": 0,
       "track": [],
       "source": "keep"
+    },
+    {
+      "date": "2026-08-25",
+      "type": "workout",
+      "title": "俯卧撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 33,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "track": [],
+      "source": "keep"
+    },
+    {
+      "date": "2026-08-25",
+      "type": "workout",
+      "title": "深蹲",
+      "distanceKm": 0.0,
+      "movingTimeSec": 66,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "track": [],
+      "source": "keep"
+    },
+    {
+      "date": "2026-08-26",
+      "type": "workout",
+      "title": "俯卧撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 76,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "track": [],
+      "source": "keep"
+    },
+    {
+      "date": "2026-08-26",
+      "type": "workout",
+      "title": "深蹲",
+      "distanceKm": 0.0,
+      "movingTimeSec": 163,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "track": [],
+      "source": "keep"
+    },
+    {
+      "date": "2026-08-27",
+      "type": "workout",
+      "title": "深蹲",
+      "distanceKm": 0.0,
+      "movingTimeSec": 113,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "track": [],
+      "source": "keep"
     }
   ],
   "checkins": [
@@ -353686,6 +353752,31 @@ window.REALDATA = {
       "item": "plank",
       "date": "2026-08-24",
       "reps": 14
+    },
+    {
+      "item": "pushup",
+      "date": "2026-08-25",
+      "reps": 9
+    },
+    {
+      "item": "squat",
+      "date": "2026-08-25",
+      "reps": 19
+    },
+    {
+      "item": "pushup",
+      "date": "2026-08-26",
+      "reps": 20
+    },
+    {
+      "item": "squat",
+      "date": "2026-08-26",
+      "reps": 45
+    },
+    {
+      "item": "squat",
+      "date": "2026-08-27",
+      "reps": 33
     }
   ]
 };
