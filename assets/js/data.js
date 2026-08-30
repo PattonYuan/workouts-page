@@ -152,6 +152,25 @@ const SPORT = {
 // 统计卡片 / 轨迹墙展示顺序（其余类型按需追加）
 const SPORT_ORDER = ['run', 'walk', 'ride', 'hike', 'moto', 'workout'];
 
+// 活动「分类」：真实活动名太碎（"绍兴市 跑步"、"深圳市 跑步"、Keep跑步、Evening Run
+// 各自独立），归并为粗粒度类别后便于统一展示 / 筛选 / 统计。
+// 判定规则见 app.js 的 activityCategory()（显示时计算，历史数据即时生效）。
+const CATEGORIES = {
+  outdoor_run:  { zh: '户外跑步', en: 'Outdoor Run',  icon: '🏃',  color: '#2f80ed' },
+  indoor_run:   { zh: '室内跑步', en: 'Indoor Run',   icon: '🏃‍♂️', color: '#5b8def' },
+  outdoor_walk: { zh: '户外步行', en: 'Outdoor Walk', icon: '🚶',  color: '#00b8d4' },
+  indoor_walk:  { zh: '室内步行', en: 'Indoor Walk',  icon: '🚶‍♂️', color: '#7fd3e0' },
+  ride:         { zh: '骑行',     en: 'Cycling',      icon: '🚴',  color: '#27ae60' },
+  hike:         { zh: '徒步',     en: 'Hiking',       icon: '🥾',  color: '#e8a33d' },
+  moto:         { zh: '摩托骑行', en: 'Motorcycling', icon: '🏍️', color: '#8e44ad' },
+  strength:     { zh: '力量核心', en: 'Strength',     icon: '🏋️', color: '#eb5757' },
+  other:        { zh: '其他',     en: 'Other',        icon: '🎯',  color: '#828282' },
+};
+const CATEGORY_ORDER = [
+  'outdoor_run', 'indoor_run', 'outdoor_walk', 'indoor_walk',
+  'ride', 'hike', 'moto', 'strength', 'other',
+];
+
 const HABIT = {
   pushup:     { label: '俯卧撑', en: 'Push-ups',  color: '#f2994a', icon: '💪' },
   squat:      { label: '深蹲',   en: 'Squats',    color: '#9b51e0', icon: '🦵' },

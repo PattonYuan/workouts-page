@@ -181,7 +181,16 @@ def _rebuild_checkins(activities, existing_checkins, incoming_checkins):
     return out
 
 
-def merge_and_write(new_activities, profile=None, checkins=None, out_path=None, source=None):
+def merge_and_write(new_activities, profile=None, checkins=None, out_path=None, source=None,
+                    replace_source=False):
+    """replace_source=True 时，先剔除该 source 的全部既有记录再合并（整源重建）。
+
+    适用场景：解析逻辑变化导致同一批活动的 type/title 整体改变（如高驰摩托骑行
+    从 workout 纠正为 moto）。_fuzzy_dup 要求 type 相同才判重，此时旧记录匹配不到
+    新记录，会被当成新活动 append，产生 11 条幽灵重复。整源重建可避免。
+    注意：会丢弃历史上被本源覆盖掉的其它来源记录（同场运动只保留本源那条），
+    恢复这些记录需要重跑对应来源的同步脚本。
+    """
     if out_path is None:
         here = os.path.dirname(os.path.abspath(__file__))
         out_path = os.path.join(here, "..", "assets", "js", "real_data.js")
@@ -196,6 +205,11 @@ def merge_and_write(new_activities, profile=None, checkins=None, out_path=None, 
     #       - 同源(模糊相同) → 用新拉取的覆盖旧记录（允许更新/重分类）；
     #       - 跨源模糊重复 → 既有优先级 >= 本次则丢弃本次，否则用本次覆盖既有。
     #   即「高驰的轨迹优先」：同场运动两平台都有时只保留高驰那条；本源重拉则原地更新。
+    if replace_source and source:
+        before = len(data["activities"])
+        data["activities"] = [o for o in data["activities"] if (o.get("source") or "") != source]
+        print(f"♻️  整源重建：剔除既有 source={source} 记录 {before - len(data['activities'])} 条，"
+              f"保留其它来源 {len(data['activities'])} 条")
     merged = list(data["activities"])
     for a in new_activities:
         a_src = source or a.get("source") or ""

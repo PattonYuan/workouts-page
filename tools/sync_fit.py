@@ -188,18 +188,36 @@ def _build_activity(session, track, fname, coros_type=None, name=None):
 
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
-    default_fit = os.path.expanduser("~/github/running_page/FIT_OUT")
+    # 默认解析项目内的 coros_activities/（带侧车 meta）。
+    # 此前默认 ~/github/running_page/FIT_OUT：该目录无 <id>.fit.meta.json，
+    # 导致 name=None 降级成合成英文标题、且摩托骑行(sportType 9807)丢失类型，
+    # 曾一次性毁掉 305 条高驰活动的真实名称。
+    default_fit = os.path.join(here, "..", "coros_activities")
     ap = argparse.ArgumentParser(description="解析 Coros FIT 文件 -> real_data.js")
     ap.add_argument("--parse", default=default_fit,
-                    help="包含 *.fit 的目录（默认 ~/github/running_page/FIT_OUT）")
+                    help="包含 *.fit 的目录（默认项目内 coros_activities/）")
     ap.add_argument("--out", default=os.path.join(here, "..", "assets", "js", "real_data.js"),
                     help="输出 real_data.js 路径")
+    ap.add_argument("--allow-synthetic", action="store_true",
+                    help="允许在缺少侧车 meta 时解析（标题会退化为合成英文名，仅调试用）")
     args = ap.parse_args()
 
     files = sorted(glob.glob(os.path.join(args.parse, "*.fit")))
     if not files:
         print(f"⚠️  在 {args.parse} 未找到任何 .fit 文件，页面将回退到示例数据。")
         return
+
+    # 防呆：侧车 meta 缺失会让标题退化为 "Evening Run" 这类合成名、并丢掉摩托骑行等类型。
+    # 曾经静默通过（except: pass），造成全量覆盖事故，这里直接拒绝执行。
+    metas = glob.glob(os.path.join(args.parse, "*.fit.meta.json"))
+    miss = len(files) - len(metas)
+    if miss > 0 or not metas:
+        print(f"❌ {args.parse} 中 {miss}/{len(files)} 个 FIT 缺少 <id>.fit.meta.json，"
+              f"标题会退化为合成英文名、摩托骑行(sportType 9807)会被误判为 workout。")
+        print("   请确认 --parse 指向 coros_activities/ 且已跑过 tools/fetch_coros.py；"
+              "确需无 meta 解析请加 --allow-synthetic。")
+        if not args.allow_synthetic:
+            sys.exit(1)
 
     activities = []
     for fp in files:
@@ -214,8 +232,10 @@ def main():
                     meta = json.load(mf)
                 coros_type = meta.get("sportType")
                 name = meta.get("name")
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"⚠️  侧车元数据解析失败，标题将退化为合成名：{os.path.basename(meta_path)}: {e}")
+        else:
+            print(f"⚠️  缺侧车元数据，标题将退化为合成名：{os.path.basename(fp)}")
         a = parse_fit_file(fp, coros_type=coros_type, name=name)
         if a:
             activities.append(a)
@@ -223,7 +243,9 @@ def main():
     print(f"解析到 {len(activities)} 条真实高驰活动（来自 {len(files)} 个 FIT 文件）")
     if not activities:
         return
-    merge_and_write(activities, out_path=args.out, source="coros")
+    # 整源重建：解析逻辑纠正过类型（摩托骑行 workout→moto），_fuzzy_dup 要求 type 相同，
+    # 不整源替换会把 11 条摩托追加成重复记录。
+    merge_and_write(activities, out_path=args.out, source="coros", replace_source=True)
 
 
 if __name__ == "__main__":

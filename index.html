@@ -6,7 +6,7 @@
   <title>My Workouts</title>
   <meta id="metaDesc" name="description" content="Personal workout journal · Running / Cycling / Training / Habits" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏃</text></svg>" />
-  <link rel="stylesheet" href="assets/css/style.css?v=20260830h" />
+  <link rel="stylesheet" href="assets/css/style.css?v=20260830i" />
   <!-- Leaflet 地图库（轨迹地图底图） -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         crossorigin="" referrerpolicy="no-referrer" />
@@ -87,6 +87,8 @@
         </div>
       </div>
       <div class="stat-cards" id="statCards"><!-- JS 填充 --></div>
+      <!-- 按归并类别统计（户外跑步 / 室内跑步 / 户外步行 / …） -->
+      <div class="stat-cards" id="catCards" style="margin-top:16px"><!-- JS 填充 --></div>
     </section>
 
     <!-- ============ 月度区块：日历 + 趋势（桌面端并排，窄屏回落单列） ============ -->
@@ -131,14 +133,18 @@
     <section id="activities" class="section container">
       <div class="section-head">
         <h2 data-i18n="secActivities">Recent Activities</h2>
+        <!-- 按「归并类别」筛选（真实名太碎，同一类运动按类别聚合） -->
         <div class="filters" id="activityFilters">
-          <button class="chip active" data-type="all"></button>
-          <button class="chip" data-type="run"></button>
-          <button class="chip" data-type="walk"></button>
-          <button class="chip" data-type="ride"></button>
-          <button class="chip" data-type="hike"></button>
-          <button class="chip" data-type="moto"></button>
-          <button class="chip" data-type="workout"></button>
+          <button class="chip active" data-cat="all"></button>
+          <button class="chip" data-cat="outdoor_run"></button>
+          <button class="chip" data-cat="indoor_run"></button>
+          <button class="chip" data-cat="outdoor_walk"></button>
+          <button class="chip" data-cat="indoor_walk"></button>
+          <button class="chip" data-cat="ride"></button>
+          <button class="chip" data-cat="hike"></button>
+          <button class="chip" data-cat="moto"></button>
+          <button class="chip" data-cat="strength"></button>
+          <button class="chip" data-cat="other"></button>
         </div>
       </div>
       <ul class="activity-list" id="activityList"><!-- JS 填充 --></ul>
@@ -194,10 +200,10 @@
     </div>
   </footer>
 
-  <script src="assets/js/real_data.js?v=20260830"></script>
-  <script src="assets/js/data.js?v=20260830"></script>
+  <script src="assets/js/real_data.js?v=20260830i"></script>
+  <script src="assets/js/data.js?v=20260830i"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           crossorigin="" referrerpolicy="no-referrer"></script>
-  <script src="assets/js/app.js?v=20260830h"></script>
+  <script src="assets/js/app.js?v=20260830i"></script>
 </body>
 </html>

@@ -27,6 +27,31 @@
     if (!h) return key;
     return LANG === 'en' ? h.en : h.label;
   }
+  function categoryLabel(key) {
+    const c = CATEGORIES[key];
+    if (!c) return key;
+    return LANG === 'en' ? c.en : c.zh;
+  }
+  // 活动归并分类（显示时计算：历史数据即时生效，无需重新同步）
+  // 规则自上而下短路：优先看 type（权威），再看标题关键词；室内/室外仅靠标题关键词判定。
+  function activityCategory(a) {
+    const ti = (a && a.title) || '';
+    const ty = (a && a.type) || '';
+    const has = (...kw) => kw.some((k) => ti.indexOf(k) >= 0);
+    if (ty === 'moto' || has('摩托', '机车')) return 'moto';
+    if (ty === 'ride' || has('骑行', '骑车', '单车')) return 'ride';
+    if (ty === 'hike' || has('徒步', '越野', '登山', '爬山')) return 'hike';
+    // 训练类：球类/游泳/瑜伽归「其他」，其余（卷腹/俯卧撑/平板支撑/深蹲/力量课）归力量核心
+    if (ty === 'workout') return has('羽毛球', '篮球', '游泳', '瑜伽', '拉伸') ? 'other' : 'strength';
+    if (ty === 'run' || has('跑步', '轻松跑', '热身跑', '法特莱克', '测试', '跑者')) {
+      return has('跑步机', '室内', 'Treadmill') ? 'indoor_run' : 'outdoor_run';
+    }
+    if (ty === 'walk' || has('行走', '步行', '健走', '走路', '散步')) {
+      return has('室内') ? 'indoor_walk' : 'outdoor_walk';
+    }
+    if (has('卷腹', '平板支撑', '俯卧撑', '深蹲', '力量', '核心', 'Strength', 'Gym')) return 'strength';
+    return 'other';
+  }
 
   const MON_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const WK_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -54,12 +79,16 @@
   const CITY_EN = {
     '深圳市': 'Shenzhen', '河南省': 'Henan', '广州市': 'Guangzhou', '长沙市': 'Changsha',
     '新乡市': 'Xinxiang', '清远市': 'Qingyuan', '绍兴市': 'Shaoxing', '杭州市': 'Hangzhou',
-    '香港特别行政区': 'Hong Kong',
+    '香港特别行政区': 'Hong Kong', '香港': 'Hong Kong',
+    '北京市': 'Beijing', '上海市': 'Shanghai', '东莞市': 'Dongguan', '惠州市': 'Huizhou',
+    '珠海市': 'Zhuhai', '佛山市': 'Foshan', '中山市': 'Zhongshan', '宁波市': 'Ningbo',
   };
   const SPORT_EN = {
     '徒步': 'Hike', '跑步': 'Run', '健走': 'Walk', '步行': 'Walk', '行走': 'Walk',
     '骑行': 'Ride', '公路骑行': 'Road Cycling', '摩托骑行': 'Motorcycle Ride',
     '呼狗崖徒步': 'Hugouya Hike',
+    '越野跑': 'Trail Run', '室内跑': 'Indoor Run', '室内跑步': 'Indoor Run',
+    '有氧': 'Cardio', '力量': 'Strength', '拉伸': 'Stretching', '游泳': 'Swim',
   };
   // Keep 训练课程名 → 英文（高频 + 一次性短语）
   const PHRASE_EN = {
@@ -80,19 +109,33 @@
     '平板支撑': 'Plank', '深蹲': 'Squats',
     '7 分钟平板支撑·安小雨的马甲线秘籍': "7-min Plank · An Xiaoyu's Abs Routine",
   };
+  // CJK 判定：含扩展 A 区(3400-4DBF)与兼容区(F900-FAFF)，仅 [一-鿿] 会漏掉生僻字
+  const CJK = /[㐀-䶿一-鿿豈-﫿]/;
   function translateTitleEn(title) {
-    if (!title || !/[一-鿿]/.test(title)) return title || '';
+    if (!title || !CJK.test(title)) return title || '';
     if (PHRASE_EN[title]) return PHRASE_EN[title];
+    // 先剥掉 emoji / 标点 / 空白前缀（如「🏃 深圳市 跑步」「【深圳市 跑步】」），
+    // 否则下面的 ^(\S+?) 会抓到符号，导致整串漏翻
+    // 只剥离 emoji/标点/空白前缀，保留汉字与字母数字
+    // （注意：不能用 [\s\W_]，JS 的 \w 不含汉字，会把「绍兴市 跑步」削成「跑步」导致漏翻）
+    const t2 = title
+      .replace(/^[^\p{Script=Han}\w]+/u, '')
+      .replace(/[【】\[\]()（）「」]+$/u, '');
     // 「城市 运动类型/英文短语」模式：深圳市 跑步 → Shenzhen Run；广州市 GPS Cardio → Guangzhou GPS Cardio
-    const m = title.match(/^(\S+?)\s+(.+)$/);
-    if (m && CITY_EN[m[1]]) return CITY_EN[m[1]] + ' ' + (SPORT_EN[m[2]] || m[2]);
-    // 其余模式：轻松跑→Easy Run、长距离跑→Long Run、热身跑→Warm-up Run
-    const out = title
-      .replace(/轻松跑/g, ' Easy Run')
-      .replace(/长距离跑/g, ' Long Run')
+    const m = t2.match(/^(\S+?)\s+(.+)$/);
+    if (m && CITY_EN[m[1]]) {
+      const rest = SPORT_EN[m[2]] || translateTitleEn(m[2]);
+      // 剩余部分仍含中文时（如未收录的「越野跑」）不硬拼半中半英，整体回退原文
+      if (!CJK.test(rest)) return CITY_EN[m[1]] + ' ' + rest;
+    }
+    // 其余模式：7k轻松跑→7km Easy Run、长距离跑→Long Run、热身跑→Warm-up Run
+    const out = (t2 || title)
+      .replace(/(\d+(?:\.\d+)?)\s*k轻松跑/gi, '$1km Easy Run')
+      .replace(/轻松跑/g, 'Easy Run')
+      .replace(/长距离跑/g, 'Long Run')
       .replace(/热身跑/g, 'Warm-up Run')
       .replace(/\s+/g, ' ').trim();
-    return /[一-鿿]/.test(out) ? (title || '') : out;
+    return CJK.test(out) ? (title || '') : out;
   }
   function actTitle(a) {
     const t0 = (a && a.title) || '';
@@ -224,6 +267,7 @@
         updateScopeChips();
         renderHeatmap();
         renderStats();
+        renderCategoryStats();
         renderInsights();
         renderPB();
         renderFunFacts();
@@ -404,6 +448,39 @@
       .join('');
   }
 
+  // 按「归并类别」统计：次数 + 里程 + 时长（跟随本年/累计作用域切换）
+  function renderCategoryStats() {
+    const box = $('#catCards');
+    if (!box) return;
+    const acts = actsInScope();
+    const g = {};
+    CATEGORY_ORDER.forEach((k) => (g[k] = []));
+    acts.forEach((a) => {
+      const k = activityCategory(a);
+      (g[k] = g[k] || []).push(a);
+    });
+
+    box.innerHTML = CATEGORY_ORDER
+      .filter((k) => g[k] && g[k].length)
+      .map((k) => {
+        const c = CATEGORIES[k];
+        const arr = g[k];
+        const km = arr.reduce((s, a) => s + (a.distanceKm || 0), 0);
+        const sec = arr.reduce((s, a) => s + (a.movingTimeSec || 0), 0);
+        const sub = km >= 0.1
+          ? `${km.toFixed(0)} km · ${fmtDuration(sec)}`
+          : fmtDuration(sec);
+        return `
+        <div class="stat-card">
+          <div class="bar" style="background:${c.color}"></div>
+          <h3>${c.icon} ${categoryLabel(k)}</h3>
+          <div><span class="big">${arr.length}</span><span class="unit">${t('statTimes')}</span></div>
+          <div class="sub">${sub}</div>
+        </div>`;
+      })
+      .join('');
+  }
+
   /* ------------------- 坚持度（连续打卡 / 最长连续 / 最爱星期） ------------------- */
   function renderInsights() {
     const acts = actsInScope();
@@ -533,6 +610,7 @@
         statScope = chip.dataset.scope;
         updateScopeChips();
         renderStats();
+        renderCategoryStats();
         renderInsights();
         renderPB();
         renderFunFacts();
@@ -765,24 +843,29 @@
   function renderActivities() {
     const year = currentYear;
     let acts = ACTIVITIES.filter((a) => a.date.startsWith(year));
-    if (actFilter !== 'all') acts = acts.filter((a) => a.type === actFilter);
+    if (actFilter !== 'all') acts = acts.filter((a) => activityCategory(a) === actFilter);
     acts = acts.slice().sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, actLimit);
 
     if (!acts.length) {
-      const msg = actFilter === 'all' ? t('actEmptyAll') : t('actEmpty').replace('{type}', sportLabel(actFilter));
+      const msg = actFilter === 'all' ? t('actEmptyAll') : t('actEmpty').replace('{type}', categoryLabel(actFilter));
       $('#activityList').innerHTML = `<li class="activity-item"><div class="activity-main">${msg}</div></li>`;
       return;
     }
 
     $('#activityList').innerHTML = acts
       .map((a) => {
-        const s = SPORT[a.type];
-        const iconBg = `${s.color}1a`;
+        // 主标题用归并后的类别（"深圳市 跑步"/"深圳市 跑步"→ 户外跑步），
+        // 真实活动名降为副标题，避免同一类运动被地点拆得七零八落
+        const cat = activityCategory(a);
+        const c = CATEGORIES[cat] || CATEGORIES.other;
+        const sub = actTitle(a);
+        const main = categoryLabel(cat);
         return `
         <li class="activity-item">
-          <div class="activity-icon" style="background:${iconBg};color:${s.color}">${s.icon}</div>
+          <div class="activity-icon" style="background:${c.color}1a;color:${c.color}">${c.icon}</div>
           <div class="activity-main">
-            <div class="activity-title">${actTitle(a)}</div>
+            <div class="activity-title">${main}</div>
+            ${sub && sub !== main ? `<div class="activity-sub">${sub}</div>` : ''}
             <div class="activity-date">${fmtDate(a.date)}</div>
           </div>
           <div class="activity-metrics">
@@ -801,7 +884,7 @@
       chip.addEventListener('click', () => {
         $$('#activityFilters .chip').forEach((c) => c.classList.remove('active'));
         chip.classList.add('active');
-        actFilter = chip.dataset.type;
+        actFilter = chip.dataset.cat;
         renderActivities();
       })
     );
@@ -1353,7 +1436,7 @@
     }
     _tracksLoading = true;
     const s = document.createElement('script');
-    s.src = 'assets/js/real_tracks.js?v=20260830';
+    s.src = 'assets/js/real_tracks.js?v=20260830i';
     s.onload = () => { if (hydrateTracks()) redrawTrackViews(); };
     s.onerror = () => console.warn('real_tracks.js 加载失败，轨迹墙/地图将显示占位图');
     document.head.appendChild(s);
@@ -1384,6 +1467,17 @@
     });
   }
 
+  // 活动列表的类别筛选 chip（data-cat）。与 fillFilterChips 分开：
+  // 后者还负责 #mapFilters 的 data-type 图例，不能混用选择器。
+  function fillCategoryChips(container) {
+    $$(container + ' .chip[data-cat]').forEach((chip) => {
+      const k = chip.dataset.cat;
+      if (k === 'all') { chip.textContent = t('filterAll'); return; }
+      const c = CATEGORIES[k];
+      if (c) chip.textContent = c.icon + ' ' + categoryLabel(k);
+    });
+  }
+
   function applyStaticLang() {
     document.documentElement.lang = LANG === 'en' ? 'en' : 'zh-CN';
     document.title = t('title');
@@ -1392,8 +1486,8 @@
     $$('[data-i18n]').forEach((el) => { el.textContent = t(el.getAttribute('data-i18n')); });
     const lb = document.getElementById('langToggle');
     if (lb) lb.textContent = LANG === 'en' ? '中' : 'EN';
-    fillFilterChips('#activityFilters');
-    fillFilterChips('#mapFilters');
+    fillCategoryChips('#activityFilters');   // 活动列表按归并类别筛选
+    fillFilterChips('#mapFilters');          // 地图仍按 type 图例筛选
     const reset = document.getElementById('mapReset');
     if (reset) reset.textContent = t('mapReset');
     // 统计作用域切换按钮文案（本年 / 累计）
@@ -1411,6 +1505,7 @@
     renderHero();
     renderHeatmap();
     renderStats();
+    renderCategoryStats();
     renderInsights();
     renderPB();
     renderFunFacts();
@@ -1436,6 +1531,7 @@
     renderYearTabs();
     renderHeatmap();
     renderStats();
+    renderCategoryStats();
     renderInsights();
     renderPB();
     renderFunFacts();
