@@ -336,13 +336,17 @@ a:hover { text-decoration: underline; }
 .cal-cell span { display: block; font-size: 11px; font-weight: 700; color: #1b4f9c; }
 .dark .cal-cell span { color: #7fb3ff; }
 .cal-cell.cal-today { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
-.week-strip { display: flex; gap: 6px; justify-content: center; margin-top: 6px; }
+/* 本周小周历（周一~周日）：改用 grid 7 等分，7 格始终完整铺满卡片可用宽度。
+   此前为 flex + min-width:34px（需 7*34 + 6*6 = 274px），而 .stat-card 内边距 20px、
+   网格最小 220px → 可用宽度仅约 180px，超出部分被 .stat-card 的 overflow:hidden 裁掉，
+   表现为周六/周日显示不全、整条被折叠。1fr 等分后自动缩放，不再溢出。 */
+.week-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-top: 6px; }
 .ws-cell {
-  min-width: 34px; text-align: center; padding: 3px 4px; border-radius: 8px;
-  border: 1px solid var(--border); font-size: 11px;
+  min-width: 0; text-align: center; padding: 3px 1px; border-radius: 6px;
+  border: 1px solid var(--border); font-size: 10px; overflow: hidden;
 }
-.ws-cell i { display: block; font-style: normal; color: var(--muted); }
-.ws-cell b { font-size: 12px; }
+.ws-cell i { display: block; font-style: normal; color: var(--muted); font-size: 9px; }
+.ws-cell b { font-size: 10px; white-space: nowrap; }
 .ws-cell.on { background: rgba(47,128,237,.16); border-color: transparent; }
 .ws-cell.on b { color: #1b4f9c; }
 .dark .ws-cell.on b { color: #7fb3ff; }

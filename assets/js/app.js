@@ -423,14 +423,18 @@
         const km = sumKm(arr);
         const sec = sumTime(arr);
         const ele = sumEle(arr);
-        const sub = km >= 0.1
-          ? `${km.toFixed(0)} km · ${fmtDuration(sec)}` + (ele > 0 ? ` · ${ele.toFixed(0)}m` : '')
+        // 有里程的类别（户外/室内跑步、骑行、徒步、步行等 GPS 运动）以「距离」为主指标，
+        // 次数降为次要信息写进副标题；无里程的力量核心类仍以「次数」为主。
+        const hasDist = km >= 0.1;
+        const sub = hasDist
+          ? `${arr.length} ${t('statTimes')} · ${fmtDuration(sec)}`
+            + (ele > 0 ? ` · ${t('statElev').replace('{n}', ele.toFixed(0))}` : '')
           : fmtDuration(sec);
         return {
           color: c.color,
           title: `${c.icon} ${categoryLabel(k)}`,
-          big: arr.length,
-          unit: t('statTimes'),
+          big: hasDist ? (km >= 10 ? km.toFixed(0) : km.toFixed(1)) : arr.length,
+          unit: hasDist ? 'km' : t('statTimes'),
           sub,
         };
       });
