@@ -1184,8 +1184,8 @@
       // 小热力图（与年度热力图同布局）
       const first = new Date(year, 0, 1);
       const start = new Date(first); start.setDate(start.getDate() - first.getDay());
-      const last = new Date(year, 11, 31);
-      const end = new Date(last); end.setDate(end.getDate() + (6 - last.getDay()));
+      const yEnd = new Date(year, 11, 31);  // 注意：last 已被上方"最近一次打卡"占用，勿重复声明
+      const end = new Date(yEnd); end.setDate(end.getDate() + (6 - yEnd.getDay()));
       const cells = [];
       const cur = new Date(start);
       while (cur <= end) {
