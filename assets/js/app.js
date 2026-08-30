@@ -267,7 +267,6 @@
         updateScopeChips();
         renderHeatmap();
         renderStats();
-        renderCategoryStats();
         renderInsights();
         renderPB();
         renderFunFacts();
@@ -399,60 +398,16 @@
   }
 
   /* ----------------------------- 统计卡片 ----------------------------- */
+  /* ----------------------------- 统计卡片（按归并类别，避免 跑步/户外跑步 重复） ----------------------------- */
   function renderStats() {
     const acts = actsInScope();
-
-    const byType = {};
-    SPORT_ORDER.forEach((t) => (byType[t] = []));
-    acts.forEach((a) => { if (byType[a.type]) byType[a.type].push(a); });
-
     const sumKm = (arr) => arr.reduce((s, a) => s + (a.distanceKm || 0), 0);
-    const sumTime = (arr) => arr.reduce((s, a) => s + a.movingTimeSec, 0);
+    const sumTime = (arr) => arr.reduce((s, a) => s + (a.movingTimeSec || 0), 0);
     const sumEle = (arr) => arr.reduce((s, a) => s + (a.elevationM || 0), 0);
 
-    const cards = [];
-    SPORT_ORDER.forEach((type) => {
-      const cfg = SPORT[type];
-      const arr = byType[type] || [];
-      if (type === 'workout') {
-        cards.push({
-          color: cfg.color, title: `${cfg.icon} ${sportLabel(type)}`,
-          big: arr.length, unit: t('statWorkoutUnit'),
-          sub: `${t('actDuration')} ${fmtDuration(sumTime(arr))}`,
-        });
-      } else {
-        cards.push({
-          color: cfg.color, title: `${cfg.icon} ${sportLabel(type)}`,
-          big: sumKm(arr).toFixed(0), unit: 'km',
-          sub: `${arr.length} ${t('statTimes')} · ${t('statElev').replace('{n}', sumEle(arr))}m`,
-        });
-      }
-    });
-
-    cards.push({
-      color: 'var(--accent)', title: statScope === 'all' ? t('statTotalAll') : t('statTotal'),
-      big: acts.length, unit: t('statWorkoutUnit'),
-      sub: t('statTotalSub').replace('{km}', sumKm(acts).toFixed(0)).replace('{dur}', fmtDuration(sumTime(acts))),
-    });
-
-    $('#statCards').innerHTML = cards
-      .map(
-        (c) => `
-        <div class="stat-card">
-          <div class="bar" style="background:${c.color}"></div>
-          <h3>${c.title}</h3>
-          <div><span class="big">${c.big}</span><span class="unit">${c.unit}</span></div>
-          <div class="sub">${c.sub}</div>
-        </div>`
-      )
-      .join('');
-  }
-
-  // 按「归并类别」统计：次数 + 里程 + 时长（跟随本年/累计作用域切换）
-  function renderCategoryStats() {
-    const box = $('#catCards');
-    if (!box) return;
-    const acts = actsInScope();
+    // 按归并类别分组（户外跑步 / 室内跑步 / 户外步行 / …）。
+    // 同一项运动在 Keep(跑步) 与 Coros(户外跑步) 下会被归并到同一类别，
+    // 不再像旧版那样既统计「跑步」又统计「户外跑步」造成重复。
     const g = {};
     CATEGORY_ORDER.forEach((k) => (g[k] = []));
     acts.forEach((a) => {
@@ -460,24 +415,42 @@
       (g[k] = g[k] || []).push(a);
     });
 
-    box.innerHTML = CATEGORY_ORDER
+    const cards = CATEGORY_ORDER
       .filter((k) => g[k] && g[k].length)
       .map((k) => {
         const c = CATEGORIES[k];
         const arr = g[k];
-        const km = arr.reduce((s, a) => s + (a.distanceKm || 0), 0);
-        const sec = arr.reduce((s, a) => s + (a.movingTimeSec || 0), 0);
+        const km = sumKm(arr);
+        const sec = sumTime(arr);
+        const ele = sumEle(arr);
         const sub = km >= 0.1
-          ? `${km.toFixed(0)} km · ${fmtDuration(sec)}`
+          ? `${km.toFixed(0)} km · ${fmtDuration(sec)}` + (ele > 0 ? ` · ${ele.toFixed(0)}m` : '')
           : fmtDuration(sec);
-        return `
+        return {
+          color: c.color,
+          title: `${c.icon} ${categoryLabel(k)}`,
+          big: arr.length,
+          unit: t('statTimes'),
+          sub,
+        };
+      });
+
+    // 合计卡（本年 / 累计 跟随作用域切换）
+    cards.push({
+      color: 'var(--accent)',
+      title: statScope === 'all' ? t('statTotalAll') : t('statTotal'),
+      big: acts.length, unit: t('statWorkoutUnit'),
+      sub: t('statTotalSub').replace('{km}', sumKm(acts).toFixed(0)).replace('{dur}', fmtDuration(sumTime(acts))),
+    });
+
+    $('#statCards').innerHTML = cards
+      .map((c) => `
         <div class="stat-card">
           <div class="bar" style="background:${c.color}"></div>
-          <h3>${c.icon} ${categoryLabel(k)}</h3>
-          <div><span class="big">${arr.length}</span><span class="unit">${t('statTimes')}</span></div>
-          <div class="sub">${sub}</div>
-        </div>`;
-      })
+          <h3>${c.title}</h3>
+          <div><span class="big">${c.big}</span><span class="unit">${c.unit}</span></div>
+          <div class="sub">${c.sub}</div>
+        </div>`)
       .join('');
   }
 
@@ -610,7 +583,6 @@
         statScope = chip.dataset.scope;
         updateScopeChips();
         renderStats();
-        renderCategoryStats();
         renderInsights();
         renderPB();
         renderFunFacts();
@@ -1711,7 +1683,7 @@
     }
     _tracksLoading = true;
     const s = document.createElement('script');
-    s.src = 'assets/js/real_tracks.js?v=20260830j';
+    s.src = 'assets/js/real_tracks.js?v=20260830l';
     s.onload = () => { if (hydrateTracks()) redrawTrackViews(); };
     s.onerror = () => console.warn('real_tracks.js 加载失败，轨迹墙/地图将显示占位图');
     document.head.appendChild(s);
@@ -1780,7 +1752,6 @@
     renderHero();
     renderHeatmap();
     renderStats();
-    renderCategoryStats();
     renderInsights();
     renderPB();
     renderFunFacts();
@@ -1806,7 +1777,6 @@
     renderYearTabs();
     renderHeatmap();
     renderStats();
-    renderCategoryStats();
     renderInsights();
     renderPB();
     renderFunFacts();

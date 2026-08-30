@@ -101,6 +101,23 @@ def derive_checkins(activities):
     return out
 
 
+# Keep 在无真实 GPS 信号（室内训练 / 手动记录 / 信号丢失）时，会把整条轨迹钉在固定
+# 回退坐标 [39.908201, 116.390984]（北京）。这些退化轨迹若写入，会把本不在北京的活动
+# 错误归因到北京，污染足迹地图 / 城市热度。这里在合并时直接清空这类轨迹。
+# 判定用 6 位小数精确相等（而非模糊半径），避免误伤真实落在北京、坐标各异的活动。
+_KEEP_DEFAULT_COORD = (39.908201, 116.390984)
+
+
+def _sanitize_track(track):
+    """清空 Keep 回退坐标的退化轨迹；正常轨迹原样返回；None/空轨迹原样返回。"""
+    if not track or len(track) < 1:
+        return track
+    dlat, dlng = _KEEP_DEFAULT_COORD
+    if all(round(p[0], 6) == dlat and round(p[1], 6) == dlng for p in track):
+        return None
+    return track
+
+
 def _fuzzy_dup(new, existing):
     """跨平台重复判定（用于 Coros→Keep 同步场景）。
 
@@ -262,7 +279,7 @@ def merge_and_write(new_activities, profile=None, checkins=None, out_path=None, 
     # 注意：拆出的轨迹已在内存 data 中移除，须先取引用再写文件。
     tracks = []
     for a in data["activities"]:
-        t = a.pop("track", None)
+        t = _sanitize_track(a.pop("track", None))
         tracks.append(t if t else None)
 
     with open(out_path, "w", encoding="utf-8") as f:
