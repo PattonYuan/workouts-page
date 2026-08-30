@@ -983,12 +983,15 @@
 
   /* ----------------------------- 轨迹地图 ----------------------------- */
   function mapTileUrl() {
-    // CARTO 底图 2025 起强制要求 API key（瓦片带 "API KEY REQUIRED" 水印），换 OSM 标准瓦片。
-    // 深色模式用同一瓦片源 + CSS 反色滤镜（见 style.css 的 body.dark .leaflet-tile-pane）。
-    return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+    // CARTO 强制 API key（水印）、OSM 主站国内不稳定，改用 Esri Canvas 灰阶底图：
+    // 无 key、全球 CDN 国内访问快，且自带亮/暗两套风格。
+    // 注意 Esri 模板是 {z}/{y}/{x}（y 在前），最大层级 16。
+    const dark = document.body.classList.contains('dark');
+    const svc = dark ? 'Canvas/World_Dark_Gray_Base' : 'Canvas/World_Light_Gray_Base';
+    return `https://server.arcgisonline.com/ArcGIS/rest/services/${svc}/MapServer/tile/{z}/{y}/{x}`;
   }
   function mapAttribution() {
-    return '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+    return 'Tiles &copy; Esri — Esri, HERE, Garmin, FAO, NOAA, USGS';
   }
 
   function initMap() {
@@ -1004,7 +1007,7 @@
     map = L.map(el, { zoomControl: true, attributionControl: true, scrollWheelZoom: false })
       .setView([22.55, 114.06], 11); // 默认深圳，随后按轨迹自适应
     mapTile = L.tileLayer(mapTileUrl(), {
-      subdomains: 'abcd', maxZoom: 19, attribution: mapAttribution(),
+      subdomains: 'abcd', maxZoom: 16, attribution: mapAttribution(),
       errorTileUrl:
         'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
     }).addTo(map);
@@ -1278,7 +1281,7 @@
     // 后续 fitBounds 只能调整、不能代替初始视图
     fpMap.setView([33.5, 110.0], 4);
     fpTile = L.tileLayer(mapTileUrl(), {
-      subdomains: 'abcd', maxZoom: 19, attribution: mapAttribution(),
+      subdomains: 'abcd', maxZoom: 16, attribution: mapAttribution(),
       errorTileUrl:
         'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
     }).addTo(fpMap);
