@@ -295,6 +295,11 @@ a:hover { text-decoration: underline; }
 .latest-strip .ls-item b { font-weight: 600; margin-right: 4px; }
 .latest-strip .ls-sep { color: var(--muted); }
 
+/* 深色模式：OSM 瓦片反色成暗色底图（亮色模式下不生效） */
+body.dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(.92) contrast(.88);
+}
+
 /* --------------------------- 轨迹地图 --------------------------- */
 .track-card { cursor: pointer; }
 .track-card { position: relative; }

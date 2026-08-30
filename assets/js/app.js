@@ -983,14 +983,12 @@
 
   /* ----------------------------- 轨迹地图 ----------------------------- */
   function mapTileUrl() {
-    const dark = document.body.classList.contains('dark');
-    const base = dark
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/'
-      : 'https://{s}.basemaps.cartocdn.com/light_all/';
-    return base + '{z}/{x}/{y}{r}.png';
+    // CARTO 底图 2025 起强制要求 API key（瓦片带 "API KEY REQUIRED" 水印），换 OSM 标准瓦片。
+    // 深色模式用同一瓦片源 + CSS 反色滤镜（见 style.css 的 body.dark .leaflet-tile-pane）。
+    return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
   }
   function mapAttribution() {
-    return '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+    return '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
   }
 
   function initMap() {
