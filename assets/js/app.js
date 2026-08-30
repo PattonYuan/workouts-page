@@ -1359,6 +1359,7 @@
     return n > 0;
   }
   function redrawTrackViews() {
+    fpData = null;  // 轨迹异步注入后必须清缓存，否则足迹地图永远停留在首跑时的空结果
     renderTracks();
     renderMap();
     drawFootprint();
