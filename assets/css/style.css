@@ -280,22 +280,6 @@ a:hover { text-decoration: underline; }
   font-size: 12px; color: var(--muted);
 }
 
-/* --------------------------- 最新打卡摘要条 --------------------------- */
-.latest-strip {
-  display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px;
-  background: var(--bg-elev); border: 1px solid var(--border);
-  border-radius: var(--radius); box-shadow: var(--shadow);
-  padding: 10px 18px; margin: -8px auto 18px; font-size: 13.5px;
-}
-.latest-strip .ls-title { font-weight: 700; }
-.latest-strip .ls-date {
-  color: var(--accent); font-weight: 700;
-  background: rgba(47, 128, 237, .12); padding: 1px 8px; border-radius: 999px;
-}
-.latest-strip .ls-item b { font-weight: 600; margin-right: 4px; }
-.latest-strip .ls-sep { color: var(--muted); }
-
-
 /* --------------------------- 轨迹地图 --------------------------- */
 .track-card { cursor: pointer; }
 .track-card { position: relative; }
@@ -323,12 +307,27 @@ a:hover { text-decoration: underline; }
 }
 .trend-title { font-size: 13px; font-weight: 600; margin: 4px 2px 8px; }
 .trend-title + svg + .trend-title { margin-top: 14px; }
+/* 趋势图 SVG 限高：viewBox 720×230/150，不限高时按容器宽度等比撑到 330+px */
+.trend-svg { width: 100%; display: block; }
+.trend-bars { max-height: 260px; }
+.trend-cum { max-height: 170px; margin-top: 6px; }
+
+/* 月度区块：日历 + 趋势并排（窄屏回落单列） */
+.month-row {
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: 16px; align-items: start;
+}
+.month-row > .section { padding: 34px 0 6px; min-width: 0; }  /* 横向内边距由外层 .container 统一给 */
+@media (max-width: 900px) {
+  .month-row { grid-template-columns: 1fr; }
+  .month-row > .section { padding: 34px 0 6px; }
+}
 
 /* --------------------------- 月度日历 / 周历 --------------------------- */
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
 .cal-wd { text-align: center; font-size: 11px; color: var(--muted); padding: 2px 0; }
 .cal-cell {
-  min-height: 52px; border-radius: 8px; border: 1px solid var(--border);
+  min-height: 44px; border-radius: 8px; border: 1px solid var(--border);
   padding: 4px 6px; text-align: right; font-size: 12px; position: relative;
 }
 .cal-cell b { font-weight: 600; opacity: .85; }

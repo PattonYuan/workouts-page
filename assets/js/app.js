@@ -567,7 +567,7 @@
     const totals = monthly.map((m) => Object.values(m).reduce((s, x) => s + x, 0));
     const maxKm = Math.max(...totals, 1);
     const iw = (W - L - R) / 12, bw = Math.min(38, iw * 0.62);
-    let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block">
+    let svg = `<svg class="trend-svg trend-bars" viewBox="0 0 ${W} ${H}" style="width:100%;display:block">
       <text x="${L - 6}" y="${T + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${Math.round(maxKm)}</text>
       <text x="${L - 6}" y="${H - B}" text-anchor="end" font-size="11" fill="var(--muted)">0</text>
       <line x1="${L}" y1="${T}" x2="${L}" y2="${H - B}" stroke="var(--border)"/>
@@ -605,7 +605,7 @@
     const px = (m) => L + (m / 11) * (W - L - R);
     const py = (v) => (H - B) - (v / maxV) * (H - T - B);
     const path = (arr, upto) => arr.slice(0, upto + 1).map((v, m) => `${m ? 'L' : 'M'}${px(m).toFixed(1)} ${py(v).toFixed(1)}`).join(' ');
-    let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;margin-top:6px">
+    let svg = `<svg class="trend-svg trend-cum" viewBox="0 0 ${W} ${H}" style="width:100%;display:block;margin-top:6px">
       <text x="${L - 6}" y="${T + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${Math.round(maxV)}</text>
       <line x1="${L}" y1="${T}" x2="${L}" y2="${H - B}" stroke="var(--border)"/>
       <line x1="${L}" y1="${H - B}" x2="${W - R}" y2="${H - B}" stroke="var(--border)"/>
@@ -1113,29 +1113,6 @@
     return '';
   }
 
-  // Hero 下的「最新打卡」摘要条：最近一次打卡日期 + 当天全部动作，免滚动一眼可见
-  function renderLatestStrip() {
-    const el = $('#latestStrip');
-    if (!el) return;
-    if (!CHECKINS.length) { el.style.display = 'none'; return; }
-    const latest = CHECKINS.reduce((m, c) => (c.date > m ? c.date : m), '');
-    const items = CHECKINS.filter((c) => c.date === latest);
-    if (!items.length) { el.style.display = 'none'; return; }
-    const now = new Date();
-    const yd = new Date(now); yd.setDate(now.getDate() - 1);
-    const rel = latest === _ymdLocal(now) ? t('relToday')
-      : latest === _ymdLocal(yd) ? t('relYesterday')
-      : fmtDate(latest).split(' · ')[0];
-    const parts = items.map((c) => {
-      const val = checkinVal(c);
-      return `<span class="ls-item"><b>${habitLabel(c.item)}</b>${val ? ` ${val}` : ''}</span>`;
-    }).join('<span class="ls-sep">·</span>');
-    el.innerHTML =
-      `<span class="ls-title">🕐 ${t('latestTitle')}</span>` +
-      `<span class="ls-date">${rel}</span>${parts}`;
-    el.style.display = '';
-  }
-
   function renderHabits() {
     const section = document.getElementById('habits');
     // 没有任何打卡数据（如 Coros 不含习惯打卡，checkins=[]）时，整体隐藏该板块
@@ -1444,7 +1421,6 @@
     drawFootprint();   // 仅重绘（弹窗/统计文案随语言更新），不重复绑定事件
     renderTrend();
     renderCalendar();
-    renderLatestStrip();
   }
 
   function bindLang() {
@@ -1478,7 +1454,6 @@
     renderTrend();      // 月度趋势（摘要数据即可渲染，无需等轨迹）
     bindCalendarNav();
     renderCalendar();
-    renderLatestStrip();
     renderHabits();
     bindStatScope();    // 统计作用域（本年 / 累计）切换
     initHeatmapTip();   // 热力图自定义悬停提示
