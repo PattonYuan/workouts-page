@@ -6,7 +6,7 @@
   <title>My Workouts</title>
   <meta id="metaDesc" name="description" content="Personal workout journal · Running / Cycling / Training / Habits" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏃</text></svg>" />
-  <link rel="stylesheet" href="assets/css/style.css?v=20260830i" />
+  <link rel="stylesheet" href="assets/css/style.css?v=20260830k" />
   <!-- Leaflet 地图库（轨迹地图底图） -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         crossorigin="" referrerpolicy="no-referrer" />
@@ -24,8 +24,8 @@
         <a href="#stats" data-i18n="navStats">Stats</a>
         <a href="#activities" data-i18n="navActivities">Activities</a>
         <a href="#tracks" data-i18n="navTracks">Tracks</a>
-        <a href="#footprint" data-i18n="navFootprint">Footprint</a>
         <a href="#trackmap" data-i18n="navMap">Map</a>
+        <a href="#footprint" data-i18n="navFootprint">Footprint</a>
         <a href="#habits" data-i18n="navHabits">Habits</a>
         <a href="#insights" data-i18n="navInsights">Consistency</a>
         <a href="#pb" data-i18n="navPB">PB</a>
@@ -110,10 +110,14 @@
       <section id="trend" class="section">
         <div class="section-head">
           <h2 data-i18n="secTrend">Monthly Trend</h2>
-          <div class="year-tabs" id="trendYearTabs"><!-- JS 填充 --></div>
+          <!-- 年份切换与月度日历同款（‹ 今年 ›），原 10 按钮年份排会溢出右栏 -->
+          <div class="filters">
+            <button class="chip" id="trendPrev">‹</button>
+            <button class="chip" id="trendToday" data-i18n="calThisYear">This year</button>
+            <button class="chip" id="trendNext">›</button>
+          </div>
         </div>
         <div class="trend-panel" id="trendPanel"><!-- JS 填充 SVG --></div>
-        <p class="map-hint muted" data-i18n="trendHint">Monthly distance stacked by sport · dashed line = same period last year</p>
       </section>
     </div>
 
@@ -156,20 +160,6 @@
       <div class="tracks-grid" id="tracksGrid"><!-- JS 填充 --></div>
     </section>
 
-    <!-- ===================== 足迹地图 ===================== -->
-    <section id="footprint" class="section container">
-      <div class="section-head">
-        <h2 data-i18n="secFootprint">Footprint Map</h2>
-        <div class="filters" id="fpFilters">
-          <button class="chip active" data-fp="cluster" data-i18n="fpByPlace">By place</button>
-          <button class="chip" data-fp="all" data-i18n="fpAllPoints">All start points</button>
-        </div>
-      </div>
-      <div id="footprintMap" class="track-map"></div>
-      <p class="map-hint muted" id="fpStats"><!-- JS 填充 --></p>
-      <p class="map-hint muted" data-i18n="fpHint">Every GPS start location · circle size = visits · click a bubble for details</p>
-    </section>
-
     <!-- ===================== 轨迹地图 ===================== -->
     <section id="trackmap" class="section container">
       <div class="section-head">
@@ -187,6 +177,25 @@
       <p class="map-hint muted" data-i18n="mapHint">Real GPS tracks overlaid on the map · click a track for details · click a "Track Wall" card above to focus it on the map</p>
     </section>
 
+    <!-- ===================== 足迹地图（置于轨迹地图下方） ===================== -->
+    <section id="footprint" class="section container">
+      <div class="section-head">
+        <h2 data-i18n="secFootprint">Footprint Map</h2>
+        <div class="filters" id="fpFilters">
+          <button class="chip active" data-fp="cluster" data-i18n="fpByPlace">By place</button>
+          <button class="chip" data-fp="all" data-i18n="fpAllPoints">All start points</button>
+          <button class="chip" data-fp="city" data-i18n="fpCityHeat">City heat</button>
+        </div>
+      </div>
+      <!-- 年份筛选：对 聚合/明细/城市热度 三种模式都生效 -->
+      <div class="filters" id="fpYearFilters" style="margin-bottom:10px">
+        <select id="fpYearSel" class="chip fp-year-sel"><!-- JS 填充 --></select>
+      </div>
+      <div id="footprintMap" class="track-map"></div>
+      <p class="map-hint muted" id="fpStats"><!-- JS 填充 --></p>
+      <p class="map-hint muted" data-i18n="fpHint">GPS start points · City heat: darker = more activities</p>
+    </section>
+
     <!-- ===================== 习惯打卡 ===================== -->
     <section id="habits" class="section container">
       <div class="section-head"><h2 data-i18n="secHabits">Habits</h2></div>
@@ -200,10 +209,10 @@
     </div>
   </footer>
 
-  <script src="assets/js/real_data.js?v=20260830i"></script>
-  <script src="assets/js/data.js?v=20260830i"></script>
+  <script src="assets/js/real_data.js?v=20260830k"></script>
+  <script src="assets/js/data.js?v=20260830k"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           crossorigin="" referrerpolicy="no-referrer"></script>
-  <script src="assets/js/app.js?v=20260830i"></script>
+  <script src="assets/js/app.js?v=20260830k"></script>
 </body>
 </html>

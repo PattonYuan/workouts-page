@@ -697,22 +697,56 @@
     return svg;
   }
 
+  // 可选年份（有活动的年份，倒序）；trendYear 与日历一样用 ‹ 今年 › 切换
+  function trendYears() {
+    return [...new Set(ACTIVITIES.map((a) => a.date.slice(0, 4)))].sort().reverse();
+  }
+
   function renderTrend() {
-    const tabs = $('#trendYearTabs');
     const panel = $('#trendPanel');
-    if (!tabs || !panel) return;
-    const years = [...new Set(ACTIVITIES.map((a) => a.date.slice(0, 4)))].sort().reverse();
+    if (!panel) return;
+    const years = trendYears();
     if (!years.length) { panel.innerHTML = ''; return; }
     if (!trendYear || !years.includes(trendYear)) trendYear = String(currentYear);
-    tabs.innerHTML = years.map((y) =>
-      `<button class="${y === trendYear ? 'active' : ''}" data-y="${y}">${y}</button>`).join('');
-    $$('#trendYearTabs button').forEach((b) =>
-      b.addEventListener('click', () => { trendYear = b.dataset.y; renderTrend(); }));
+    const prev = $('#trendPrev'), next = $('#trendNext'), today = $('#trendToday');
+    if (prev) prev.disabled = trendYear === years[years.length - 1]; // 最早年
+    if (next) next.disabled = trendYear === years[0];                // 最新年
+    if (today) today.textContent = `${t('calThisYear')} · ${trendYear}`;
     panel.innerHTML =
       `<div class="trend-title">${t('trendMonthly')} · ${trendYear} (${t('trendKmUnit')})</div>` +
       trendBarsSVG(trendYear) +
       `<div class="trend-title">${t('trendCum')} · ${trendYear}</div>` +
       trendCumSVG(trendYear);
+    equalizeMonthRow();
+  }
+
+  // 月度区块：让「日历卡片」与「趋势卡片」等高，视觉对齐（内容顶部对齐、矮的一侧居中留白）
+  function equalizeMonthRow() {
+    const a = document.querySelector('#calPanel');
+    const b = document.querySelector('#trendPanel');
+    if (!a || !b) return;
+    a.style.minHeight = ''; b.style.minHeight = '';
+    a.style.display = 'flex'; a.style.flexDirection = 'column';
+    a.style.justifyContent = 'center';
+    const h = Math.max(a.offsetHeight, b.offsetHeight);
+    a.style.minHeight = h + 'px';
+    b.style.minHeight = h + 'px';
+  }
+
+  function bindTrendNav() {
+    const years = trendYears();
+    const prev = $('#trendPrev'), next = $('#trendNext'), today = $('#trendToday');
+    if (prev) prev.addEventListener('click', () => {
+      const i = years.indexOf(trendYear);
+      if (i >= 0 && i < years.length - 1) { trendYear = years[i + 1]; renderTrend(); }
+    });
+    if (next) next.addEventListener('click', () => {
+      const i = years.indexOf(trendYear);
+      if (i > 0) { trendYear = years[i - 1]; renderTrend(); }
+    });
+    if (today) today.addEventListener('click', () => {
+      trendYear = String(currentYear); renderTrend();
+    });
   }
 
   /* ----------------------------- 月度日历 ----------------------------- */
@@ -767,6 +801,7 @@
     }
     html += '</div>';
     panel.innerHTML = html;
+    equalizeMonthRow();
   }
 
   function bindCalendarNav() {
@@ -924,7 +959,9 @@
     const year = currentYear;
     const acts = ACTIVITIES.filter(
       (a) => a.date.startsWith(year) &&
-        ['run', 'walk', 'ride', 'hike', 'moto'].includes(a.type) && a.distanceKm > 0
+        ['run', 'walk', 'ride', 'hike', 'moto'].includes(a.type) &&
+        a.distanceKm > 0 &&
+        a.track && a.track.length >= 2   // 仅展示有真实 GPS 轨迹的，无轨迹（室内步行等）不放进轨迹墙
     )
       .slice()
       .sort((a, b) => (a.date < b.date ? 1 : -1));
@@ -1277,8 +1314,12 @@
   }
 
   /* ----------------------------- 足迹地图 ----------------------------- */
-  let fpMap = null, fpTile = null, fpClusterGroup = null, fpDetailGroup = null, fpMode = 'cluster';
-  let fpData = null;
+  let fpMap = null, fpTile = null, fpClusterGroup = null, fpDetailGroup = null,
+      fpCityGroup = null, fpLegend = null, fpMode = 'cluster';
+  let fpData = null, _fpKey = null;  // 聚类缓存按 fpYear 分键，切年/轨迹注入后必须清
+  let fpYear = null;                 // 年份筛选：null = 全部年份
+  const _fpCityCache = {};           // 城市热度缓存：yearKey -> {byAd, maxN}
+  let _fpGeoLoading = false;         // 城市边界脚本懒加载中
 
   // 聚类点 → 城市标注：在锚点匹配半径内取「归属度」最高者（dist/r 最小），
   // 无命中则不标注，避免大城市锚点把邻市活动抢走
@@ -1296,12 +1337,26 @@
     return best;
   }
 
-  // 全库带 GPS 的活动按 0.1°（约 11km）网格聚类为「足迹点」
+  // 参与足迹统计的活动（GPS 起点 + 有里程），按当前 fpYear 过滤
+  function fpActs() {
+    return ACTIVITIES.filter((a) =>
+      (!fpYear || a.date.startsWith(fpYear)) &&
+      a.track && a.track.length >= 2 && a.distanceKm > 0);
+  }
+
+  // 足迹可选年份（有 GPS 活动的年份，倒序）
+  function fpYears() {
+    return [...new Set(ACTIVITIES
+      .filter((a) => a.track && a.track.length >= 2 && a.distanceKm > 0)
+      .map((a) => a.date.slice(0, 4)))].sort().reverse();
+  }
+
+  // 全库带 GPS 的活动按 0.1°（约 11km）网格聚类为「足迹点」（随 fpYear 变化）
   function computeFootprint() {
-    if (fpData) return fpData;
+    const key = fpYear || 'all';
+    if (fpData && _fpKey === key) return fpData;
     const grid = new Map();
-    ACTIVITIES.forEach((a) => {
-      if (!a.track || a.track.length < 2 || !(a.distanceKm > 0)) return;
+    fpActs().forEach((a) => {
       const la = a.track[0][0], lo = a.track[0][1];
       const key = `${la.toFixed(1)},${lo.toFixed(1)}`;
       let c = grid.get(key);
@@ -1323,7 +1378,192 @@
       fpData.push(c);
     });
     fpData.sort((a, b) => b.n - a.n);
+    _fpKey = key;
     return fpData;
+  }
+
+  /* ---------- 城市热度（choropleth）：GPS 起点点在多边形内归属城市 ---------- */
+
+  // 射线法：单环内判定（坐标 [lng, lat]）
+  function pointInRing(x, y, ring) {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+      if (((yi > y) !== (yj > y)) && (x < ((xj - xi) * (y - yi)) / (yj - yi) + xi)) inside = !inside;
+    }
+    return inside;
+  }
+
+  // Polygon / MultiPolygon 奇偶规则（含洞）
+  function pointInGeometry(x, y, geom) {
+    const polys = geom.type === 'Polygon' ? [geom.coordinates] : (geom.coordinates || []);
+    for (const poly of polys) {
+      let inPoly = false;
+      for (const ring of poly) { if (pointInRing(x, y, ring)) inPoly = !inPoly; }
+      if (inPoly) return true;
+    }
+    return false;
+  }
+
+  // 城市英文名：real_citygeo 的 name 是中文（"绍兴市"/"香港特别行政区"），
+  // 用 FOOTPRINT_CITIES 的 zh 前缀匹配转 en，失败则去后缀用中文
+  function cityNameEn(zhName) {
+    for (const c of FOOTPRINT_CITIES) {
+      if (zhName.startsWith(c.zh)) return c.en;
+    }
+    return zhName.replace(/(特别行政区|自治区|市|县|盟)$/, '');
+  }
+
+  // 城市热度聚合：{ byAd: Map(adcode -> agg), maxN, feats }
+  function computeCityHeat() {
+    const key = fpYear || 'all';
+    if (_fpCityCache[key]) return _fpCityCache[key];
+    const geo = window.REAL_CITYGEO;
+    const feats = (geo && geo.features) || [];
+    // 预计算 bbox 加速粗筛：[minLng, minLat, maxLng, maxLat]
+    const idx = feats.map((f) => {
+      let b = [181, 91, -181, -91];
+      const walk = (ring) => ring.forEach(([x, y]) => {
+        if (x < b[0]) b[0] = x; if (y < b[1]) b[1] = y;
+        if (x > b[2]) b[2] = x; if (y > b[3]) b[3] = y;
+      });
+      const polys = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
+      polys.forEach((poly) => poly[0] && walk(poly[0]));  // 仅外环即可粗筛
+      return { f, b };
+    });
+    const byAd = new Map();
+    fpActs().forEach((a) => {
+      const x = a.track[0][1], y = a.track[0][0];  // track 是 [lat, lng]
+      for (const it of idx) {
+        if (x < it.b[0] || x > it.b[2] || y < it.b[1] || y > it.b[3]) continue;
+        if (!pointInGeometry(x, y, it.f.geometry)) continue;
+        let c = byAd.get(it.f.properties.adcode);
+        if (!c) {
+          c = { ad: it.f.properties.adcode, name: it.f.properties.name, n: 0, km: 0, types: {}, first: a.date, last: a.date };
+          byAd.set(it.f.properties.adcode, c);
+        }
+        c.n += 1; c.km += a.distanceKm || 0;
+        c.types[a.type] = (c.types[a.type] || 0) + 1;
+        if (a.date < c.first) c.first = a.date;
+        if (a.date > c.last) c.last = a.date;
+        break;  // 归属第一个命中城市（地级市边界基本不重叠）
+      }
+    });
+    let maxN = 1;
+    byAd.forEach((c) => { if (c.n > maxN) maxN = c.n; c.km = Math.round(c.km); });
+    const res = { byAd, maxN };
+    _fpCityCache[key] = res;
+    return res;
+  }
+
+  // 热度色：√ 比例，浅红 → 深红
+  function heatColor(t) {
+    return `hsl(6, 68%, ${(72 - t * 38).toFixed(1)}%)`;
+  }
+
+  // 城市多边形 bbox 中心（用于常驻城市名标注，城市近似凸形足够）
+  function featCenter(f) {
+    let b = [181, 91, -181, -91];
+    const walk = (ring) => ring.forEach(([x, y]) => {
+      if (x < b[0]) b[0] = x; if (y < b[1]) b[1] = y;
+      if (x > b[2]) b[2] = x; if (y > b[3]) b[3] = y;
+    });
+    const polys = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
+    polys.forEach((poly) => poly[0] && walk(poly[0]));
+    return [(b[1] + b[3]) / 2, (b[0] + b[2]) / 2]; // [lat, lng]
+  }
+
+  // 城市边界脚本懒加载（304KB，与 real_tracks.js 同款异步注入）
+  function loadCityGeo() {
+    if (typeof window.REAL_CITYGEO !== 'undefined' || _fpGeoLoading) return;
+    _fpGeoLoading = true;
+    const s = document.createElement('script');
+    s.src = 'assets/js/real_citygeo.js?v=20260830k';
+    s.onload = () => { _fpGeoLoading = false; drawFootprint(); };
+    s.onerror = () => { _fpGeoLoading = false; console.warn('real_citygeo.js 加载失败，城市热度模式不可用'); };
+    document.head.appendChild(s);
+  }
+
+  function drawCityHeat() {
+    if (typeof window.REAL_CITYGEO === 'undefined') {
+      $('#fpStats').textContent = t('fpLoadingGeo');
+      loadCityGeo();
+      return;
+    }
+    const heat = computeCityHeat();
+    const byAd = heat.byAd, maxN = heat.maxN;
+    const nActs = [...byAd.values()].reduce((s, c) => s + c.n, 0);
+
+    fpClusterGroup && fpMap.removeLayer(fpClusterGroup);
+    fpDetailGroup && fpMap.removeLayer(fpDetailGroup);
+    fpMap.removeLayer(fpCityGroup);
+    if (fpLegend) fpLegend.getContainer().style.display = '';
+
+    fpCityGroup.clearLayers();
+    L.geoJSON(window.REAL_CITYGEO, {
+      style: (feat) => {
+        const h = byAd.get(feat.properties.adcode);
+        const tt = h ? Math.sqrt(h.n / maxN) : 0;
+        return {
+          color: '#a83232', weight: tt > 0 ? 1.2 : 0.6,
+          opacity: tt > 0 ? 0.9 : 0.35,
+          fillColor: heatColor(tt),
+          fillOpacity: tt > 0 ? 0.3 + tt * 0.45 : 0.05,
+        };
+      },
+      onEachFeature: (feat, layer) => {
+        const c = byAd.get(feat.properties.adcode);
+        if (!c) return;
+        const label = LANG === 'en' ? cityNameEn(c.name) : c.name;
+        const typesTxt = Object.entries(c.types).sort((x, y) => y[1] - x[1])
+          .map(([k, n]) => `${sportLabel(k)} ×${n}`).join(' · ');
+        layer.bindPopup(
+          `<b>${label}</b><br>${c.n} ${t('statWorkoutUnit')} · ${c.km.toLocaleString()} km` +
+          `<br>${typesTxt}<br><span style="opacity:.65">${c.first} → ${c.last}</span>`);
+        layer.on('mouseover', () => layer.setStyle({ weight: 2, opacity: 1 }));
+        layer.on('mouseout', () => layer.setStyle({ weight: 1.2, opacity: 0.9 }));
+        // 常驻城市名标签（浅色描边，叠在地图上清晰可读）
+        const ctr = featCenter(feat);
+        const mk = L.marker(ctr, {
+          interactive: false,
+          icon: L.divIcon({
+            className: 'fp-city-pin',
+            html: `<span>${label}</span>`,
+            iconSize: [0, 0],
+          }),
+        });
+        fpCityGroup.addLayer(mk);
+      },
+    }).addTo(fpCityGroup);
+    fpCityGroup.addTo(fpMap);
+
+    // 统计行 + 图例
+    $('#fpStats').innerHTML =
+      `<b>${byAd.size}</b> / ${FOOTPRINT_CITIES.length} ${t('fpInCities')} · ` +
+      `<b>${nActs}</b> ${t('statWorkoutUnit')} · ${t('fpTotalKm')} ` +
+      `<b>${[...byAd.values()].reduce((s, c) => s + c.km, 0).toLocaleString()} km</b>`;
+    const lg = fpLegend && fpLegend.getContainer();
+    if (lg) {
+      lg.innerHTML =
+        `<span>${t('fpHeatFew')}</span>` +
+        `<span class="fp-legend-bar"></span>` +
+        `<span>${t('fpHeatMany')} (${maxN})</span>`;
+    }
+
+    // 视角：有数据城市的整体范围（无数据则全国）
+    const pts = [];
+    window.REAL_CITYGEO.features.forEach((f) => {
+      if (!byAd.get(f.properties.adcode)) return;
+      const polys = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
+      polys.forEach((poly) => poly[0] && poly[0].forEach(([x, y]) => pts.push([y, x])));
+    });
+    if (pts.length) {
+      const b = L.latLngBounds(pts);
+      if (b.isValid()) {
+        const cur = fpMap.getBounds();
+        if (!cur.intersects(b)) fpMap.fitBounds(b, { padding: [30, 30], maxZoom: 10 });
+      }
+    }
   }
 
   function initFootprint() {
@@ -1347,12 +1587,24 @@
     }).addTo(fpMap);
     fpClusterGroup = L.layerGroup();
     fpDetailGroup = L.layerGroup();
-    window.addEventListener('resize', () => fpMap && fpMap.invalidateSize());
+    fpCityGroup = L.layerGroup();
+    // 城市热度图例（仅 city 模式显示）
+    fpLegend = L.control({ position: 'bottomright' });
+    fpLegend.onAdd = () => {
+      const d = L.DomUtil.create('div', 'fp-legend');
+      d.style.display = 'none';
+      return d;
+    };
+    fpLegend.addTo(fpMap);
+    window.addEventListener('resize', () => { fpMap && fpMap.invalidateSize(); equalizeMonthRow(); });
   }
 
   function drawFootprint() {
     initFootprint();
     if (!fpMap) return;
+    renderFpYearSelect();   // 年份选项随轨迹注入/语言变化重建
+    if (fpMode === 'city') { drawCityHeat(); return; }
+    if (fpLegend) fpLegend.getContainer().style.display = 'none';
     const data = computeFootprint();
     if (!data.length) {
       $('#fpStats').textContent = t('tracksEmpty');
@@ -1391,12 +1643,26 @@
     // 切换视图：聚合 / 明细（先移除再挂，避免重复图层）
     fpMap.removeLayer(fpClusterGroup);
     fpMap.removeLayer(fpDetailGroup);
+    fpMap.removeLayer(fpCityGroup);
     (fpMode === 'cluster' ? fpClusterGroup : fpDetailGroup).addTo(fpMap);
     const b = L.latLngBounds(data.map((c) => [c.lat, c.lng]));
     if (b.isValid()) {
       const cur = fpMap.getBounds();
       if (!cur.intersects(b) || fpMap.getZoom() == null) fpMap.fitBounds(b, { padding: [30, 30], maxZoom: 13 });
     }
+  }
+
+  // 年份下拉（select 比 10 个 chip 紧凑，且对三种模式统一生效）
+  function renderFpYearSelect() {
+    const sel = $('#fpYearSel');
+    if (!sel) return;
+    const years = fpYears();
+    const cur = fpYear || 'all';
+    sel.innerHTML =
+      `<option value="all">${t('fpAllYears')}</option>` +
+      years.map((y) => `<option value="${y}">${y}</option>`).join('');
+    sel.value = cur;
+    if (sel.value !== cur) { fpYear = null; sel.value = 'all'; }  // 选项缺失时回退
   }
 
   function bindFootprintFilters() {
@@ -1407,6 +1673,13 @@
         drawFootprint();
       })
     );
+    const sel = $('#fpYearSel');
+    if (sel) {
+      sel.addEventListener('change', () => {
+        fpYear = sel.value === 'all' ? null : sel.value;
+        drawFootprint();
+      });
+    }
   }
 
   /* ----------------------------- 轨迹数据按需加载 ----------------------------- */
@@ -1423,7 +1696,9 @@
     return n > 0;
   }
   function redrawTrackViews() {
-    fpData = null;  // 轨迹异步注入后必须清缓存，否则足迹地图永远停留在首跑时的空结果
+    fpData = null;      // 轨迹异步注入后必须清缓存，否则足迹地图永远停留在首跑时的空结果
+    _fpKey = null;
+    Object.keys(_fpCityCache).forEach((k) => delete _fpCityCache[k]);  // 城市热度同样需要重算
     renderTracks();
     renderMap();
     drawFootprint();
@@ -1436,7 +1711,7 @@
     }
     _tracksLoading = true;
     const s = document.createElement('script');
-    s.src = 'assets/js/real_tracks.js?v=20260830i';
+    s.src = 'assets/js/real_tracks.js?v=20260830j';
     s.onload = () => { if (hydrateTracks()) redrawTrackViews(); };
     s.onerror = () => console.warn('real_tracks.js 加载失败，轨迹墙/地图将显示占位图');
     document.head.appendChild(s);
@@ -1548,6 +1823,7 @@
     drawFootprint();
     loadTracks();       // 异步加载轨迹数据后自动重绘轨迹墙/地图/足迹
     renderTrend();      // 月度趋势（摘要数据即可渲染，无需等轨迹）
+    bindTrendNav();     // 趋势年份 ‹ 今年 › 切换
     bindCalendarNav();
     renderCalendar();
     renderHabits();
