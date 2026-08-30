@@ -1,0 +1,38 @@
+{
+  "type": "one-pager",
+  "lang": "en",
+  "brief": {
+    "audience": "Reader curious about a personal fitness project / the person behind it",
+    "job": "Summarize nine years of self-tracked movement and the site that records it",
+    "template": "one-pager-en",
+    "formats": ["html", "pdf"],
+    "page_target": 1,
+    "narrative": "Numbers first, then the story of the movement and the project",
+    "required_facts": ["total distance", "total time", "activity count", "active days", "sport breakdown", "personal bests"],
+    "required_assets": [],
+    "acceptance_checks": ["one page", "all headline numbers survive verbatim"],
+    "preserve": [],
+    "explicit_deviations": []
+  },
+  "content": {
+    "title": "Nine Years, Eight Thousand Kilometres",
+    "subtitle": "A self-tracked record of running, walking, riding, and hiking — and the static site that keeps it honest.",
+    "metrics": [
+      { "value": "8,252", "label": "km total distance" },
+      { "value": "1,539", "label": "hours moving" },
+      { "value": "3,820", "label": "activities logged" },
+      { "value": "1,713", "label": "active days since 2017" }
+    ],
+    "argument": [
+      "Since March 2017 I have logged every run, walk, ride, and hike I could measure. The result is a continuous paper trail of 8,252 km and 1,539 hours of movement — not a training plan, but a habit of paying attention."
+    ],
+    "evidence": [
+      "Running: 509 sessions, 3,487 km, longest single run 29.1 km",
+      "Walking: 2,940 sessions, 4,015 km — the quiet backbone of the data",
+      "Riding & hiking: 24 rides (64.8 km longest), 20 hikes, plus 11 moto tracks",
+      "303 habit check-ins logged: plank 94, situps 137, push-ups 69",
+      "Vanilla JS + HTML/CSS on GitHub Pages; inspired by zhaohongxuan/workouts"
+    ],
+    "next_step": "Next: automate the COROS sync to a nightly cron so the page never falls a day behind."
+  }
+}

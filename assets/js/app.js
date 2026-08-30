@@ -419,6 +419,7 @@
       { color: 'var(--accent)', ico: '🔥', title: t('insCurrentStreak'), big: curStreak, unit: t('insDays'), sub: t('heroSince').replace('{year}', _since) },
       { color: 'var(--accent-2)', ico: '📈', title: t('insLongestStreak'), big: longest, unit: t('insDays'), sub: t('insActiveDays').replace('{n}', activeDays) },
       { color: '#e8a33d', ico: '📅', title: t('insFavoriteDay'), big: fav, unit: '', sub: t('insFavoriteSub') },
+      { color: '#27ae60', ico: '🗓️', title: t('insStreakWeeks'), big: calcWeekStreak(allDates), unit: t('insWeeksUnit'), sub: weekStripHTML() },
     ];
     $('#insightCards').innerHTML = cards
       .map(
@@ -540,6 +541,223 @@
     updateScopeChips();
   }
 
+  /* ----------------------------- 月度趋势（原生 SVG，零依赖） ----------------------------- */
+  const TREND_TYPES = ['run', 'walk', 'ride', 'hike', 'moto'];
+  let trendYear = null;
+
+  function trendAgg(year) {
+    const monthly = Array.from({ length: 12 }, () => ({}));
+    const cum = Array(12).fill(0);
+    ACTIVITIES.forEach((a) => {
+      if (!a.date.startsWith(year)) return;
+      const km = a.distanceKm || 0;
+      if (km <= 0 || !TREND_TYPES.includes(a.type)) return;
+      const m = +a.date.slice(5, 7) - 1;
+      monthly[m][a.type] = (monthly[m][a.type] || 0) + km;
+      cum[m] += km;
+    });
+    for (let m = 1; m < 12; m++) cum[m] += cum[m - 1];
+    return { monthly, cum };
+  }
+
+  // 月度里程堆叠柱状图
+  function trendBarsSVG(year) {
+    const { monthly } = trendAgg(year);
+    const W = 720, H = 230, L = 40, R = 8, T = 16, B = 26;
+    const totals = monthly.map((m) => Object.values(m).reduce((s, x) => s + x, 0));
+    const maxKm = Math.max(...totals, 1);
+    const iw = (W - L - R) / 12, bw = Math.min(38, iw * 0.62);
+    let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block">
+      <text x="${L - 6}" y="${T + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${Math.round(maxKm)}</text>
+      <text x="${L - 6}" y="${H - B}" text-anchor="end" font-size="11" fill="var(--muted)">0</text>
+      <line x1="${L}" y1="${T}" x2="${L}" y2="${H - B}" stroke="var(--border)"/>
+      <line x1="${L}" y1="${H - B}" x2="${W - R}" y2="${H - B}" stroke="var(--border)"/>`;
+    monthly.forEach((seg, m) => {
+      const x = L + m * iw + (iw - bw) / 2;
+      let y = H - B;
+      const ordered = TREND_TYPES.filter((k) => seg[k]).map((k) => [k, seg[k]]);
+      ordered.forEach(([k, v]) => {
+        const h = (v / maxKm) * (H - T - B);
+        y -= h;
+        svg += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(h - 0.5, 0).toFixed(1)}"
+          fill="${SPORT[k].color}" rx="1.5" opacity=".92"><title>${year}-${String(m + 1).padStart(2, '0')} ${sportLabel(k)} ${v.toFixed(1)}km</title></rect>`;
+      });
+      svg += `<text x="${(x + bw / 2).toFixed(1)}" y="${H - B + 15}" text-anchor="middle" font-size="11" fill="var(--muted)">${m + 1}</text>`;
+      if (totals[m] > 0) {
+        svg += `<text x="${(x + bw / 2).toFixed(1)}" y="${(y - 4).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="var(--muted)">${totals[m].toFixed(0)}</text>`;
+      }
+    });
+    svg += '</svg>';
+    return svg;
+  }
+
+  // 累计里程对比折线（实线=所选年份，虚线=去年同期）
+  function trendCumSVG(year) {
+    const W = 720, H = 150, L = 40, R = 8, T = 18, B = 22;
+    const { cum } = trendAgg(year);
+    const prev = trendAgg(String(+year - 1)).cum;
+    const cur = trendAgg(year).cum;
+    let lastM = 0;
+    for (let i = cur.length - 1; i >= 0; i--) {
+      if (cur[i] > 0) { lastM = i; break; }
+    }
+    const maxV = Math.max(...cur, ...prev, 1);
+    const px = (m) => L + (m / 11) * (W - L - R);
+    const py = (v) => (H - B) - (v / maxV) * (H - T - B);
+    const path = (arr, upto) => arr.slice(0, upto + 1).map((v, m) => `${m ? 'L' : 'M'}${px(m).toFixed(1)} ${py(v).toFixed(1)}`).join(' ');
+    let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;margin-top:6px">
+      <text x="${L - 6}" y="${T + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${Math.round(maxV)}</text>
+      <line x1="${L}" y1="${T}" x2="${L}" y2="${H - B}" stroke="var(--border)"/>
+      <line x1="${L}" y1="${H - B}" x2="${W - R}" y2="${H - B}" stroke="var(--border)"/>
+      <path d="${path(prev, 11)}" fill="none" stroke="var(--muted)" stroke-width="1.6" stroke-dasharray="5 4" opacity=".75"/>`;
+    svg += `<path d="${path(cur, lastM)}" fill="none" stroke="#2f80ed" stroke-width="2.4" stroke-linejoin="round"/>`;
+    cur.slice(0, lastM + 1).forEach((v, m) => {
+      svg += `<circle cx="${px(m).toFixed(1)}" cy="${py(v).toFixed(1)}" r="2.8" fill="#2f80ed"><title>${year}-${String(m + 1).padStart(2, '0')} ${v.toFixed(1)}km</title></circle>`;
+    });
+    svg += `<text x="${W - R}" y="${T}" text-anchor="end" font-size="11" fill="var(--muted)">` +
+      `— ${year}  ·  -- ${year - 1} ${t('trendPrevYear')}</text></svg>`;
+    return svg;
+  }
+
+  function renderTrend() {
+    const tabs = $('#trendYearTabs');
+    const panel = $('#trendPanel');
+    if (!tabs || !panel) return;
+    const years = [...new Set(ACTIVITIES.map((a) => a.date.slice(0, 4)))].sort().reverse();
+    if (!years.length) { panel.innerHTML = ''; return; }
+    if (!trendYear || !years.includes(trendYear)) trendYear = String(currentYear);
+    tabs.innerHTML = years.map((y) =>
+      `<button class="${y === trendYear ? 'active' : ''}" data-y="${y}">${y}</button>`).join('');
+    $$('#trendYearTabs button').forEach((b) =>
+      b.addEventListener('click', () => { trendYear = b.dataset.y; renderTrend(); }));
+    panel.innerHTML =
+      `<div class="trend-title">${t('trendMonthly')} · ${trendYear} (${t('trendKmUnit')})</div>` +
+      trendBarsSVG(trendYear) +
+      `<div class="trend-title">${t('trendCum')} · ${trendYear}</div>` +
+      trendCumSVG(trendYear);
+  }
+
+  /* ----------------------------- 月度日历 ----------------------------- */
+  let calY = null, calM = null; // calM: 0-11
+
+  // 每日运动量（km），供日历/周条用
+  function dailyKmMap(year, month) {
+    const map = {};
+    ACTIVITIES.forEach((a) => {
+      if (!a.date.startsWith(year)) return;
+      if (month != null && +a.date.slice(5, 7) - 1 !== month) return;
+      const day = a.date.slice(8, 10);
+      const km = a.distanceKm || 0;
+      const e = map[day] || { km: 0, items: [] };
+      e.km += km;
+      if (km > 0) e.items.push(`${actTitle(a)} · ${km.toFixed(1)}km`);
+      else e.items.push(actTitle(a));
+      map[day] = e;
+    });
+    return map;
+  }
+
+  function renderCalendar() {
+    const panel = $('#calPanel');
+    if (!panel) return;
+    const now = new Date();
+    if (calY == null) { calY = now.getFullYear(); calM = now.getMonth(); }
+    const first = new Date(calY, calM, 1);
+    const daysInMonth = new Date(calY, calM + 1, 0).getDate();
+    const startDow = first.getDay(); // 周日=0（与年度热力图一致）
+    const title = LANG === 'en'
+      ? `${MON_EN[calM]} ${calY}`
+      : `${calY} 年 ${calM + 1} 月`;
+    const wds = (t('calWeekdays') || '').split(',');
+    const byDay = dailyKmMap(String(calY), calM);
+    const maxKm = Math.max(1, ...Object.values(byDay).map((e) => e.km));
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    let html = `<div class="trend-title" style="text-align:center">${title}</div>
+      <div class="cal-grid">`;
+    wds.forEach((w) => { html += `<div class="cal-wd">${w}</div>`; });
+    for (let i = 0; i < startDow; i++) html += '<div></div>';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const ds = `${calY}-${String(calM + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const e = byDay[ds.slice(8)];
+      const km = e ? e.km : 0;
+      const op = km > 0 ? Math.min(0.14 + (km / maxKm) * 0.5, 0.64) : 0;
+      const isToday = ds === todayStr ? ' cal-today' : '';
+      const tip = e ? e.items.map((x) => `${ds.slice(5)} ${x}`).join('\n') : '';
+      html += `<div class="cal-cell${isToday}" style="${op ? `background:rgba(47,128,237,${op.toFixed(2)})` : ''}"
+        title="${tip}"><b>${d}</b>${km > 0 ? `<span>${km >= 10 ? km.toFixed(0) : km.toFixed(1)}</span>` : ''}</div>`;
+    }
+    html += '</div>';
+    panel.innerHTML = html;
+  }
+
+  function bindCalendarNav() {
+    const prev = $('#calPrev'), next = $('#calNext'), today = $('#calToday');
+    if (prev) prev.addEventListener('click', () => {
+      calM--; if (calM < 0) { calM = 11; calY--; } renderCalendar();
+    });
+    if (next) next.addEventListener('click', () => {
+      calM++; if (calM > 11) { calM = 0; calY++; } renderCalendar();
+    });
+    if (today) today.addEventListener('click', () => {
+      const n = new Date(); calY = n.getFullYear(); calM = n.getMonth(); renderCalendar();
+    });
+  }
+
+  /* ----------------------------- 周连续（周历） ----------------------------- */
+  // 连续周数：周一为一周之始；本周有运动则从本周起算，否则从上周起算。
+  // 注意：不能用 toISOString()（按 UTC 换算，东八区会退一天），需手动格式化本地日期。
+  const _ymdLocal = (dt) =>
+    `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+
+  function calcWeekStreak(dates) {
+    const set = new Set(dates);
+    const wk = (d) => {
+      const dt = new Date(d + 'T00:00:00');
+      dt.setDate(dt.getDate() - ((dt.getDay() + 6) % 7)); // 回到本周周一
+      return _ymdLocal(dt);
+    };
+    const weeks = new Set([...set].map(wk));
+    const now = new Date();
+    let cur = wk(_ymdLocal(now));
+    let n = 0;
+    if (!weeks.has(cur)) {
+      const d = new Date(cur + 'T00:00:00');
+      d.setDate(d.getDate() - 7);
+      cur = _ymdLocal(d);
+    }
+    while (weeks.has(cur)) {
+      n++;
+      const d = new Date(cur + 'T00:00:00');
+      d.setDate(d.getDate() - 7);
+      cur = _ymdLocal(d);
+    }
+    return n;
+  }
+
+  // 本周（周一起）7 格小周历
+  function weekStripHTML() {
+    const now = new Date();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    const wds = (t('calWeekdays') || '').split(',');
+    const order = [1, 2, 3, 4, 5, 6, 0]; // 周一起
+    const byDay = dailyKmMap(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`, null);
+    let html = '<div class="week-strip">';
+    order.forEach((dw) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + order.indexOf(dw));
+      const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const e = byDay[ds.slice(8, 10)];
+      const km = e ? e.km : 0;
+      const on = km > 0;
+      html += `<div class="ws-cell${on ? ' on' : ''}" title="${ds}${e && e.items.length ? '\n' + e.items.join('\n') : ''}">
+        <i>${wds[dw]}</i>${on ? `<b>${km >= 10 ? km.toFixed(0) : km.toFixed(1)}</b>` : '<u>&nbsp;</u>'}</div>`;
+    });
+    html += '</div>';
+    return html;
+  }
+
   /* ----------------------------- 活动列表 ----------------------------- */
   let actFilter = 'all';
   let actLimit = 10;   // 最近活动列表只显示最近的 10 条；点击 PB 跳转时临时放大，确保目标活动出现在列表里
@@ -590,6 +808,35 @@
   }
 
   /* ----------------------------- 轨迹墙 ----------------------------- */
+  // 相似路线聚合：同类型 + 起点相近(≤250m) + 距离相近(±max(0.3km,10%))
+  // → 视为同一条路线（如每晚同一条环线），墙上只占一格，可翻看历史。
+  // 入参按日期倒序；返回分组数组，天然按「最新成员日期」倒序。
+  function groupRoutes(acts) {
+    const dist = (p, q) => {
+      const rad = Math.PI / 180;
+      const dx = (p[1] - q[1]) * rad * Math.cos(p[0] * rad);
+      const dy = (p[0] - q[0]) * rad;
+      return Math.sqrt(dx * dx + dy * dy) * 6371000;
+    };
+    const groups = [];
+    for (const a of acts) {
+      let g = null;
+      if (a.track && a.track.length >= 2) {
+        for (const gr of groups) {
+          const ref = gr.acts[0]; // 组内最新一条作为代表
+          if (ref.type !== a.type || !ref.track || ref.track.length < 2) continue;
+          if (Math.abs(a.distanceKm - ref.distanceKm) >
+              Math.max(0.3, 0.10 * Math.max(a.distanceKm, ref.distanceKm))) continue;
+          if (dist(a.track[0], ref.track[0]) > 250) continue;
+          g = gr; break;
+        }
+      }
+      if (!g) { g = { acts: [] }; groups.push(g); }
+      g.acts.push(a);
+    }
+    return groups;
+  }
+
   function renderTracks() {
     const year = currentYear;
     const acts = ACTIVITIES.filter(
@@ -597,33 +844,73 @@
         ['run', 'walk', 'ride', 'hike', 'moto'].includes(a.type) && a.distanceKm > 0
     )
       .slice()
-      .sort((a, b) => (a.date < b.date ? 1 : -1))
-      .slice(0, 12);
+      .sort((a, b) => (a.date < b.date ? 1 : -1));
 
-    if (!acts.length) {
+    // 相似路线聚合后取最近 12 条路线（而非 12 条活动），避免同一环线刷屏
+    const groups = groupRoutes(acts).slice(0, 12);
+
+    if (!groups.length) {
       $('#tracksGrid').innerHTML = `<p class="muted">${t('tracksEmpty')}</p>`;
       return;
     }
 
-    currentTrackActs = acts;
-    $('#tracksGrid').innerHTML = acts
-      .map((a, i) => {
+    currentTrackActs = groups;
+    $('#tracksGrid').innerHTML = groups
+      .map((g, i) => {
+        const a = g.acts[0]; // 代表 = 最新一次
         const color = SPORT[a.type].color;
-        const svg = (a.track && a.track.length >= 2) ? realTrackSVG(a.track, color) : routeSVG(color, a.date);
+        const hasReal = typeof window !== 'undefined' && window.REALDATA;
+        // 真实数据缺 GPS 时显示占位图；假曲线只用于内置示例数据
+        const svg = (a.track && a.track.length >= 2) ? realTrackSVG(a.track, color)
+          : (hasReal ? emptyTrackSVG(color) : routeSVG(color, a.date));
+        const n = g.acts.length;
+        const pager = n > 1
+          ? `<span class="t-page" data-d="-1" title="${t('routePrev')}">‹</span>` +
+            `<span class="t-page" data-d="1" title="${t('routeNext')}">›</span>`
+          : '';
         return `
-        <div class="track-card" data-idx="${i}" title="${a.date} · ${actTitle(a)} · ${a.distanceKm.toFixed(1)}km ${t('tracksFocus')}">
-          ${svg}
+        <div class="track-card" data-idx="${i}" data-pos="0"
+             title="${a.date} · ${actTitle(a)} · ${a.distanceKm.toFixed(1)}km${n > 1 ? ` · ${t('routeTimes').replace('{n}', n)}` : ''} ${t('tracksFocus')}">
+          ${n > 1 ? `<span class="track-badge">×${n}</span>` : ''}
+          <span class="t-svg">${svg}</span>
           <div class="t-title">${actTitle(a)}</div>
-          <div class="t-meta">${a.distanceKm.toFixed(1)}km · ${fmtDate(a.date).split(' · ')[0]}</div>
+          <div class="t-meta">${a.distanceKm.toFixed(1)}km · ${fmtDate(a.date).split(' · ')[0]}${n > 1 ? ` · <span class="t-cur">1/${n}</span>` : ''}</div>
+          <span class="t-nav">${pager}</span>
         </div>`;
       })
       .join('');
 
-    // 点击轨迹卡片 → 在地图上聚焦该轨迹
+    const showMember = (card, pos, focus) => {
+      const g = currentTrackActs[+card.dataset.idx];
+      if (!g) return;
+      pos = ((pos % g.acts.length) + g.acts.length) % g.acts.length;
+      card.dataset.pos = String(pos);
+      const a = g.acts[pos];
+      const color = SPORT[a.type].color;
+      const hasReal = typeof window !== 'undefined' && window.REALDATA;
+      const svg = (a.track && a.track.length >= 2) ? realTrackSVG(a.track, color)
+        : (hasReal ? emptyTrackSVG(color) : routeSVG(color, a.date));
+      card.querySelector('.t-svg').innerHTML = svg;
+      const n = g.acts.length;
+      card.querySelector('.t-meta').innerHTML =
+        `${a.distanceKm.toFixed(1)}km · ${fmtDate(a.date).split(' · ')[0]}${n > 1 ? ` · <span class="t-cur">${pos + 1}/${n}</span>` : ''}`;
+      card.title = `${a.date} · ${actTitle(a)} · ${a.distanceKm.toFixed(1)}km${n > 1 ? ` · ${t('routeTimes').replace('{n}', n)}` : ''} ${t('tracksFocus')}`;
+      if (focus) focusTrackOnMap(a);
+    };
+
+    // 点击卡片 → 在地图上聚焦当前成员；‹ › 仅翻看历史，不动地图
     $$('#tracksGrid .track-card').forEach((card) => {
-      card.addEventListener('click', () => {
-        const a = currentTrackActs[+card.dataset.idx];
-        if (a) focusTrackOnMap(a);
+      card.addEventListener('click', (ev) => {
+        const pg = ev.target.closest('.t-page');
+        const g = currentTrackActs[+card.dataset.idx];
+        if (!g) return;
+        if (pg) {
+          ev.stopPropagation();
+          showMember(card, +card.dataset.pos + Number(pg.dataset.d), false);
+        } else {
+          const a = g.acts[+card.dataset.pos || 0];
+          if (a) focusTrackOnMap(a);
+        }
       });
     });
   }
@@ -650,7 +937,20 @@
     </svg>`;
   }
 
-  // 由日期生成确定性的「伪轨迹」曲线（无真实 GPS 时使用）
+  // 无真实 GPS 轨迹时的占位图（真实数据不画假曲线，避免误导）
+  function emptyTrackSVG(color) {
+    const W = 130, H = 80, y = H / 2;
+    return `<svg viewBox="0 0 ${W} ${H}">
+      <line x1="16" y1="${y}" x2="${W - 16}" y2="${y}" stroke="${color}" stroke-width="1.6"
+        stroke-dasharray="5 5" opacity=".38" stroke-linecap="round"/>
+      <circle cx="16" cy="${y}" r="2.6" fill="${color}" opacity=".5"/>
+      <circle cx="${W - 16}" cy="${y}" r="2.6" fill="${color}" opacity=".5"/>
+      <text x="${W / 2}" y="${y - 9}" text-anchor="middle" font-size="9.5"
+        fill="${color}" opacity=".62">暂无轨迹</text>
+    </svg>`;
+  }
+
+  // 由日期生成确定性的「伪轨迹」曲线（仅内置示例数据使用）
   function routeSVG(color, seedStr) {
     let seed = 0;
     for (let i = 0; i < seedStr.length; i++) seed = (seed * 31 + seedStr.charCodeAt(i)) | 0;
@@ -764,8 +1064,8 @@
   }
 
   function applyMapTheme() {
-    if (!map || !mapTile) return;
-    mapTile.setUrl(mapTileUrl());
+    if (map && mapTile) mapTile.setUrl(mapTileUrl());
+    if (fpMap && fpTile) fpTile.setUrl(mapTileUrl());
   }
 
   function focusTrackOnMap(a) {
@@ -804,6 +1104,37 @@
   }
 
   /* ----------------------------- 习惯打卡 ----------------------------- */
+  // 打卡数值文案：有次数显示次数（冷水澡按"次"），否则显示时长
+  function checkinVal(c) {
+    if (!c) return '';
+    if (c.reps) return `${c.reps} ${c.item === 'coldshower' ? t('habitUnitTimes') : t('habitUnitReps')}`;
+    if (c.sec) return fmtDuration(c.sec);
+    return '';
+  }
+
+  // Hero 下的「最新打卡」摘要条：最近一次打卡日期 + 当天全部动作，免滚动一眼可见
+  function renderLatestStrip() {
+    const el = $('#latestStrip');
+    if (!el) return;
+    if (!CHECKINS.length) { el.style.display = 'none'; return; }
+    const latest = CHECKINS.reduce((m, c) => (c.date > m ? c.date : m), '');
+    const items = CHECKINS.filter((c) => c.date === latest);
+    if (!items.length) { el.style.display = 'none'; return; }
+    const now = new Date();
+    const yd = new Date(now); yd.setDate(now.getDate() - 1);
+    const rel = latest === _ymdLocal(now) ? t('relToday')
+      : latest === _ymdLocal(yd) ? t('relYesterday')
+      : fmtDate(latest).split(' · ')[0];
+    const parts = items.map((c) => {
+      const val = checkinVal(c);
+      return `<span class="ls-item"><b>${habitLabel(c.item)}</b>${val ? ` ${val}` : ''}</span>`;
+    }).join('<span class="ls-sep">·</span>');
+    el.innerHTML =
+      `<span class="ls-title">🕐 ${t('latestTitle')}</span>` +
+      `<span class="ls-date">${rel}</span>${parts}`;
+    el.style.display = '';
+  }
+
   function renderHabits() {
     const section = document.getElementById('habits');
     // 没有任何打卡数据（如 Coros 不含习惯打卡，checkins=[]）时，整体隐藏该板块
@@ -828,9 +1159,27 @@
       // 该习惯当年无任何打卡记录 → 跳过，不渲染卡片（如冷水澡暂未记录则隐藏）
       if (!items.length) return;
       const daySet = new Set(items.map((i) => i.date));
-      const totalReps = items.reduce((s, i) => s + i.reps, 0);
+      // reps = 真实次数（俯卧撑/卷腹/深蹲）；sec = 时长秒数（含平板支撑）。
+      // 两者严格分开统计：老记录可能只有 sec（当年 Keep 未记次数）。
+      const totalReps = items.reduce((s, i) => s + (i.reps || 0), 0);
+      const totalSec = items.reduce((s, i) => s + (i.sec || 0), 0);
+      const hasReps = items.some((i) => i.reps);
+      const hasSec = items.some((i) => i.sec);
+      const byDay = {};
+      items.forEach((i) => { byDay[i.date] = i; });
+      const dayTip = (i) => {
+        if (!i) return '';
+        const parts = [];
+        if (i.reps) parts.push(`${i.reps} ${key === 'coldshower' ? t('habitUnitTimes') : t('habitUnitReps')}`);
+        if (i.sec) parts.push(fmtDuration(i.sec));
+        return `${i.date.slice(5)} · ${parts.join(' · ')}`;
+      };
       const days = items.length;
       const streak = calcStreak(items.map((i) => i.date));
+      // 最近一次（不限当年）：日期 + 次数/时长
+      const last = CHECKINS.reduce((m, c) => (c.item === key && (!m || c.date > m.date) ? c : m), null);
+      const lval = checkinVal(last);
+      const lastTxt = last ? `${t('habitLast')} ${last.date.slice(5)}${lval ? ` · ${lval}` : ''}` : '';
 
       // 小热力图（与年度热力图同布局）
       const first = new Date(year, 0, 1);
@@ -842,7 +1191,8 @@
       while (cur <= end) {
         const inYear = cur.getFullYear() === year;
         const on = inYear && daySet.has(ymd(cur));
-        cells.push(`<div class="c ${on ? 'on' : ''}"></div>`);
+        const tip = on ? dayTip(byDay[ymd(cur)]) : '';
+        cells.push(`<div class="c ${on ? 'on' : ''}"${tip ? ` title="${tip}"` : ''}></div>`);
         cur.setDate(cur.getDate() + 1);
       }
 
@@ -857,10 +1207,174 @@
         <div class="habit-mini-grid">${cells.join('')}</div>
         <div class="habit-foot">
           <div><b>${days}</b>${t('habitDays')}</div>
-          <div><b>${totalReps.toLocaleString()}</b>${key === 'coldshower' ? t('habitUnitTimes') : t('habitUnitReps')}</div>
-        </div>`;
+          ${hasReps ? `<div><b>${totalReps.toLocaleString()}</b>${key === 'coldshower' ? t('habitUnitTimes') : t('habitUnitReps')}</div>` : ''}
+          ${hasSec ? `<div><b>${fmtDuration(totalSec)}</b></div>` : ''}
+        </div>
+        <div class="habit-last">${lastTxt}</div>`;
       wrapper.appendChild(card);
     });
+  }
+
+  /* ----------------------------- 足迹地图 ----------------------------- */
+  let fpMap = null, fpTile = null, fpClusterGroup = null, fpDetailGroup = null, fpMode = 'cluster';
+  let fpData = null;
+
+  // 聚类点 → 城市标注：在锚点匹配半径内取「归属度」最高者（dist/r 最小），
+  // 无命中则不标注，避免大城市锚点把邻市活动抢走
+  function fpCityFor(lat, lng) {
+    const rad = Math.PI / 180;
+    let best = null, bestScore = Infinity;
+    for (const c of FOOTPRINT_CITIES) {
+      const dx = (c.lng - lng) * rad * Math.cos(lat * rad);
+      const dy = (c.lat - lat) * rad;
+      const km = Math.sqrt(dx * dx + dy * dy) * 6371;
+      if (km > (c.r || 25)) continue;
+      const score = km / (c.r || 25);
+      if (score < bestScore) { bestScore = score; best = c; }
+    }
+    return best;
+  }
+
+  // 全库带 GPS 的活动按 0.1°（约 11km）网格聚类为「足迹点」
+  function computeFootprint() {
+    if (fpData) return fpData;
+    const grid = new Map();
+    ACTIVITIES.forEach((a) => {
+      if (!a.track || a.track.length < 2 || !(a.distanceKm > 0)) return;
+      const la = a.track[0][0], lo = a.track[0][1];
+      const key = `${la.toFixed(1)},${lo.toFixed(1)}`;
+      let c = grid.get(key);
+      if (!c) {
+        c = { lat: 0, lng: 0, n: 0, km: 0, types: {}, first: a.date, last: a.date, acts: [] };
+        grid.set(key, c);
+      }
+      c.lat += la; c.lng += lo; c.n += 1; c.km += a.distanceKm || 0;
+      c.types[a.type] = (c.types[a.type] || 0) + 1;
+      if (a.date < c.first) c.first = a.date;
+      if (a.date > c.last) c.last = a.date;
+      c.acts.push(a);
+    });
+    fpData = [];
+    grid.forEach((c) => {
+      c.lat /= c.n; c.lng /= c.n; c.km = Math.round(c.km * 10) / 10;
+      const city = fpCityFor(c.lat, c.lng);
+      if (city) { c.city = city; }
+      fpData.push(c);
+    });
+    fpData.sort((a, b) => b.n - a.n);
+    return fpData;
+  }
+
+  function initFootprint() {
+    if (fpMap) return;
+    const el = $('#footprintMap');
+    if (!el) return;
+    if (typeof L === 'undefined') {
+      el.innerHTML =
+        '<div style="height:100%;display:grid;place-items:center;text-align:center;padding:24px;color:var(--muted)">' +
+        t('mapError') + '</div>';
+      return;
+    }
+    fpMap = L.map(el, { zoomControl: true, attributionControl: true, scrollWheelZoom: false });
+    fpTile = L.tileLayer(mapTileUrl(), {
+      subdomains: 'abcd', maxZoom: 19, attribution: mapAttribution(),
+      errorTileUrl:
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+    }).addTo(fpMap);
+    fpClusterGroup = L.layerGroup();
+    fpDetailGroup = L.layerGroup();
+    window.addEventListener('resize', () => fpMap && fpMap.invalidateSize());
+  }
+
+  function drawFootprint() {
+    initFootprint();
+    if (!fpMap) return;
+    const data = computeFootprint();
+    if (!data.length) {
+      $('#fpStats').textContent = t('tracksEmpty');
+      return;
+    }
+    // 顶部统计：城市数 / 足迹点数 / 累计里程
+    const cities = new Set(data.filter((c) => c.city).map((c) => c.city.zh));
+    const totalKm = data.reduce((s, c) => s + c.km, 0);
+    $('#fpStats').innerHTML =
+      `<b>${cities.size}</b> ${t('fpCities')} · <b>${data.length}</b> ${t('fpSpots')} · ` +
+      `${t('fpTotalKm')} <b>${totalKm.toFixed(0)} km</b>`;
+
+    fpClusterGroup.clearLayers();
+    fpDetailGroup.clearLayers();
+    data.forEach((c) => {
+      const mainType = Object.entries(c.types).sort((x, y) => y[1] - x[1])[0][0];
+      const color = (SPORT[mainType] || {}).color || '#2f80ed';
+      const placeLabel = c.city ? (LANG === 'en' ? c.city.en : c.city.zh) : t('fpSpot');
+      const typesTxt = Object.entries(c.types).sort((x, y) => y[1] - x[1])
+        .map(([k, n]) => `${sportLabel(k)} ×${n}`).join(' · ');
+      const popup = `<b>${placeLabel}</b><br>${c.n} ${t('statWorkoutUnit')} · ${c.km.toFixed(1)} km` +
+        `<br>${typesTxt}<br><span style="opacity:.65">${c.first} → ${c.last}</span>`;
+      L.circleMarker([c.lat, c.lng], {
+        radius: 7 + Math.sqrt(c.n) * 3, color, fillColor: color,
+        fillOpacity: 0.32, weight: 1.5, opacity: 0.85,
+      }).bindPopup(popup).addTo(fpClusterGroup);
+
+      c.acts.forEach((a) => {
+        const ac = (SPORT[a.type] || {}).color || '#2f80ed';
+        L.circleMarker([a.track[0][0], a.track[0][1]], {
+          radius: 3.5, color: ac, fillColor: ac, fillOpacity: 0.8, weight: 0,
+        }).bindPopup(`${a.date} · ${actTitle(a)} · ${a.distanceKm.toFixed(1)}km`)
+          .addTo(fpDetailGroup);
+      });
+    });
+    // 切换视图：聚合 / 明细（先移除再挂，避免重复图层）
+    fpMap.removeLayer(fpClusterGroup);
+    fpMap.removeLayer(fpDetailGroup);
+    (fpMode === 'cluster' ? fpClusterGroup : fpDetailGroup).addTo(fpMap);
+    const b = L.latLngBounds(data.map((c) => [c.lat, c.lng]));
+    if (b.isValid()) {
+      const cur = fpMap.getBounds();
+      if (!cur.intersects(b) || fpMap.getZoom() == null) fpMap.fitBounds(b, { padding: [30, 30], maxZoom: 13 });
+    }
+  }
+
+  function bindFootprintFilters() {
+    $$('#fpFilters .chip[data-fp]').forEach((chip) =>
+      chip.addEventListener('click', () => {
+        fpMode = chip.dataset.fp;
+        $$('#fpFilters .chip').forEach((x) => x.classList.toggle('active', x === chip));
+        drawFootprint();
+      })
+    );
+  }
+
+  /* ----------------------------- 轨迹数据按需加载 ----------------------------- */
+  // real_data.js 只含摘要（首屏快）；GPS 轨迹在 real_tracks.js 里由这里异步注入，
+  // 加载完成后重绘轨迹墙/地图/足迹。file:// 本地预览同样可用（script 注入不受 CORS 限制）。
+  let _tracksLoading = false;
+  function hydrateTracks() {
+    const tr = window.REALTRACKS;
+    if (!tr) return false;
+    let n = 0;
+    ACTIVITIES.forEach((a, i) => {
+      if (!a.track && tr[i] && tr[i].length) { a.track = tr[i]; n++; }
+    });
+    return n > 0;
+  }
+  function redrawTrackViews() {
+    renderTracks();
+    renderMap();
+    drawFootprint();
+  }
+  function loadTracks() {
+    if (_tracksLoading || typeof window.REALDATA === 'undefined') return;
+    if (typeof window.REALTRACKS !== 'undefined') {  // 已加载过（如语言切换）
+      redrawTrackViews();
+      return;
+    }
+    _tracksLoading = true;
+    const s = document.createElement('script');
+    s.src = 'assets/js/real_tracks.js';
+    s.onload = () => { if (hydrateTracks()) redrawTrackViews(); };
+    s.onerror = () => console.warn('real_tracks.js 加载失败，轨迹墙/地图将显示占位图');
+    document.head.appendChild(s);
   }
 
   /* ----------------------------- 主题切换 ----------------------------- */
@@ -922,6 +1436,10 @@
     renderTracks();
     renderHabits();
     renderMap();
+    drawFootprint();   // 仅重绘（弹窗/统计文案随语言更新），不重复绑定事件
+    renderTrend();
+    renderCalendar();
+    renderLatestStrip();
   }
 
   function bindLang() {
@@ -946,6 +1464,16 @@
     bindMapFilters();
     bindTheme();        // 先应用主题（含深色模式），再初始化地图底图
     renderMap();
+    renderTracks();
+    renderHabits();
+    renderMap();
+    bindFootprintFilters();
+    drawFootprint();
+    loadTracks();       // 异步加载轨迹数据后自动重绘轨迹墙/地图/足迹
+    renderTrend();      // 月度趋势（摘要数据即可渲染，无需等轨迹）
+    bindCalendarNav();
+    renderCalendar();
+    renderLatestStrip();
     renderHabits();
     bindStatScope();    // 统计作用域（本年 / 累计）切换
     initHeatmapTip();   // 热力图自定义悬停提示

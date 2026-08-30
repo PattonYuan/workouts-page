@@ -275,9 +275,75 @@ a:hover { text-decoration: underline; }
 .habit-mini-grid .c.on { background: var(--accent); }
 .habit-foot { display: flex; gap: 18px; margin-top: 12px; font-size: 13px; color: var(--muted); }
 .habit-foot b { color: var(--text); font-size: 16px; display: block; }
+.habit-last {
+  margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border);
+  font-size: 12px; color: var(--muted);
+}
+
+/* --------------------------- 最新打卡摘要条 --------------------------- */
+.latest-strip {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px;
+  background: var(--bg-elev); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 10px 18px; margin: -8px auto 18px; font-size: 13.5px;
+}
+.latest-strip .ls-title { font-weight: 700; }
+.latest-strip .ls-date {
+  color: var(--accent); font-weight: 700;
+  background: rgba(47, 128, 237, .12); padding: 1px 8px; border-radius: 999px;
+}
+.latest-strip .ls-item b { font-weight: 600; margin-right: 4px; }
+.latest-strip .ls-sep { color: var(--muted); }
 
 /* --------------------------- 轨迹地图 --------------------------- */
 .track-card { cursor: pointer; }
+.track-card { position: relative; }
+.track-card .t-svg { display: block; position: relative; }
+.track-badge {
+  position: absolute; top: 14px; right: 16px; z-index: 2;
+  background: rgba(0,0,0,.55); color: #fff; font-size: 11px; font-weight: 600;
+  padding: 1px 7px; border-radius: 999px; pointer-events: none;
+}
+.track-card .t-nav {
+  position: absolute; right: 12px; bottom: 44px; display: flex; gap: 4px;
+}
+.track-card .t-page {
+  width: 22px; height: 22px; display: grid; place-items: center;
+  background: var(--bg-elev); border: 1px solid var(--border); border-radius: 6px;
+  font-size: 13px; color: var(--muted); line-height: 1;
+}
+.track-card .t-page:hover { color: var(--text, inherit); border-color: var(--muted); }
+.track-card .t-cur { font-variant-numeric: tabular-nums; }
+
+/* --------------------------- 月度趋势 --------------------------- */
+.trend-panel {
+  background: var(--bg-elev); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px 18px;
+}
+.trend-title { font-size: 13px; font-weight: 600; margin: 4px 2px 8px; }
+.trend-title + svg + .trend-title { margin-top: 14px; }
+
+/* --------------------------- 月度日历 / 周历 --------------------------- */
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.cal-wd { text-align: center; font-size: 11px; color: var(--muted); padding: 2px 0; }
+.cal-cell {
+  min-height: 52px; border-radius: 8px; border: 1px solid var(--border);
+  padding: 4px 6px; text-align: right; font-size: 12px; position: relative;
+}
+.cal-cell b { font-weight: 600; opacity: .85; }
+.cal-cell span { display: block; font-size: 11px; font-weight: 700; color: #1b4f9c; }
+.dark .cal-cell span { color: #7fb3ff; }
+.cal-cell.cal-today { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.week-strip { display: flex; gap: 6px; justify-content: center; margin-top: 6px; }
+.ws-cell {
+  min-width: 34px; text-align: center; padding: 3px 4px; border-radius: 8px;
+  border: 1px solid var(--border); font-size: 11px;
+}
+.ws-cell i { display: block; font-style: normal; color: var(--muted); }
+.ws-cell b { font-size: 12px; }
+.ws-cell.on { background: rgba(47,128,237,.16); border-color: transparent; }
+.ws-cell.on b { color: #1b4f9c; }
+.dark .ws-cell.on b { color: #7fb3ff; }
 .track-map {
   height: 540px;
   border-radius: var(--radius);

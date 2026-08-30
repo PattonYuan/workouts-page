@@ -10,8 +10,25 @@ import json
 import os
 
 
+def _load_tracks(path):
+    """读取与 real_data.js 同目录、按活动顺序对齐的轨迹文件 real_tracks.js。
+    返回轨迹数组（与活动一一对应，无轨迹处为 null）；文件不存在返回 None。"""
+    tp = os.path.join(os.path.dirname(path), "real_tracks.js")
+    if not os.path.exists(tp):
+        return None
+    try:
+        with open(tp, encoding="utf-8") as f:
+            txt = f.read()
+        s = txt.index("[")
+        e = txt.rindex("]") + 1
+        return json.loads(txt[s:e])
+    except Exception:
+        return None
+
+
 def load_existing(path):
-    """读取已有的 real_data.js，解析出 window.REALDATA 内容。"""
+    """读取已有的 real_data.js，解析出 window.REALDATA 内容。
+    轨迹拆分存储在 real_tracks.js，这里自动合回活动上（保证增量合并不丢轨迹）。"""
     if not os.path.exists(path):
         return {"profile": None, "activities": [], "checkins": []}
     try:
@@ -20,9 +37,15 @@ def load_existing(path):
         marker = txt.index("window")
         s = txt.index("{", marker)
         e = txt.rindex("}") + 1
-        return json.loads(txt[s:e])
+        data = json.loads(txt[s:e])
     except Exception:
         return {"profile": None, "activities": [], "checkins": []}
+    tracks = _load_tracks(path)
+    if tracks:
+        for a, t in zip(data.get("activities", []), tracks):
+            if t:
+                a["track"] = t
+    return data
 
 
 def _key(a):
@@ -58,7 +81,9 @@ def derive_checkins(activities):
     """兜底：从已有 activities 按动作名关键词派生打卡记录。
 
     保证即使 fetch_keep 未传 checkins（或训练类来自高驰），打卡板块仍有数据。
-    返回 [{item, date, reps}, ...]，按 (item,date) 去重。
+    返回 [{item, date, reps, sec}, ...]，按 (item,date) 去重。
+    注意：活动本身不含真实次数（Keep 的 actualRep 只在详情接口里有），
+    因此这里 reps 恒为 None，时长放 sec —— 严禁拿时长秒数冒充次数。
     """
     out = []
     seen = set()
@@ -71,9 +96,8 @@ def derive_checkins(activities):
         if ck in seen:
             continue
         seen.add(ck)
-        # reps：优先活动自带（Keep 详情已填 actualRep/actualSec），否则用时长兜底
-        reps = a.get("reps") or a.get("movingTimeSec") or 1
-        out.append({"item": key, "date": date, "reps": int(reps)})
+        sec = a.get("movingTimeSec") or None
+        out.append({"item": key, "date": date, "reps": None, "sec": int(sec) if sec else None})
     return out
 
 
@@ -108,33 +132,52 @@ def _fuzzy_dup(new, existing):
 def _rebuild_checkins(activities, existing_checkins, incoming_checkins):
     """由合并后的活动重建打卡列表（按 动作+日期 去重）。
 
-    reps 优先采用既有/本次传入打卡里的精确个数（Keep traininglog 的 actualRep），
-    缺失时回退到活动时长。既修复「同日多条打卡被合并为一条」的 bug，
-    又保留历史已记录的精确次数。
+    字段语义（勿混）：
+      · reps = 真实次数（俯卧撑/卷腹/深蹲，来自 Keep traininglog 的 actualRep）；
+      · sec  = 时长秒数（全部动作都有；平板支撑只有秒数没有次数）。
+    reps 与 sec 严格分开：历史上曾把时长秒数回退成"次数"存进 reps，导致
+    统计口径错乱（如"卷腹 240 个"实为 240 秒）。重建时优先沿用既有/传入值，
+    活动级信息只用于补 sec（活动不含真实次数）。
     """
     reps = {}
+    sec = {}
     for c in (existing_checkins or []):
         ik = (c.get("item"), c.get("date"))
         if c.get("reps") is not None:
-            reps[ik] = c.get("reps")
+            reps[ik] = int(c["reps"])
+        if c.get("sec") is not None:
+            sec[ik] = int(c["sec"])
     for c in (incoming_checkins or []):
         ik = (c.get("item"), c.get("date"))
         if c.get("reps") is not None:
-            reps[ik] = c.get("reps")
-    out = []
-    seen = set()
+            reps[ik] = int(c["reps"])
+        if c.get("sec") is not None:
+            sec[ik] = int(c["sec"])
+    # 同日同动作可能有多条活动（如早晚各一次卷腹）：sec 累加，reps 取首个非空
+    agg = {}
+    order = []
     for a in activities:
         hk = _habit_key_from_name(a.get("title"))
         if not hk:
             continue
         ck = (hk, a.get("date"))
-        if ck in seen:
-            continue
-        seen.add(ck)
-        r = reps.get(ck)
-        if r is None:
-            r = a.get("reps") or a.get("movingTimeSec") or 1
-        out.append({"item": hk, "date": a.get("date"), "reps": int(r)})
+        if ck not in agg:
+            agg[ck] = {"sec": 0, "reps": None}
+            order.append(ck)
+        agg[ck]["sec"] += int(a.get("movingTimeSec") or 0)
+        if agg[ck]["reps"] is None and a.get("reps"):
+            agg[ck]["reps"] = int(a["reps"])
+    out = []
+    for ck in order:
+        e = agg[ck]
+        r = reps.get(ck) if reps.get(ck) is not None else e["reps"]
+        s = sec.get(ck) if sec.get(ck) is not None else e["sec"]
+        out.append({
+            "item": ck[0],
+            "date": ck[1],
+            "reps": int(r) if r else None,
+            "sec": int(s) if s else None,
+        })
     return out
 
 
@@ -199,10 +242,27 @@ def merge_and_write(new_activities, profile=None, checkins=None, out_path=None, 
             data["checkins"] = derived
             print(f"↪ 从活动派生 {len(derived)} 条打卡（未从上游接收到 checkins）")
 
+    # 轨迹拆分：real_data.js 只存活动摘要（首屏体积从 ~7MB 降到 <1MB），
+    # GPS 轨迹按活动顺序写入 real_tracks.js（数组对齐，无轨迹处 null），
+    # 由前端异步注入加载后再渲染轨迹墙/地图/足迹。
+    # 注意：拆出的轨迹已在内存 data 中移除，须先取引用再写文件。
+    tracks = []
+    for a in data["activities"]:
+        t = a.pop("track", None)
+        tracks.append(t if t else None)
+
     with open(out_path, "w", encoding="utf-8") as f:
         f.write("// 由 tools/sync_*.py 自动生成，请勿手动编辑\n")
         f.write("window.REALDATA = ")
         json.dump(data, f, ensure_ascii=False, indent=2)
         f.write(";\n")
 
-    print(f"✅ 已写入 {out_path}（共 {len(data['activities'])} 条活动）")
+    tracks_path = os.path.join(os.path.dirname(out_path), "real_tracks.js")
+    with open(tracks_path, "w", encoding="utf-8") as f:
+        f.write("// 由 tools/realdata.py 自动生成（轨迹与 REALDATA.activities 按下标对齐），请勿手动编辑\n")
+        f.write("window.REALTRACKS = ")
+        json.dump(tracks, f, ensure_ascii=False, separators=(",", ":"))
+        f.write(";\n")
+
+    print(f"✅ 已写入 {out_path}（共 {len(data['activities'])} 条活动）"
+          f" + {tracks_path}（{sum(1 for t in tracks if t)} 条轨迹）")

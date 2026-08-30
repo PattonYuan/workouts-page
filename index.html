@@ -25,6 +25,7 @@
         <a href="#activities" data-i18n="navActivities">Activities</a>
         <a href="#tracks" data-i18n="navTracks">Tracks</a>
         <a href="#trackmap" data-i18n="navMap">Map</a>
+        <a href="#footprint" data-i18n="navFootprint">Footprint</a>
         <a href="#habits" data-i18n="navHabits">Habits</a>
         <a href="#insights" data-i18n="navInsights">Consistency</a>
         <a href="#pb" data-i18n="navPB">PB</a>
@@ -48,6 +49,9 @@
         <div class="hero-stats" id="heroStats"><!-- JS 填充 --></div>
       </div>
     </section>
+
+    <!-- ===================== 最新打卡摘要条 ===================== -->
+    <div class="latest-strip container" id="latestStrip" style="display:none"><!-- JS 填充 --></div>
 
     <!-- ===================== 坚持度（连续打卡 / 最爱星期） ===================== -->
     <section id="insights" class="section container">
@@ -76,6 +80,19 @@
       </div>
     </section>
 
+    <!-- ===================== 月度日历 ===================== -->
+    <section id="calendar" class="section container">
+      <div class="section-head">
+        <h2 data-i18n="secCalendar">Month Calendar</h2>
+        <div class="filters">
+          <button class="chip" id="calPrev">‹</button>
+          <button class="chip" id="calToday" data-i18n="calThisMonth">This month</button>
+          <button class="chip" id="calNext">›</button>
+        </div>
+      </div>
+      <div class="trend-panel" id="calPanel"><!-- JS 填充 --></div>
+    </section>
+
     <!-- ===================== 数据统计 ===================== -->
     <section id="stats" class="section container">
       <div class="section-head">
@@ -86,6 +103,16 @@
         </div>
       </div>
       <div class="stat-cards" id="statCards"><!-- JS 填充 --></div>
+    </section>
+
+    <!-- ===================== 月度趋势 ===================== -->
+    <section id="trend" class="section container">
+      <div class="section-head">
+        <h2 data-i18n="secTrend">Monthly Trend</h2>
+        <div class="year-tabs" id="trendYearTabs"><!-- JS 填充 --></div>
+      </div>
+      <div class="trend-panel" id="trendPanel"><!-- JS 填充 SVG --></div>
+      <p class="map-hint muted" data-i18n="trendHint">Monthly distance stacked by sport · dashed line = same period last year</p>
     </section>
 
     <!-- ===================== 个人最佳 ===================== -->
@@ -138,6 +165,20 @@
       </div>
       <div id="trackMap" class="track-map"></div>
       <p class="map-hint muted" data-i18n="mapHint">Real GPS tracks overlaid on the map · click a track for details · click a "Track Wall" card above to focus it on the map</p>
+    </section>
+
+    <!-- ===================== 足迹地图 ===================== -->
+    <section id="footprint" class="section container">
+      <div class="section-head">
+        <h2 data-i18n="secFootprint">Footprint Map</h2>
+        <div class="filters" id="fpFilters">
+          <button class="chip active" data-fp="cluster" data-i18n="fpByPlace">By place</button>
+          <button class="chip" data-fp="all" data-i18n="fpAllPoints">All start points</button>
+        </div>
+      </div>
+      <div id="footprintMap" class="track-map"></div>
+      <p class="map-hint muted" id="fpStats"><!-- JS 填充 --></p>
+      <p class="map-hint muted" data-i18n="fpHint">Every GPS start location · circle size = visits · click a bubble for details</p>
     </section>
 
     <!-- ===================== 习惯打卡 ===================== -->

@@ -40,7 +40,7 @@ echo "==> 解析并写入 real_data.js ..."
 
 # 3. 检查是否变化
 if git status --short assets/js/real_data.js | grep -q .; then
-  git add assets/js/real_data.js
+  git add assets/js/real_data.js assets/js/real_tracks.js
   git commit -m "手动同步：Coros 数据更新"
   echo "==> 已提交。"
   if [ "$PUSH" = "1" ]; then

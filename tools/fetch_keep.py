@@ -27,7 +27,7 @@ import os
 import sys
 import time
 import zlib
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from urllib import request as ureq
 from urllib.parse import urlencode
 import http.cookiejar
@@ -46,6 +46,15 @@ STATS_API = "https://api.gotokeep.com/pd/v3/stats/detail?dateUnit=all&type={type
 RUN_LOG_API = "https://api.gotokeep.com/pd/v3/runninglog/{run_id}"
 # 训练类（力量/核心/自重）详情走 traininglog 接口，runninglog 对其返回 400
 TRAININGLOG_API = "https://api.gotokeep.com/pd/v3/traininglog/{log_id}"
+# 步行/徒步（dataType=*Walking / id 带 _hk 后缀）的详情走 hikinglog 接口，
+# runninglog 对其返回 400；hikinglog 返回 geoPoints（真实 GPS 轨迹）。
+# 线索：活动列表 stats.schema 形如 keep://hikinglogs/{id}。
+HIKINGLOG_API = "https://api.gotokeep.com/pd/v3/hikinglog/{log_id}"
+
+# Keep 返回的时间戳是 UTC 毫秒；日期一律按东八区换算。此前用 UTC 格式化，
+# 导致凌晨 00:00–08:00 的活动（如 00:01 的俯卧撑）被记到前一天，还会让
+# 跨平台（高驰）去重因「日期不同」而失败，同一活动重复展示。
+TZ_CN = timezone(timedelta(hours=8))
 
 # 训练动作名 → 习惯打卡 item 键（用于 HABIT 打卡板块）
 # 注意：这些在 Keep 里 dataType 多为 manualStrengthTraining / trainingStretching / hiit 等，
@@ -271,18 +280,62 @@ def _haversine_km(lats, lons):
 
 
 # ----------------------------- 单条活动解析 -----------------------------
-def parse_run_log(client, run_id, page_type):
+def _fetch_detail(client, run_id, page_type):
+    """取活动详情 JSON data。runninglog 不支持（400）的类型自动回退：
+    步行/徒步 → hikinglog。返回 data dict 或 None。"""
     r = client._req(RUN_LOG_API.format(run_id=run_id))
     if not r or not r.get("data"):
+        if page_type in ("hiking", "walking"):
+            r = client._req(HIKINGLOG_API.format(log_id=run_id))
+        if not r or not r.get("data"):
+            return None
+    return r["data"]
+
+
+def _extract_track(d, client):
+    """从详情 data 提取 GPS 轨迹（GCJ-02 → WGS-84，[lat, lon] 列表）。
+    优先 geoPoints（接口内嵌加密 GPS），缺失时回退 CDN rawDataURL（可能 403）。"""
+    track = []
+    geo = d.get("geoPoints")
+    if geo:
+        pts = _decode_runmap(geo, is_geo=True)
+        if pts:
+            for p in pts:
+                lat = p.get("latitude")
+                lng = p.get("longitude")
+                if lat is None or lng is None:
+                    continue
+                wlon, wlat = gcj02_to_wgs84(float(lng), float(lat))
+                track.append([round(wlat, 6), round(wlon, 6)])
+    if not track:
+        raw_url = d.get("rawDataURL")
+        if raw_url and not client.track_blocked:
+            resp = client._req(raw_url, retries=1)
+            if resp and isinstance(resp, str):
+                pts = _decode_runmap(resp)
+                if pts:
+                    for p in pts:
+                        lat = p.get("latitude")
+                        lng = p.get("longitude")
+                        if lat is None or lng is None:
+                            continue
+                        wlon, wlat = gcj02_to_wgs84(float(lng), float(lat))
+                        track.append([round(wlat, 6), round(wlon, 6)])
+            else:
+                client.track_blocked = True
+    return track
+
+
+def parse_run_log(client, run_id, page_type):
+    d = _fetch_detail(client, run_id, page_type)
+    if not d:
         return None
-    d = r["data"]
     try:
         start = d.get("startTime", 0) / 1000
         end = d.get("endTime", 0) / 1000
         if not start:
             return None
-        tz = d.get("timezone", "")
-        dt = datetime.fromtimestamp(start, tz=timezone.utc)
+        dt = datetime.fromtimestamp(start, tz=TZ_CN)
         date_str = dt.strftime("%Y-%m-%d")
         # 时长优先用接口直接给的 duration（秒），缺失时回退到 end-start
         dur = int(d.get("duration") or 0)
@@ -290,42 +343,11 @@ def parse_run_log(client, run_id, page_type):
             dur = int(end - start)
 
         # 距离：Keep 接口直接返回 distance（单位：米），优先使用，避免依赖被防盗链挡掉的轨迹 CDN。
-        # 轨迹 CDN（rawDataURL）在本机/部分网络下返回 403，track 可能为空；距离改由接口字段保证正确。
         dist_m = d.get("distance")
         dist = round(float(dist_m) / 1000.0, 2) if isinstance(dist_m, (int, float)) else 0.0
 
-        # 轨迹（GCJ-02 → WGS-84）：优先用接口直接返回的 geoPoints（加密 GPS 点序列），
-        # 无需依赖被防盗链挡掉的 CDN(rawDataURL)。仅当 geoPoints 缺失时才回退到 rawDataURL。
-        # 室内运动（跑步机/室内训练）本身无 GPS，geoPoints 为空，track 自然为空。
-        track = []
-        geo = d.get("geoPoints")
-        if geo:
-            pts = _decode_runmap(geo, is_geo=True)
-            if pts:
-                for p in pts:
-                    lat = p.get("latitude")
-                    lng = p.get("longitude")
-                    if lat is None or lng is None:
-                        continue
-                    wlon, wlat = gcj02_to_wgs84(float(lng), float(lat))
-                    track.append([round(wlat, 6), round(wlon, 6)])
-        if not track:
-            # 回退：部分老活动只有 rawDataURL（CDN），可能 403，失败则留空。
-            raw_url = d.get("rawDataURL")
-            if raw_url and not client.track_blocked:
-                resp = client._req(raw_url, retries=1)
-                if resp and isinstance(resp, str):
-                    pts = _decode_runmap(resp)
-                    if pts:
-                        for p in pts:
-                            lat = p.get("latitude")
-                            lng = p.get("longitude")
-                            if lat is None or lng is None:
-                                continue
-                            wlon, wlat = gcj02_to_wgs84(float(lng), float(lat))
-                            track.append([round(wlat, 6), round(wlon, 6)])
-                else:
-                    client.track_blocked = True
+        # 轨迹（GCJ-02 → WGS-84）。室内运动（跑步机/室内训练）本身无 GPS，track 自然为空。
+        track = _extract_track(d, client)
 
         # 爬升：接口直接给 accumulativeUpliftedHeight（米）
         elev = d.get("accumulativeUpliftedHeight")
@@ -379,6 +401,19 @@ def fetch_type(client, page_type, since_ts=0):
                 st = log.get("stats")
                 if not isinstance(st, dict):
                     continue  # 跳过 type=steps 的计步摘要（无 id，且 .get 会崩）
+                # 步行（outdoorWalking/indoorWalking）只从 walking 流由 fetch_walks 处理。
+                # Keep 的 hiking 流同样混着步行记录（内部 type=hiking），若在此解析会
+                # 被误标成 hike（"Keep徒步"），且与 fetch_walks 产生的 walk 记录、以及
+                # 高驰的健走记录因「类型不同」而无法模糊去重 → 同一次步行重复展示。
+                if page_type != "walking" and st.get("dataType") in ("outdoorWalking", "indoorWalking"):
+                    continue
+                # hiking 流里还混有爬楼梯（stairClimbing）等非徒步记录（id 同为 _hk，
+                # 详情也在 hikinglog 上，能解析成功），只保留真正的徒步。
+                if page_type == "hiking":
+                    dt = (st.get("dataType") or "").lower()
+                    nm = st.get("name") or ""
+                    if "hiking" not in dt and not any(k in nm for k in ("徒步", "登山", "远足")):
+                        continue
                 ms = _rec_start_ms(st)
                 # 增量：接口按时间倒序返回，见到不晚于游标的旧记录即已到底，停止翻页
                 if since_ts and ms and ms < since_ts - GRACE_MS:
@@ -413,10 +448,11 @@ def fetch_type(client, page_type, since_ts=0):
 
 # ----------------------------- 步行专用拉取 -----------------------------
 # Keep 的 "walking" 接口其实是「全量活动流」：跑步/骑行/徒步/爬楼/HIIT/羽毛球/拉伸/步行…
-# 全混在一起（共 7500+ 条），且其中步行(_hk 后缀)详情 RUN_LOG_API 返回 HTTP 400，取不到
-# 轨迹/心率。但活动列表的 stats 摘要已自带 distance/duration/startTime/name，足以记录步行
-# 本身（无 GPS 轨迹，Keep 对步行本就不提供）。因此单独实现：只挑真正的步行，用摘要直接构造，
-# 不调 RUN_LOG_API，也不把同流的跑步/骑行误标成 walk。
+# 全混在一起（共 7500+ 条），因此单独实现：只挑真正的步行，不把同流的跑步/骑行误标成 walk。
+#
+# 轨迹：户外步行（outdoorWalking，id 带 _hk 后缀）的详情在 hikinglog 接口上
+# （runninglog 对其返回 400），带 geoPoints 加密 GPS，可解出真实轨迹。
+# 室内步行无 GPS，直接用列表摘要构造，不调详情。
 WALK_NAME_HINTS = ("步行", "行走", "健走", "走路")
 
 
@@ -428,7 +464,9 @@ def _is_walk(st):
     return any(h in nm for h in WALK_NAME_HINTS)
 
 
-def _walk_from_stats(st):
+def _build_walk(client, st):
+    """由列表摘要构造步行记录；户外步行再调 hikinglog 详情补全 GPS 轨迹/心率。
+    详情失败时退化为无轨迹的摘要记录（距离/时长仍正确）。"""
     ms = st.get("startTime") or 0
     if not ms:
         dd = st.get("doneDate")
@@ -439,21 +477,43 @@ def _walk_from_stats(st):
                 ms = 0
     if not ms:
         return None
-    dt = datetime.fromtimestamp(ms / 1000, tz=timezone.utc)
+    dt = datetime.fromtimestamp(ms / 1000, tz=TZ_CN)
     date_str = dt.strftime("%Y-%m-%d")
     dist_m = st.get("distance")
     dist = round(float(dist_m) / 1000.0, 2) if isinstance(dist_m, (int, float)) else 0.0
     dur = int(st.get("duration") or 0)
     name = st.get("name") or "健走"
+
+    track = []
+    elev = 0.0
+    hr = None
+    rid = st.get("id")
+    if st.get("dataType") == "outdoorWalking" and rid:
+        d = client._req(HIKINGLOG_API.format(log_id=rid))
+        dd = (d or {}).get("data") if d else None
+        if dd:
+            track = _extract_track(dd, client)
+            if isinstance(dd.get("distance"), (int, float)) and dd["distance"] > 0:
+                dist = round(float(dd["distance"]) / 1000.0, 2)
+            if dd.get("duration"):
+                dur = int(dd["duration"])
+            e = dd.get("accumulativeUpliftedHeight")
+            if isinstance(e, (int, float)):
+                elev = round(float(e), 1)
+            h = (dd.get("heartRate") or {}).get("averageHeartRate")
+            if isinstance(h, (int, float)) and 0 < h < 250:
+                hr = int(h)
+            name = dd.get("workoutName") or dd.get("exerciseName") or name
+        time.sleep(0.3)  # 详情接口轻量限速
     return {
         "date": date_str,
         "type": "walk",
         "title": name,
         "distanceKm": dist,
         "movingTimeSec": dur,
-        "elevationM": 0.0,
-        "avgHr": 0,
-        "track": [],
+        "elevationM": elev,
+        "avgHr": hr or 0,
+        "track": _downsample_track(track),
         "source": "keep",
     }
 
@@ -486,12 +546,13 @@ def fetch_walks(client, since_ts=0):
                 if not _is_walk(st):
                     continue
                 seen.add(rid)
-                act = _walk_from_stats(st)
+                act = _build_walk(client, st)
                 if act:
                     out.append(act)
                     if newest_ms is None or (ms and ms > newest_ms):
                         newest_ms = ms
-                    print(f"  + {act['date']} [walk] {act['title']} {act['distanceKm']}km")
+                    print(f"  + {act['date']} [walk] {act['title']} {act['distanceKm']}km"
+                          f"{' (含GPS轨迹)' if act['track'] else ''}")
         nl = data.get("lastTimestamp", 0)
         if not nl:
             break
@@ -533,7 +594,7 @@ def _training_from_summary(st):
                 ms = 0
     if not ms:
         return None
-    dt = datetime.fromtimestamp(ms / 1000, tz=timezone.utc)
+    dt = datetime.fromtimestamp(ms / 1000, tz=TZ_CN)
     date_str = dt.strftime("%Y-%m-%d")
     dur = int(st.get("duration") or st.get("accurateDuration") or 0)
     name = st.get("name") or "训练"
@@ -551,8 +612,8 @@ def _training_from_summary(st):
     key = _training_item_key(name)
     checkin = None
     if key:
-        # 优先取详情里的 actualRep / actualSec；摘要拿不到，用 duration 兜底（平板支撑）
-        checkin = {"item": key, "date": date_str, "reps": dur or 1}
+        # 摘要阶段只有时长；真实次数 reps 由 fetch_training 调详情补全
+        checkin = {"item": key, "date": date_str, "reps": None, "sec": dur or None}
     return act, checkin
 
 
@@ -590,25 +651,29 @@ def fetch_training(client, since_ts=0):
                 if not res:
                     continue
                 act, checkin = res
-                # 尝试用 traininglog 详情补全 reps（actualRep/actualSec）
+                # 用 traininglog 详情补全精确次数与时长（字段严格分开，勿混）：
+                #   · reps = groups[].actualRep 累加 —— Keep 记录的真实次数
+                #     （俯卧撑/卷腹/深蹲；累加而非取第一组，多组课程才不漏）；
+                #   · sec  = groups[].actualSec 累加（缺失回退详情 duration）——时长秒数，
+                #     平板支撑只有 sec 没有 reps。
                 if checkin is not None:
                     d = client._req(TRAININGLOG_API.format(log_id=rid))
                     dd = (d or {}).get("data") if d else None
                     if dd:
-                        reps = None
-                        for g in (dd.get("groups") or []):
-                            if g.get("actualRep"):
-                                reps = int(g["actualRep"])
-                                break
-                        if reps is None and dd.get("duration"):
-                            reps = int(dd.get("duration") or 0) or None
-                        if reps:
-                            checkin["reps"] = reps
+                        groups = dd.get("groups") or []
+                        n = sum(int(g.get("actualRep") or 0) for g in groups)
+                        s = sum(int(g.get("actualSec") or 0) for g in groups)
+                        s = s or int(dd.get("duration") or 0)
+                        if n and checkin["item"] != "plank":
+                            checkin["reps"] = n
+                        if s:
+                            checkin["sec"] = s
                 acts.append(act)
                 checkins.append(checkin)
                 if newest_ms is None or (ms and ms > newest_ms):
                     newest_ms = ms
-                print(f"  + {act['date']} [workout] {act['title']} -> {checkin['item']} x{checkin['reps']}")
+                got = f"{checkin['reps']}个" if checkin.get("reps") else f"{checkin.get('sec') or 0}秒"
+                print(f"  + {act['date']} [workout] {act['title']} -> {checkin['item']} {got}")
         nl = data.get("lastTimestamp", 0)
         if not nl or nl == last:
             break

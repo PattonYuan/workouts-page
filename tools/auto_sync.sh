@@ -37,12 +37,14 @@ detect_proxy() {
   # 1) 沿用已设置的环境变量（若可达）
   if [ -n "${http_proxy:-}" ]; then
     code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 -x "$http_proxy" https://github.com 2>/dev/null)
-    [ "$code" != "000" ] && [ -n "$code" ] && { echo "${http_proxy#*//}"; return; }
+    [ "$code" != "000" ] && [ -n "$code" ] && { p="${http_proxy##*:}"; echo "${p%/}"; return; }
   fi
   # 2) 读 macOS 系统代理（networksetup 里填的端口，如 7890）
   for svc in "Wi-Fi" "Ethernet" "Thunderbolt Bridge"; do
     sp=$(networksetup -getwebproxy "$svc" 2>/dev/null | awk -F': ' '/Port/{print $2}')
-    [ -n "$sp" ] && { echo "$sp"; return; }
+    [ -n "$sp" ] || continue
+    code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 -x "http://127.0.0.1:$sp" https://github.com 2>/dev/null)
+    [ "$code" != "000" ] && [ -n "$code" ] && { echo "$sp"; return; }
   done
   # 3) 兜底扫描常见端口（含本机常开的 7877/7890 及 WorkBuddy 沙箱代理 50715）
   for p in 7890 7891 7892 7893 7877 1080 1081 8080 8888 8118 3128 9090 33210 33211 52074 63863 62459 50715; do
@@ -92,12 +94,16 @@ fi
 
 # 3. 提交 + 推送（仅在有变化时）
 echo "==> [3/3] 检查变更并提交 ..."
-# 只检测数据文件本身，避免把 untracked 脚本/日志误判为"有变化"
-if git diff --quiet assets/js/real_data.js 2>/dev/null; then
+# 只检测数据文件本身，避免把 untracked 脚本/日志误判为"有变化"。
+# real_data.js（活动摘要）与 real_tracks.js（GPS 轨迹，2026-08 拆分）必须一起提交：
+# 缺少 real_tracks.js 时页面无轨迹，且增量合并会因读不到历史轨迹而逐步丢失它们。
+DATA_FILES="assets/js/real_data.js assets/js/real_tracks.js"
+_changed=$(git status --porcelain -- $DATA_FILES 2>/dev/null | wc -l | tr -d ' ')
+if [ "$_changed" = "0" ]; then
   # 无变化
   echo "    ✅ 无新增数据，无需提交/推送"
 else
-  git add assets/js/real_data.js
+  git add $DATA_FILES
   git commit -m "auto sync: $(date '+%Y-%m-%d') 数据更新" >> "$PROJ/logs/auto_sync.log" 2>&1 \
     && echo "    已提交" \
     || echo "    ⚠️ 提交失败"

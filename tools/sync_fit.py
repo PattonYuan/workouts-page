@@ -21,10 +21,15 @@ import glob
 import json
 import os
 import sys
+from datetime import timedelta, timezone
 
 # 复用共享合并逻辑
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from realdata import merge_and_write
+
+# FIT 里的时间戳是 UTC（fitparse 解出 naive datetime），日期/时段一律按东八区换算。
+# 此前直接 strftime UTC 值，凌晨 00:00–08:00 的活动会被记到前一天。
+TZ_CN = timezone(timedelta(hours=8))
 
 SPORT_MAP = {
     "running": "run",
@@ -145,8 +150,11 @@ def _build_activity(session, track, fname, coros_type=None, name=None):
     start = session.get("start_time")
     if start is None:
         return None
-    date = start.strftime("%Y-%m-%d")
-    hour = start.hour
+    if start.tzinfo is None:
+        start = start.replace(tzinfo=timezone.utc)  # FIT 存 UTC（naive）
+    local = start.astimezone(TZ_CN)
+    date = local.strftime("%Y-%m-%d")
+    hour = local.hour
     # 优先用高驰活动名（真实名称），否则按时间段合成
     title = name.strip() if name and name.strip() else f"{time_of_day_label(hour)} {SPORT_LABEL.get(stype, 'Workout')}"
 
