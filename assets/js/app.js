@@ -1276,6 +1276,9 @@
       return;
     }
     fpMap = L.map(el, { zoomControl: true, attributionControl: true, scrollWheelZoom: false });
+    // 必须先给初始视图：无 center/zoom 时 add circleMarker 会抛 "Set map center and zoom first"，
+    // 后续 fitBounds 只能调整、不能代替初始视图
+    fpMap.setView([33.5, 110.0], 4);
     fpTile = L.tileLayer(mapTileUrl(), {
       subdomains: 'abcd', maxZoom: 19, attribution: mapAttribution(),
       errorTileUrl:
