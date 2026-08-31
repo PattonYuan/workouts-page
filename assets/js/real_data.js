@@ -39171,6 +39171,16 @@ window.REALDATA = {
       "elevationM": 8,
       "avgHr": 121,
       "source": "coros"
+    },
+    {
+      "date": "2026-08-30",
+      "type": "walk",
+      "title": "绍兴市 健走",
+      "distanceKm": 2.49,
+      "movingTimeSec": 2024,
+      "elevationM": 0,
+      "avgHr": 115,
+      "source": "coros"
     }
   ],
   "checkins": [
