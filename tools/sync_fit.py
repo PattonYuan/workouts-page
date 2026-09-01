@@ -66,6 +66,16 @@ SPORT_LABEL = {
     "workout": "Workout",
 }
 
+# 组合运动(multisport)子段的中文类型名，用于把「XX市 组合运动」改写成「XX市 跑步/健走」等
+STYPE_CN = {
+    "run": "跑步",
+    "walk": "健走",
+    "ride": "骑行",
+    "hike": "徒步",
+    "moto": "摩托骑行",
+    "workout": "训练",
+}
+
 MAX_TRACK_POINTS = 150
 
 
@@ -85,8 +95,68 @@ def time_of_day_label(hour):
     return "Evening"
 
 
+def _split_combo_title(name, stype):
+    """把组合运动名改写为子段类型名：'绍兴市 组合运动' -> '绍兴市 跑步' / '绍兴市 健走'。"""
+    base = (name or "").strip()
+    cn = STYPE_CN.get(stype, "训练")
+    if "组合运动" in base:
+        return base.replace("组合运动", cn).strip()
+    return f"{base} · {cn}" if base else f"组合运动 {cn}"
+
+
+def _parse_combo_zip(path, name=None):
+    """解析高驰组合运动（multisport）导出：实为 zip，内含每个运动段一个子 FIT。
+
+    返回活动 dict 列表（每个子段一条），无可用子段时返回 None。
+    """
+    import shutil
+    import tempfile
+    import zipfile
+
+    results = []
+    tmp = tempfile.mkdtemp(prefix="coros_combo_")
+    try:
+        with zipfile.ZipFile(path) as z:
+            z.extractall(tmp)
+        subs = sorted(glob.glob(os.path.join(tmp, "*.fit")))
+        if not subs:
+            print(f"  ⚠️  组合运动包内无子 FIT：{os.path.basename(path)}")
+            return None
+        for sub in subs:
+            a = None
+            try:
+                a = _parse_with_fitdecode(sub)
+            except Exception as e:
+                print(f"  ⚠️  fitdecode 解析子段失败 {os.path.basename(sub)}: {e}，尝试 fitparse")
+                try:
+                    a = _parse_with_fitparse(sub)
+                except Exception as e2:
+                    print(f"  ❌  跳过子段 {os.path.basename(sub)}: {e2}")
+            if not a:
+                continue
+            # 子段标题：优先用「组合运动名 + 子段类型」（如 绍兴市 跑步 / 绍兴市 健走）
+            a["title"] = _split_combo_title(name, a.get("type")) if name else a["title"]
+            results.append(a)
+        print(f"  🧩 组合运动拆分为 {len(results)} 个子段：{[r['title'] for r in results]}")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    return results or None
+
+
 def parse_fit_file(path, coros_type=None, name=None):
-    """解析单个 FIT 文件。优先 fitdecode（更鲁棒，可跳过异常帧），失败回退 fitparse。"""
+    """解析单个 FIT 文件。优先 fitdecode（更鲁棒，可跳过异常帧），失败回退 fitparse。
+
+    特殊：高驰组合运动（sportType=10001）下载下来是 zip 包（内含每段一个子 FIT），
+    返回拆分后的活动 dict 列表；普通 FIT 仍返回单个 dict 或 None。
+    """
+    with open(path, "rb") as fh:
+        head = fh.read(2)
+    if head == b"PK":  # zip 魔数 -> 组合运动多段包
+        try:
+            return _parse_combo_zip(path, name=name)
+        except Exception as e:
+            print(f"  ❌  组合运动包解析失败 {os.path.basename(path)}: {e}")
+            return None
     try:
         return _parse_with_fitdecode(path, coros_type=coros_type, name=name)
     except Exception as e:
@@ -238,9 +308,15 @@ def main():
             print(f"⚠️  缺侧车元数据，标题将退化为合成名：{os.path.basename(fp)}")
         a = parse_fit_file(fp, coros_type=coros_type, name=name)
         if a:
-            activities.append(a)
+            # 组合运动 zip 返回子段活动列表；普通 FIT 返回单个 dict
+            if isinstance(a, list):
+                activities.extend(a)
+            else:
+                activities.append(a)
 
-    print(f"解析到 {len(activities)} 条真实高驰活动（来自 {len(files)} 个 FIT 文件）")
+    n_files = len(files)
+    n_acts = len(activities)
+    print(f"解析到 {n_acts} 条真实高驰活动（来自 {n_files} 个 FIT 文件，组合运动已按子段拆分）")
     if not activities:
         return
     # 整源重建：解析逻辑纠正过类型（摩托骑行 workout→moto），_fuzzy_dup 要求 type 相同，
