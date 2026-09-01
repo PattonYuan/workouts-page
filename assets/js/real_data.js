@@ -39221,6 +39221,26 @@ window.REALDATA = {
       "elevationM": 0.0,
       "avgHr": 0,
       "source": "keep"
+    },
+    {
+      "date": "2026-09-01",
+      "type": "walk",
+      "title": "户外步行",
+      "distanceKm": 1.27,
+      "movingTimeSec": 974,
+      "elevationM": 11.9,
+      "avgHr": 107,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-01",
+      "type": "workout",
+      "title": "深蹲",
+      "distanceKm": 0.0,
+      "movingTimeSec": 106,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
     }
   ],
   "checkins": [
@@ -41143,6 +41163,12 @@ window.REALDATA = {
       "date": "2026-08-31",
       "reps": null,
       "sec": 123
+    },
+    {
+      "item": "squat",
+      "date": "2026-09-01",
+      "reps": 31,
+      "sec": 106
     }
   ]
 };
