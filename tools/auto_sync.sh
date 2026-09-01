@@ -103,7 +103,22 @@ if [ "$_changed" = "0" ]; then
   # 无变化
   echo "    ✅ 无新增数据，无需提交/推送"
 else
-  git add $DATA_FILES
+  # 数据有变化 → 同步 bump 版本号（否则 CDN 按「完整 URL + 查询串」缓存，会一直喂旧内容）
+  # 只 bump 真正变化的两个数据文件对应的 ?v= 标签：
+  #   index.html 里的 real_data.js?v=  与  app.js 里的 real_tracks.js?v=
+  _base="$(date +%Y%m%d)"
+  _cur=$(grep -o "real_data.js?v=${_base}[a-z]*" index.html | head -1 | sed 's/.*=//')
+  if [ -n "$_cur" ]; then
+    _suf=${_cur##*$_base}
+    _next=$(printf '%s' "$_suf" | tr 'a-y' 'b-z'; [ "$_suf" = "z" ] && printf 'aa')
+    _new="${_base}${_next}"
+  else
+    _new="${_base}a"
+  fi
+  sed -i '' "s/real_data.js?v=[0-9a-z]*/real_data.js?v=${_new}/g" index.html
+  sed -i '' "s/real_tracks.js?v=[0-9a-z]*/real_tracks.js?v=${_new}/g" app.js
+  echo "    🔖 版本号 bump → ?v=${_new}"
+  git add $DATA_FILES index.html app.js
   git commit -m "auto sync: $(date '+%Y-%m-%d') 数据更新" >> "$PROJ/logs/auto_sync.log" 2>&1 \
     && echo "    已提交" \
     || echo "    ⚠️ 提交失败"
