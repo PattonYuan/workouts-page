@@ -39181,6 +39181,46 @@ window.REALDATA = {
       "elevationM": 0,
       "avgHr": 115,
       "source": "coros"
+    },
+    {
+      "date": "2026-08-31",
+      "type": "workout",
+      "title": "深蹲",
+      "distanceKm": 0.0,
+      "movingTimeSec": 106,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-08-31",
+      "type": "workout",
+      "title": "卷腹",
+      "distanceKm": 0.0,
+      "movingTimeSec": 105,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-08-31",
+      "type": "workout",
+      "title": "俯卧撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 46,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-08-31",
+      "type": "workout",
+      "title": "平板支撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 123,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
     }
   ],
   "checkins": [
@@ -41079,6 +41119,30 @@ window.REALDATA = {
       "date": "2026-08-29",
       "reps": 11,
       "sec": 39
+    },
+    {
+      "item": "squat",
+      "date": "2026-08-31",
+      "reps": 30,
+      "sec": 106
+    },
+    {
+      "item": "situp",
+      "date": "2026-08-31",
+      "reps": 30,
+      "sec": 105
+    },
+    {
+      "item": "pushup",
+      "date": "2026-08-31",
+      "reps": 12,
+      "sec": 46
+    },
+    {
+      "item": "plank",
+      "date": "2026-08-31",
+      "reps": null,
+      "sec": 123
     }
   ]
 };
