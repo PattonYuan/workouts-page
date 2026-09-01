@@ -105,20 +105,33 @@ if [ "$_changed" = "0" ]; then
 else
   # 数据有变化 → 同步 bump 版本号（否则 CDN 按「完整 URL + 查询串」缓存，会一直喂旧内容）
   # 只 bump 真正变化的两个数据文件对应的 ?v= 标签：
-  #   index.html 里的 real_data.js?v=  与  app.js 里的 real_tracks.js?v=
+  #   index.html 里的 real_data.js?v=  与  assets/js/app.js 里的 real_tracks.js?v=
+  # ⚠️ app.js 在 assets/js/ 下；本脚本 cwd 是仓库根目录，写成 "app.js" 会
+  #    No such file or directory 且因未用 set -e 而静默跳过，导致轨迹版本永远不更新。
+  _idx="index.html"
+  _app="assets/js/app.js"
   _base="$(date +%Y%m%d)"
-  _cur=$(grep -o "real_data.js?v=${_base}[a-z]*" index.html | head -1 | sed 's/.*=//')
+  _cur=$(grep -o "real_data.js?v=${_base}[a-z]*" "$_idx" | head -1 | sed 's/.*=//')
   if [ -n "$_cur" ]; then
-    _suf=${_cur##*$_base}
-    _next=$(printf '%s' "$_suf" | tr 'a-y' 'b-z'; [ "$_suf" = "z" ] && printf 'aa')
-    _new="${_base}${_next}"
+    _suf="${_cur##*$_base}"
+    _last="${_suf: -1}"
+    if [ -z "$_suf" ]; then
+      _new="${_base}a"                                        # 无字母后缀
+    elif [ "$_last" = "z" ]; then
+      _new="${_base}${_suf}a"                                 # 字母用尽（z / az）→ 追加，保证唯一
+    else
+      _new="${_base}${_suf%?}$(printf '%s' "$_last" | tr 'a-y' 'b-z')"
+    fi
   else
-    _new="${_base}a"
+    _new="${_base}a"                                          # 跨天自然回滚（如 20260830m → 20260901a）
   fi
-  sed -i '' "s/real_data.js?v=[0-9a-z]*/real_data.js?v=${_new}/g" index.html
-  sed -i '' "s/real_tracks.js?v=[0-9a-z]*/real_tracks.js?v=${_new}/g" app.js
+  sed -i '' "s/real_data.js?v=[0-9a-z]*/real_data.js?v=${_new}/g" "$_idx"
+  sed -i '' "s/real_tracks.js?v=[0-9a-z]*/real_tracks.js?v=${_new}/g" "$_app"
   echo "    🔖 版本号 bump → ?v=${_new}"
-  git add $DATA_FILES index.html app.js
+  # 校验：两个标签都必须真的改到，否则说明路径/模式失效，避免静默不生效
+  grep -q "real_data.js?v=${_new}" "$_idx" || echo "    ⚠️ real_data.js 版本号未生效，请检查 $_idx"
+  grep -q "real_tracks.js?v=${_new}" "$_app" || echo "    ⚠️ real_tracks.js 版本号未生效，请检查 $_app"
+  git add $DATA_FILES "$_idx" "$_app"
   git commit -m "auto sync: $(date '+%Y-%m-%d') 数据更新" >> "$PROJ/logs/auto_sync.log" 2>&1 \
     && echo "    已提交" \
     || echo "    ⚠️ 提交失败"
