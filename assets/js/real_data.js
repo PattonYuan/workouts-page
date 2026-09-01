@@ -39223,6 +39223,26 @@ window.REALDATA = {
       "source": "keep"
     },
     {
+      "date": "2026-08-31",
+      "type": "run",
+      "title": "绍兴市 跑步",
+      "distanceKm": 3.12,
+      "movingTimeSec": 1196,
+      "elevationM": 4,
+      "avgHr": 185,
+      "source": "coros"
+    },
+    {
+      "date": "2026-08-31",
+      "type": "walk",
+      "title": "绍兴市 健走",
+      "distanceKm": 0.63,
+      "movingTimeSec": 465,
+      "elevationM": 2,
+      "avgHr": 160,
+      "source": "coros"
+    },
+    {
       "date": "2026-09-01",
       "type": "walk",
       "title": "户外步行",
@@ -39238,6 +39258,46 @@ window.REALDATA = {
       "title": "深蹲",
       "distanceKm": 0.0,
       "movingTimeSec": 106,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-01",
+      "type": "ride",
+      "title": "绍兴市 公路骑行",
+      "distanceKm": 5.42,
+      "movingTimeSec": 1022,
+      "elevationM": 9,
+      "avgHr": 141,
+      "source": "coros"
+    },
+    {
+      "date": "2026-09-01",
+      "type": "workout",
+      "title": "平板支撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 127,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-01",
+      "type": "workout",
+      "title": "卷腹",
+      "distanceKm": 0.0,
+      "movingTimeSec": 257,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-01",
+      "type": "workout",
+      "title": "俯卧撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 66,
       "elevationM": 0.0,
       "avgHr": 0,
       "source": "keep"
@@ -41169,6 +41229,24 @@ window.REALDATA = {
       "date": "2026-09-01",
       "reps": 31,
       "sec": 106
+    },
+    {
+      "item": "plank",
+      "date": "2026-09-01",
+      "reps": null,
+      "sec": 127
+    },
+    {
+      "item": "situp",
+      "date": "2026-09-01",
+      "reps": 74,
+      "sec": 257
+    },
+    {
+      "item": "pushup",
+      "date": "2026-09-01",
+      "reps": 18,
+      "sec": 66
     }
   ]
 };
