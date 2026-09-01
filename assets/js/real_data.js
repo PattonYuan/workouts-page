@@ -39264,16 +39264,6 @@ window.REALDATA = {
     },
     {
       "date": "2026-09-01",
-      "type": "ride",
-      "title": "绍兴市 公路骑行",
-      "distanceKm": 5.42,
-      "movingTimeSec": 1022,
-      "elevationM": 9,
-      "avgHr": 141,
-      "source": "coros"
-    },
-    {
-      "date": "2026-09-01",
       "type": "workout",
       "title": "平板支撑",
       "distanceKm": 0.0,
@@ -39301,6 +39291,16 @@ window.REALDATA = {
       "elevationM": 0.0,
       "avgHr": 0,
       "source": "keep"
+    },
+    {
+      "date": "2026-09-01",
+      "type": "ride",
+      "title": "绍兴市 公路骑行",
+      "distanceKm": 5.42,
+      "movingTimeSec": 1022,
+      "elevationM": 9,
+      "avgHr": 141,
+      "source": "coros"
     }
   ],
   "checkins": [
