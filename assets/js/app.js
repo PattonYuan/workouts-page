@@ -473,7 +473,7 @@
       { color: 'var(--accent)', ico: '🔥', title: t('insCurrentStreak'), big: curStreak, unit: t('insDays'), sub: t('heroSince').replace('{year}', _since) },
       { color: 'var(--accent-2)', ico: '📈', title: t('insLongestStreak'), big: longest, unit: t('insDays'), sub: t('insActiveDays').replace('{n}', activeDays) },
       { color: '#e8a33d', ico: '📅', title: t('insFavoriteDay'), big: fav, unit: '', sub: t('insFavoriteSub') },
-      { color: '#27ae60', ico: '🗓️', title: t('insStreakWeeks'), big: calcWeekStreak(allDates), unit: t('insWeeksUnit'), sub: weekStripHTML() },
+      { color: '#27ae60', ico: '🗓️', title: t('insStreakWeeks'), big: calcWeekStreak(acts.map((a) => a.date), currentYear), unit: t('insWeeksUnit'), sub: weekStripHTML(currentYear) },
     ];
     $('#insightCards').innerHTML = cards
       .map(
@@ -799,7 +799,29 @@
   const _ymdLocal = (dt) =>
     `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
 
-  function calcWeekStreak(dates) {
+  // 小周历锚定的那一周的「周一」：
+  //   · 当年 → 真实本周（跟随真实日期，未来几天自然留空）；
+  //   · 往年 → 该年最后一个「完整周」（整周 7 天都落在该年内，避免跨年取数）。
+  // 此前 calcWeekStreak / weekStripHTML 都直接 new Date()，锚死在「真实本周」，
+  // 导致切换年份时「连续周数」和小周历都永远显示本周、不随年份更新。
+  function weekStripMonday(year) {
+    const y = Number(year);
+    const now = new Date();
+    if (y === now.getFullYear()) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - ((now.getDay() + 6) % 7)); // 本周周一
+      return d;
+    }
+    const lastDay = new Date(y, 11, 31);
+    const mon = new Date(lastDay);
+    mon.setDate(lastDay.getDate() - ((lastDay.getDay() + 6) % 7));
+    const sun = new Date(mon);
+    sun.setDate(mon.getDate() + 6);
+    if (sun > lastDay) mon.setDate(mon.getDate() - 7); // 该周跨年 → 退回上一个完整周
+    return mon;
+  }
+
+  function calcWeekStreak(dates, year) {
     const set = new Set(dates);
     const wk = (d) => {
       const dt = new Date(d + 'T00:00:00');
@@ -807,8 +829,7 @@
       return _ymdLocal(dt);
     };
     const weeks = new Set([...set].map(wk));
-    const now = new Date();
-    let cur = wk(_ymdLocal(now));
+    let cur = _ymdLocal(weekStripMonday(year));
     let n = 0;
     if (!weeks.has(cur)) {
       const d = new Date(cur + 'T00:00:00');
@@ -824,20 +845,35 @@
     return n;
   }
 
-  // 本周（周一起）7 格小周历
-  function weekStripHTML() {
-    const now = new Date();
-    const monday = new Date(now);
-    monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  // 按「完整日期」聚合某年里程：{ 'YYYY-MM-DD': {km, items} }
+  // 不能用 dailyKmMap(year, null)——后者以「月内日号」为键，会把 9/5 命中成 8/5 的记录
+  // （跨月串数据），且跨月周（如 8/31~9/6）取不到次月数据，导致周历数字错乱。
+  function dateKmMap(year) {
+    const map = {};
+    ACTIVITIES.forEach((a) => {
+      if (!String(a.date).startsWith(String(year))) return;
+      const km = a.distanceKm || 0;
+      const e = map[a.date] || { km: 0, items: [] };
+      e.km += km;
+      if (km > 0) e.items.push(`${actTitle(a)} · ${km.toFixed(1)}km`);
+      else e.items.push(actTitle(a));
+      map[a.date] = e;
+    });
+    return map;
+  }
+
+  // 锚定周（周一起）7 格小周历 —— 跟随 currentYear 变化
+  function weekStripHTML(year) {
+    const monday = weekStripMonday(year);
     const wds = (t('calWeekdays') || '').split(',');
     const order = [1, 2, 3, 4, 5, 6, 0]; // 周一起
-    const byDay = dailyKmMap(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`, null);
+    const byDate = dateKmMap(year);
     let html = '<div class="week-strip">';
     order.forEach((dw) => {
       const d = new Date(monday);
       d.setDate(monday.getDate() + order.indexOf(dw));
-      const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      const e = byDay[ds.slice(8, 10)];
+      const ds = _ymdLocal(d);
+      const e = byDate[ds];
       const km = e ? e.km : 0;
       const on = km > 0;
       html += `<div class="ws-cell${on ? ' on' : ''}" title="${ds}${e && e.items.length ? '\n' + e.items.join('\n') : ''}">
@@ -1687,7 +1723,7 @@
     }
     _tracksLoading = true;
     const s = document.createElement('script');
-    s.src = 'assets/js/real_tracks.js?v=20260830l';
+    s.src = 'assets/js/real_tracks.js?v=20260901a';
     s.onload = () => { if (hydrateTracks()) redrawTrackViews(); };
     s.onerror = () => console.warn('real_tracks.js 加载失败，轨迹墙/地图将显示占位图');
     document.head.appendChild(s);
