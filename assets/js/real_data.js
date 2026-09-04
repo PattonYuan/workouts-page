@@ -39301,6 +39301,146 @@ window.REALDATA = {
       "elevationM": 9,
       "avgHr": 141,
       "source": "coros"
+    },
+    {
+      "date": "2026-09-02",
+      "type": "walk",
+      "title": "户外步行",
+      "distanceKm": 1.28,
+      "movingTimeSec": 978,
+      "elevationM": 12.4,
+      "avgHr": 109,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-02",
+      "type": "workout",
+      "title": "卷腹",
+      "distanceKm": 0.0,
+      "movingTimeSec": 208,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-02",
+      "type": "workout",
+      "title": "平板支撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 128,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-02",
+      "type": "workout",
+      "title": "俯卧撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 190,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-02",
+      "type": "workout",
+      "title": "深蹲",
+      "distanceKm": 0.0,
+      "movingTimeSec": 123,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-03",
+      "type": "walk",
+      "title": "户外步行",
+      "distanceKm": 1.17,
+      "movingTimeSec": 885,
+      "elevationM": 13.2,
+      "avgHr": 118,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-03",
+      "type": "workout",
+      "title": "卷腹",
+      "distanceKm": 0.0,
+      "movingTimeSec": 293,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-03",
+      "type": "workout",
+      "title": "平板支撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 144,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-03",
+      "type": "workout",
+      "title": "俯卧撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 119,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-03",
+      "type": "workout",
+      "title": "深蹲",
+      "distanceKm": 0.0,
+      "movingTimeSec": 162,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-04",
+      "type": "workout",
+      "title": "卷腹",
+      "distanceKm": 0.0,
+      "movingTimeSec": 269,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-04",
+      "type": "workout",
+      "title": "平板支撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 139,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-04",
+      "type": "workout",
+      "title": "俯卧撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 334,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-04",
+      "type": "workout",
+      "title": "深蹲",
+      "distanceKm": 0.0,
+      "movingTimeSec": 179,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
     }
   ],
   "checkins": [
@@ -41247,6 +41387,78 @@ window.REALDATA = {
       "date": "2026-09-01",
       "reps": 18,
       "sec": 66
+    },
+    {
+      "item": "situp",
+      "date": "2026-09-02",
+      "reps": 60,
+      "sec": 208
+    },
+    {
+      "item": "plank",
+      "date": "2026-09-02",
+      "reps": null,
+      "sec": 128
+    },
+    {
+      "item": "pushup",
+      "date": "2026-09-02",
+      "reps": 50,
+      "sec": 190
+    },
+    {
+      "item": "squat",
+      "date": "2026-09-02",
+      "reps": 34,
+      "sec": 123
+    },
+    {
+      "item": "situp",
+      "date": "2026-09-03",
+      "reps": 83,
+      "sec": 293
+    },
+    {
+      "item": "plank",
+      "date": "2026-09-03",
+      "reps": null,
+      "sec": 144
+    },
+    {
+      "item": "pushup",
+      "date": "2026-09-03",
+      "reps": 32,
+      "sec": 119
+    },
+    {
+      "item": "squat",
+      "date": "2026-09-03",
+      "reps": 45,
+      "sec": 162
+    },
+    {
+      "item": "situp",
+      "date": "2026-09-04",
+      "reps": 76,
+      "sec": 269
+    },
+    {
+      "item": "plank",
+      "date": "2026-09-04",
+      "reps": null,
+      "sec": 139
+    },
+    {
+      "item": "pushup",
+      "date": "2026-09-04",
+      "reps": 89,
+      "sec": 334
+    },
+    {
+      "item": "squat",
+      "date": "2026-09-04",
+      "reps": 50,
+      "sec": 179
     }
   ]
 };
