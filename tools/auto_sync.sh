@@ -29,29 +29,33 @@ mkdir -p "$PROJ/logs"
 cd "$PROJ" || exit 1
 
 # 0. 基础设置 + 代理探测（探测一次，全局导出，供 Keep 拉取与 git 推送共用）
-git config --global http.version HTTP/1.1
+git config --global http.version HTTP/1.1 2>/dev/null || true
+
+# 代理可用性判定：必须真实成功（2xx/3xx）。沙箱/本地代理常对 github 返回 502，
+# 但 curl -w %{http_code} 会拿到 "502"（非 000），旧逻辑误判为"可达"→ 推送必然失败。
+proxy_ok() { local c="$1"; [ -n "$c" ] && [ "$c" -ge 200 ] && [ "$c" -lt 400 ]; }
 
 # 代理探测：优先沿用已设置的环境变量，否则读 macOS 系统代理 / 扫描常见端口
 detect_proxy() {
-  local p sp
-  # 1) 沿用已设置的环境变量（若可达）
+  local p sp code
+  # 1) 沿用已设置的环境变量（仅当真实可达时）
   if [ -n "${http_proxy:-}" ]; then
     code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 -x "$http_proxy" https://github.com 2>/dev/null)
-    [ "$code" != "000" ] && [ -n "$code" ] && { p="${http_proxy##*:}"; echo "${p%/}"; return; }
+    if proxy_ok "$code"; then p="${http_proxy##*:}"; echo "${p%/}"; return; fi
   fi
   # 2) 读 macOS 系统代理（networksetup 里填的端口，如 7890）
   for svc in "Wi-Fi" "Ethernet" "Thunderbolt Bridge"; do
     sp=$(networksetup -getwebproxy "$svc" 2>/dev/null | awk -F': ' '/Port/{print $2}')
     [ -n "$sp" ] || continue
     code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 -x "http://127.0.0.1:$sp" https://github.com 2>/dev/null)
-    [ "$code" != "000" ] && [ -n "$code" ] && { echo "$sp"; return; }
+    if proxy_ok "$code"; then echo "$sp"; return; fi
   done
   # 3) 兜底扫描常见端口（含本机常开的 7877/7890 及 WorkBuddy 沙箱代理 50715）
   for p in 7890 7891 7892 7893 7877 1080 1081 8080 8888 8118 3128 9090 33210 33211 52074 63863 62459 50715; do
     if (exec 3<>/dev/tcp/127.0.0.1/$p) 2>/dev/null; then
       exec 3>&-
       code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 -x "http://127.0.0.1:$p" https://github.com 2>/dev/null)
-      [ "$code" != "000" ] && [ -n "$code" ] && { echo "$p"; return; }
+      if proxy_ok "$code"; then echo "$p"; return; fi
     fi
   done
 }
@@ -125,12 +129,19 @@ else
   else
     _new="${_base}a"                                          # 跨天自然回滚（如 20260830m → 20260901a）
   fi
-  sed -i '' "s/real_data.js?v=[0-9a-z]*/real_data.js?v=${_new}/g" "$_idx"
-  sed -i '' "s/real_tracks.js?v=[0-9a-z]*/real_tracks.js?v=${_new}/g" "$_app"
+  # ⚠️ 必须用 /usr/bin/sed：macOS 上 PATH 里的 sed 可能是 toybox（不支持 BSD -i ''），
+  #    会让 bump 静默失败（报 No such file or directory 后继续，留下"数据变了但没 bump"的提交）。
+  /usr/bin/sed -i '' "s/real_data.js?v=[0-9a-z]*/real_data.js?v=${_new}/g" "$_idx"
+  /usr/bin/sed -i '' "s/real_tracks.js?v=[0-9a-z]*/real_tracks.js?v=${_new}/g" "$_app"
   echo "    🔖 版本号 bump → ?v=${_new}"
   # 校验：两个标签都必须真的改到，否则说明路径/模式失效，避免静默不生效
-  grep -q "real_data.js?v=${_new}" "$_idx" || echo "    ⚠️ real_data.js 版本号未生效，请检查 $_idx"
-  grep -q "real_tracks.js?v=${_new}" "$_app" || echo "    ⚠️ real_tracks.js 版本号未生效，请检查 $_app"
+  _bump_ok=1
+  grep -q "real_data.js?v=${_new}" "$_idx" || { echo "    ⚠️ real_data.js 版本号未生效，请检查 $_idx"; _bump_ok=0; }
+  grep -q "real_tracks.js?v=${_new}" "$_app" || { echo "    ⚠️ real_tracks.js 版本号未生效，请检查 $_app"; _bump_ok=0; }
+  if [ "$_bump_ok" != "1" ]; then
+    echo "    ❌ 版本号 bump 未生效，中止提交（避免产生无 bump 的数据提交）；修复后重跑即可"
+    exit 1
+  fi
   git add $DATA_FILES "$_idx" "$_app"
   git commit -m "auto sync: $(date '+%Y-%m-%d') 数据更新" >> "$PROJ/logs/auto_sync.log" 2>&1 \
     && echo "    已提交" \
