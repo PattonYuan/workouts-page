@@ -39504,16 +39504,6 @@ window.REALDATA = {
     },
     {
       "date": "2026-09-06",
-      "type": "run",
-      "title": "绍兴市 跑步",
-      "distanceKm": 5.06,
-      "movingTimeSec": 1934,
-      "elevationM": 0,
-      "avgHr": 174,
-      "source": "coros"
-    },
-    {
-      "date": "2026-09-06",
       "type": "workout",
       "title": "平板支撑",
       "distanceKm": 0.0,
@@ -39551,6 +39541,16 @@ window.REALDATA = {
       "elevationM": 0.0,
       "avgHr": 0,
       "source": "keep"
+    },
+    {
+      "date": "2026-09-06",
+      "type": "run",
+      "title": "绍兴市 跑步",
+      "distanceKm": 5.06,
+      "movingTimeSec": 1934,
+      "elevationM": 0,
+      "avgHr": 174,
+      "source": "coros"
     }
   ],
   "checkins": [
