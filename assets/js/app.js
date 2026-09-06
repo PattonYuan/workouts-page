@@ -687,7 +687,13 @@
     const prev = $('#trendPrev'), next = $('#trendNext'), today = $('#trendToday');
     if (prev) prev.disabled = trendYear === years[years.length - 1]; // 最早年
     if (next) next.disabled = trendYear === years[0];                // 最新年
-    if (today) today.textContent = `${t('calThisYear')} · ${trendYear}`;
+    // 「今年」按钮 = 跳回真实今年（不能跟 trendYear/currentYear 走：那只是当前查看/选中的年份，
+    // 否则查看 2023 时会显示成"今年 · 2023"自相矛盾）。已在本年时高亮为 active。
+    const nowY = new Date().getFullYear();
+    if (today) {
+      today.textContent = `${t('calThisYear')} · ${nowY}`;
+      today.classList.toggle('active', trendYear === String(nowY));
+    }
     panel.innerHTML =
       `<div class="trend-title">${t('trendMonthly')} · ${trendYear} (${t('trendKmUnit')})</div>` +
       trendBarsSVG(trendYear) +
@@ -721,7 +727,7 @@
       if (i > 0) { trendYear = years[i - 1]; renderTrend(); }
     });
     if (today) today.addEventListener('click', () => {
-      trendYear = String(currentYear); renderTrend();
+      trendYear = String(new Date().getFullYear()); renderTrend();   // 真实今年，非选中的 currentYear
     });
   }
 
@@ -777,6 +783,15 @@
     }
     html += '</div>';
     panel.innerHTML = html;
+    // 「本月」按钮 = 跳回真实本月；原先是静态 i18n 文案，翻到 2023 年仍显示"本月"造成误解
+    const btn = $('#calToday');
+    if (btn) {
+      const nowY = now.getFullYear(), nowM = now.getMonth();
+      btn.textContent = LANG === 'en'
+        ? `${t('calThisMonth')} · ${MON_EN[nowM]} ${nowY}`
+        : `${t('calThisMonth')} · ${nowY}-${String(nowM + 1).padStart(2, '0')}`;
+      btn.classList.toggle('active', calY === nowY && calM === nowM);
+    }
     equalizeMonthRow();
   }
 
