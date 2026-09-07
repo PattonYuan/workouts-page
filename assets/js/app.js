@@ -687,11 +687,11 @@
     const prev = $('#trendPrev'), next = $('#trendNext'), today = $('#trendToday');
     if (prev) prev.disabled = trendYear === years[years.length - 1]; // 最早年
     if (next) next.disabled = trendYear === years[0];                // 最新年
-    // 「今年」按钮 = 跳回真实今年（不能跟 trendYear/currentYear 走：那只是当前查看/选中的年份，
-    // 否则查看 2023 时会显示成"今年 · 2023"自相矛盾）。已在本年时高亮为 active。
+    // 中间按钮 = 状态显示「当前查看的年份」（不再是"今年"，避免查看 2023 时显示成"今年 · 2023"）。
+    // 点击仍跳回真实今年；处于真实今年时高亮 active，作为"此刻"提示。
     const nowY = new Date().getFullYear();
     if (today) {
-      today.textContent = `${t('calThisYear')} · ${nowY}`;
+      today.textContent = trendYear;
       today.classList.toggle('active', trendYear === String(nowY));
     }
     panel.innerHTML =
@@ -783,13 +783,14 @@
     }
     html += '</div>';
     panel.innerHTML = html;
-    // 「本月」按钮 = 跳回真实本月；原先是静态 i18n 文案，翻到 2023 年仍显示"本月"造成误解
+    // 中间按钮 = 状态显示「当前查看的年月」（原为静态 i18n「本月」，翻到 2023 年仍写"本月"造成误解）。
+    // 点击仍跳回真实本月；处于真实本月时高亮 active，作为"此刻"提示。
     const btn = $('#calToday');
     if (btn) {
       const nowY = now.getFullYear(), nowM = now.getMonth();
       btn.textContent = LANG === 'en'
-        ? `${t('calThisMonth')} · ${MON_EN[nowM]} ${nowY}`
-        : `${t('calThisMonth')} · ${nowY}-${String(nowM + 1).padStart(2, '0')}`;
+        ? `${MON_EN[calM]} ${calY}`
+        : `${calY}-${String(calM + 1).padStart(2, '0')}`;
       btn.classList.toggle('active', calY === nowY && calM === nowM);
     }
     equalizeMonthRow();
