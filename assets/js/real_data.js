@@ -39554,16 +39554,6 @@ window.REALDATA = {
     },
     {
       "date": "2026-09-07",
-      "type": "ride",
-      "title": "绍兴市 公路骑行",
-      "distanceKm": 7.12,
-      "movingTimeSec": 1122,
-      "elevationM": 6,
-      "avgHr": 163,
-      "source": "coros"
-    },
-    {
-      "date": "2026-09-07",
       "type": "workout",
       "title": "卷腹",
       "distanceKm": 0.0,
@@ -39603,13 +39593,13 @@ window.REALDATA = {
       "source": "keep"
     },
     {
-      "date": "2026-09-08",
-      "type": "run",
-      "title": "E40+4ST",
-      "distanceKm": 6.76,
-      "movingTimeSec": 2700,
-      "elevationM": 9,
-      "avgHr": 177,
+      "date": "2026-09-07",
+      "type": "ride",
+      "title": "绍兴市 公路骑行",
+      "distanceKm": 7.12,
+      "movingTimeSec": 1122,
+      "elevationM": 6,
+      "avgHr": 163,
       "source": "coros"
     },
     {
@@ -39651,6 +39641,16 @@ window.REALDATA = {
       "elevationM": 0.0,
       "avgHr": 0,
       "source": "keep"
+    },
+    {
+      "date": "2026-09-08",
+      "type": "run",
+      "title": "E40+4ST",
+      "distanceKm": 6.76,
+      "movingTimeSec": 2700,
+      "elevationM": 9,
+      "avgHr": 177,
+      "source": "coros"
     }
   ],
   "checkins": [
