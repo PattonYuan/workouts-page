@@ -1739,7 +1739,7 @@
     }
     _tracksLoading = true;
     const s = document.createElement('script');
-    s.src = 'assets/js/real_tracks.js?v=20260906b';
+    s.src = 'assets/js/real_tracks.js?v=20260908a';
     s.onload = () => { if (hydrateTracks()) redrawTrackViews(); };
     s.onerror = () => console.warn('real_tracks.js 加载失败，轨迹墙/地图将显示占位图');
     document.head.appendChild(s);

@@ -39551,6 +39551,106 @@ window.REALDATA = {
       "elevationM": 0,
       "avgHr": 174,
       "source": "coros"
+    },
+    {
+      "date": "2026-09-07",
+      "type": "ride",
+      "title": "绍兴市 公路骑行",
+      "distanceKm": 7.12,
+      "movingTimeSec": 1122,
+      "elevationM": 6,
+      "avgHr": 163,
+      "source": "coros"
+    },
+    {
+      "date": "2026-09-07",
+      "type": "workout",
+      "title": "卷腹",
+      "distanceKm": 0.0,
+      "movingTimeSec": 91,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-07",
+      "type": "workout",
+      "title": "平板支撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 188,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-07",
+      "type": "workout",
+      "title": "俯卧撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 47,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-07",
+      "type": "workout",
+      "title": "深蹲",
+      "distanceKm": 0.0,
+      "movingTimeSec": 163,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-08",
+      "type": "run",
+      "title": "E40+4ST",
+      "distanceKm": 6.76,
+      "movingTimeSec": 2700,
+      "elevationM": 9,
+      "avgHr": 177,
+      "source": "coros"
+    },
+    {
+      "date": "2026-09-08",
+      "type": "workout",
+      "title": "卷腹",
+      "distanceKm": 0.0,
+      "movingTimeSec": 108,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-08",
+      "type": "workout",
+      "title": "平板支撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 220,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-08",
+      "type": "workout",
+      "title": "俯卧撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 46,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-08",
+      "type": "workout",
+      "title": "深蹲",
+      "distanceKm": 0.0,
+      "movingTimeSec": 214,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
     }
   ],
   "checkins": [
@@ -41617,6 +41717,54 @@ window.REALDATA = {
       "date": "2026-09-06",
       "reps": 43,
       "sec": 154
+    },
+    {
+      "item": "situp",
+      "date": "2026-09-07",
+      "reps": 26,
+      "sec": 91
+    },
+    {
+      "item": "plank",
+      "date": "2026-09-07",
+      "reps": null,
+      "sec": 188
+    },
+    {
+      "item": "pushup",
+      "date": "2026-09-07",
+      "reps": 13,
+      "sec": 47
+    },
+    {
+      "item": "squat",
+      "date": "2026-09-07",
+      "reps": 46,
+      "sec": 163
+    },
+    {
+      "item": "situp",
+      "date": "2026-09-08",
+      "reps": 31,
+      "sec": 108
+    },
+    {
+      "item": "plank",
+      "date": "2026-09-08",
+      "reps": null,
+      "sec": 220
+    },
+    {
+      "item": "pushup",
+      "date": "2026-09-08",
+      "reps": 12,
+      "sec": 46
+    },
+    {
+      "item": "squat",
+      "date": "2026-09-08",
+      "reps": 60,
+      "sec": 214
     }
   ]
 };
