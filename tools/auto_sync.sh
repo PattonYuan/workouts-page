@@ -60,6 +60,18 @@ detect_proxy() {
   done
 }
 PROXY_PORT="$(detect_proxy)"
+# 首次未检测到则温和重试：登录后代理 app（MyClash 等）常晚几秒才监听端口，
+# 直接放弃会导致"只提交不推送"，而提交后 git status 干净，下次又判无变化 → 永久卡在未推送。
+if [ -z "$PROXY_PORT" ]; then
+  for _w in $(seq 1 12); do
+    sleep 15
+    PROXY_PORT="$(detect_proxy)"
+    if [ -n "$PROXY_PORT" ]; then
+      echo "🔌 重试第 ${_w} 次检测到代理 127.0.0.1:$PROXY_PORT"
+      break
+    fi
+  done
+fi
 if [ -n "$PROXY_PORT" ]; then
   export HTTP_PROXY="http://127.0.0.1:$PROXY_PORT"
   export HTTPS_PROXY="http://127.0.0.1:$PROXY_PORT"
@@ -96,7 +108,15 @@ else
   echo "    ⚠️ Keep 拉取失败（见日志），保留已有数据"
 fi
 
-# 3. 提交 + 推送（仅在有变化时）
+# 3. 桥接：把同步到的运动数据产出到 Obsidian 周总结（即使 --no-push 也写）
+echo "==> [3/4] 生成周总结健身桥接数据 ..."
+if "$PY" tools/workout_to_obsidian.py >> "$PROJ/logs/auto_sync.log" 2>&1; then
+  echo "    桥接 OK"
+else
+  echo "    ⚠️ 桥接生成失败（见日志），不影响运动数据同步"
+fi
+
+# 4. 提交 + 推送（仅在有变化时）
 echo "==> [3/3] 检查变更并提交 ..."
 # 只检测数据文件本身，避免把 untracked 脚本/日志误判为"有变化"。
 # real_data.js（活动摘要）与 real_tracks.js（GPS 轨迹，2026-08 拆分）必须一起提交：
@@ -163,6 +183,28 @@ else
   else
     echo "    ℹ️ 已跳过推送（--no-push）"
   fi
+fi
+
+# 5. 兜底补推：若本地已领先远端（例如上次因无代理只提交未推送、或合并冲突后残留），
+#    代理恢复后必须补推，否则会永久停留在"未推送"状态。
+echo "==> [4/4] 检查未推送提交 ..."
+_ahead=$(git rev-list --count "origin/$REMOTE_BRANCH..HEAD" 2>/dev/null || echo 0)
+if [ "$_ahead" != "0" ] && [ "$PUSH" = "1" ]; then
+  if [ -z "$PROXY_PORT" ]; then
+    echo "    ⚠️ 存在 $_ahead 个未推送提交，但当前无可用代理，稍后重跑可补推"
+  else
+    echo "    存在 $_ahead 个未推送提交，通过代理补推 ..."
+    ok=0
+    for i in $(seq 1 15); do
+      if git push origin "$REMOTE_BRANCH" >> "$PROJ/logs/auto_sync.log" 2>&1; then
+        ok=1; echo "    ✅ 补推成功"; break
+      fi
+      sleep 20
+    done
+    [ "$ok" = "0" ] && echo "    ⚠️ 补推失败（代理 502 或不稳），可稍后重跑"
+  fi
+else
+  echo "    ✅ 本地与远端一致，无需补推"
 fi
 
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] 自动同步结束"
