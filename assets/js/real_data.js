@@ -41691,7 +41691,7 @@ window.REALDATA = {
     {
       "item": "situp",
       "date": "2026-09-05",
-      "reps": 60,
+      "reps": 73,
       "sec": 211
     },
     {
