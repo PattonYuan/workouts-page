@@ -39663,6 +39663,126 @@ window.REALDATA = {
       "source": "coros"
     },
     {
+      "date": "2026-09-09",
+      "type": "workout",
+      "title": "深蹲",
+      "distanceKm": 0.0,
+      "movingTimeSec": 103,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-09",
+      "type": "workout",
+      "title": "卷腹",
+      "distanceKm": 0.0,
+      "movingTimeSec": 136,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-09",
+      "type": "workout",
+      "title": "俯卧撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 68,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-09",
+      "type": "workout",
+      "title": "平板支撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 184,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-10",
+      "type": "workout",
+      "title": "卷腹",
+      "distanceKm": 0.0,
+      "movingTimeSec": 106,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-10",
+      "type": "workout",
+      "title": "俯卧撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 112,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-10",
+      "type": "workout",
+      "title": "平板支撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 121,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-10",
+      "type": "workout",
+      "title": "深蹲",
+      "distanceKm": 0.0,
+      "movingTimeSec": 216,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-11",
+      "type": "workout",
+      "title": "平板支撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 141,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-11",
+      "type": "workout",
+      "title": "俯卧撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 116,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-11",
+      "type": "workout",
+      "title": "卷腹",
+      "distanceKm": 0.0,
+      "movingTimeSec": 263,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-11",
+      "type": "workout",
+      "title": "深蹲",
+      "distanceKm": 0.0,
+      "movingTimeSec": 302,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
       "date": "2026-09-13",
       "type": "run",
       "title": "E80+8ST",
@@ -39671,6 +39791,66 @@ window.REALDATA = {
       "elevationM": 2,
       "avgHr": 169,
       "source": "coros"
+    },
+    {
+      "date": "2026-09-14",
+      "type": "walk",
+      "title": "户外步行",
+      "distanceKm": 1.66,
+      "movingTimeSec": 1281,
+      "elevationM": 9.4,
+      "avgHr": 124,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-15",
+      "type": "run",
+      "title": "E50+4ST",
+      "distanceKm": 7.67,
+      "movingTimeSec": 3300,
+      "elevationM": 2,
+      "avgHr": 167,
+      "source": "coros"
+    },
+    {
+      "date": "2026-09-15",
+      "type": "workout",
+      "title": "平板支撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 124,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-15",
+      "type": "workout",
+      "title": "卷腹",
+      "distanceKm": 0.0,
+      "movingTimeSec": 117,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-15",
+      "type": "workout",
+      "title": "俯卧撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 73,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-15",
+      "type": "workout",
+      "title": "深蹲",
+      "distanceKm": 0.0,
+      "movingTimeSec": 103,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
     }
   ],
   "checkins": [
@@ -41711,7 +41891,7 @@ window.REALDATA = {
     {
       "item": "situp",
       "date": "2026-09-05",
-      "reps": 73,
+      "reps": 60,
       "sec": 211
     },
     {
@@ -41785,6 +41965,102 @@ window.REALDATA = {
       "date": "2026-09-08",
       "reps": 60,
       "sec": 214
+    },
+    {
+      "item": "squat",
+      "date": "2026-09-09",
+      "reps": 29,
+      "sec": 103
+    },
+    {
+      "item": "situp",
+      "date": "2026-09-09",
+      "reps": 39,
+      "sec": 136
+    },
+    {
+      "item": "pushup",
+      "date": "2026-09-09",
+      "reps": 18,
+      "sec": 68
+    },
+    {
+      "item": "plank",
+      "date": "2026-09-09",
+      "reps": null,
+      "sec": 184
+    },
+    {
+      "item": "situp",
+      "date": "2026-09-10",
+      "reps": 30,
+      "sec": 106
+    },
+    {
+      "item": "pushup",
+      "date": "2026-09-10",
+      "reps": 30,
+      "sec": 112
+    },
+    {
+      "item": "plank",
+      "date": "2026-09-10",
+      "reps": null,
+      "sec": 121
+    },
+    {
+      "item": "squat",
+      "date": "2026-09-10",
+      "reps": 60,
+      "sec": 216
+    },
+    {
+      "item": "plank",
+      "date": "2026-09-11",
+      "reps": null,
+      "sec": 141
+    },
+    {
+      "item": "pushup",
+      "date": "2026-09-11",
+      "reps": 31,
+      "sec": 116
+    },
+    {
+      "item": "situp",
+      "date": "2026-09-11",
+      "reps": 75,
+      "sec": 263
+    },
+    {
+      "item": "squat",
+      "date": "2026-09-11",
+      "reps": 84,
+      "sec": 302
+    },
+    {
+      "item": "plank",
+      "date": "2026-09-15",
+      "reps": null,
+      "sec": 124
+    },
+    {
+      "item": "situp",
+      "date": "2026-09-15",
+      "reps": 34,
+      "sec": 117
+    },
+    {
+      "item": "pushup",
+      "date": "2026-09-15",
+      "reps": 20,
+      "sec": 73
+    },
+    {
+      "item": "squat",
+      "date": "2026-09-15",
+      "reps": 30,
+      "sec": 103
     }
   ]
 };
