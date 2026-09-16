@@ -39654,16 +39654,6 @@ window.REALDATA = {
     },
     {
       "date": "2026-09-09",
-      "type": "run",
-      "title": "E30min+R200m*4+e10",
-      "distanceKm": 7.42,
-      "movingTimeSec": 3285,
-      "elevationM": 14,
-      "avgHr": 166,
-      "source": "coros"
-    },
-    {
-      "date": "2026-09-09",
       "type": "workout",
       "title": "深蹲",
       "distanceKm": 0.0,
@@ -39701,6 +39691,16 @@ window.REALDATA = {
       "elevationM": 0.0,
       "avgHr": 0,
       "source": "keep"
+    },
+    {
+      "date": "2026-09-09",
+      "type": "run",
+      "title": "E30min+R200m*4+e10",
+      "distanceKm": 7.42,
+      "movingTimeSec": 3285,
+      "elevationM": 14,
+      "avgHr": 166,
+      "source": "coros"
     },
     {
       "date": "2026-09-10",
@@ -39804,16 +39804,6 @@ window.REALDATA = {
     },
     {
       "date": "2026-09-15",
-      "type": "run",
-      "title": "E50+4ST",
-      "distanceKm": 7.67,
-      "movingTimeSec": 3300,
-      "elevationM": 2,
-      "avgHr": 167,
-      "source": "coros"
-    },
-    {
-      "date": "2026-09-15",
       "type": "workout",
       "title": "平板支撑",
       "distanceKm": 0.0,
@@ -39851,6 +39841,36 @@ window.REALDATA = {
       "elevationM": 0.0,
       "avgHr": 0,
       "source": "keep"
+    },
+    {
+      "date": "2026-09-15",
+      "type": "run",
+      "title": "E50+4ST",
+      "distanceKm": 7.67,
+      "movingTimeSec": 3300,
+      "elevationM": 2,
+      "avgHr": 167,
+      "source": "coros"
+    },
+    {
+      "date": "2026-09-16",
+      "type": "run",
+      "title": "E45min+R200m*6+e10",
+      "distanceKm": 11.02,
+      "movingTimeSec": 4361,
+      "elevationM": 40,
+      "avgHr": 171,
+      "source": "coros"
+    },
+    {
+      "date": "2026-09-16",
+      "type": "moto",
+      "title": "绍兴市 摩托骑行",
+      "distanceKm": 9.03,
+      "movingTimeSec": 1178,
+      "elevationM": 63,
+      "avgHr": 107,
+      "source": "coros"
     }
   ],
   "checkins": [
