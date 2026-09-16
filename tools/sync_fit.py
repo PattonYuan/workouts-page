@@ -22,6 +22,7 @@ import json
 import os
 import sys
 from datetime import timedelta, timezone
+import re
 
 # 复用共享合并逻辑
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -56,6 +57,24 @@ COROS_TYPE_MAP = {
     900: "walk",
     9807: "moto",
 }
+
+# 用户约定：Coros「砾石路骑行」(Gravel) 作为摩托车骑行使用（摩托模式不能自动暂停 GPS）。
+# 按活动名匹配，而非私有 sportType 码 —— 砾石路骑行与公路骑行可能同为 sportType=200，
+# 仅靠 sportType 无法区分；按名匹配既能命中 gravel 又能避免误伤。若日后确认砾石有独立
+# sportType，亦可加进上面 COROS_TYPE_MAP 做双保险。
+# 匹配忽略大小写，中文/英文活动名均可命中；标题里的别名文本会被改写为「摩托骑行」。
+MOTO_NAME_ALIASES = ["砾石路骑行", "砾石骑行", "碎石路骑行", "碎石骑行",
+                     "gravel cycling", "gravel ride"]
+
+
+def _remap_moto(title, stype):
+    """活动名含「砾石路骑行」类关键字时，强制归为摩托骑行(moto)并改写标题。"""
+    t = (title or "").strip()
+    for alias in MOTO_NAME_ALIASES:
+        if re.search(re.escape(alias), t, flags=re.IGNORECASE):
+            new_title = re.sub(re.escape(alias), "摩托骑行", t, flags=re.IGNORECASE).strip()
+            return new_title, "moto"
+    return title, stype
 
 SPORT_LABEL = {
     "run": "Run",
@@ -227,6 +246,9 @@ def _build_activity(session, track, fname, coros_type=None, name=None):
     hour = local.hour
     # 优先用高驰活动名（真实名称），否则按时间段合成
     title = name.strip() if name and name.strip() else f"{time_of_day_label(hour)} {SPORT_LABEL.get(stype, 'Workout')}"
+
+    # 用户约定：Coros「砾石路骑行」作为摩托车骑行使用 —— 按活动名改写为 moto
+    title, stype = _remap_moto(title, stype)
 
     distance_km = round((session.get("total_distance") or 0) / 1000.0, 2)
     moving = session.get("total_timer_time") or session.get("total_elapsed_time") or 0
