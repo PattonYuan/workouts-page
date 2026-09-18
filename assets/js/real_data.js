@@ -39871,6 +39871,66 @@ window.REALDATA = {
       "elevationM": 63,
       "avgHr": 107,
       "source": "coros"
+    },
+    {
+      "date": "2026-09-16",
+      "type": "walk",
+      "title": "户外步行",
+      "distanceKm": 1.13,
+      "movingTimeSec": 914,
+      "elevationM": 2.0,
+      "avgHr": 134,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-17",
+      "type": "ride",
+      "title": "绍兴市 公路骑行",
+      "distanceKm": 21.29,
+      "movingTimeSec": 3370,
+      "elevationM": 30,
+      "avgHr": 165,
+      "source": "coros"
+    },
+    {
+      "date": "2026-09-17",
+      "type": "workout",
+      "title": "深蹲",
+      "distanceKm": 0.0,
+      "movingTimeSec": 116,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-17",
+      "type": "workout",
+      "title": "平板支撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 129,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-17",
+      "type": "workout",
+      "title": "卷腹",
+      "distanceKm": 0.0,
+      "movingTimeSec": 109,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-17",
+      "type": "workout",
+      "title": "俯卧撑",
+      "distanceKm": 0.0,
+      "movingTimeSec": 39,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
     }
   ],
   "checkins": [
@@ -42081,6 +42141,30 @@ window.REALDATA = {
       "date": "2026-09-15",
       "reps": 30,
       "sec": 103
+    },
+    {
+      "item": "squat",
+      "date": "2026-09-17",
+      "reps": 32,
+      "sec": 116
+    },
+    {
+      "item": "plank",
+      "date": "2026-09-17",
+      "reps": null,
+      "sec": 129
+    },
+    {
+      "item": "situp",
+      "date": "2026-09-17",
+      "reps": 31,
+      "sec": 109
+    },
+    {
+      "item": "pushup",
+      "date": "2026-09-17",
+      "reps": 10,
+      "sec": 39
     }
   ]
 };
