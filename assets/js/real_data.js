@@ -39854,6 +39854,16 @@ window.REALDATA = {
     },
     {
       "date": "2026-09-16",
+      "type": "walk",
+      "title": "户外步行",
+      "distanceKm": 1.13,
+      "movingTimeSec": 914,
+      "elevationM": 2.0,
+      "avgHr": 134,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-16",
       "type": "run",
       "title": "E45min+R200m*6+e10",
       "distanceKm": 11.02,
@@ -39870,26 +39880,6 @@ window.REALDATA = {
       "movingTimeSec": 1178,
       "elevationM": 63,
       "avgHr": 107,
-      "source": "coros"
-    },
-    {
-      "date": "2026-09-16",
-      "type": "walk",
-      "title": "户外步行",
-      "distanceKm": 1.13,
-      "movingTimeSec": 914,
-      "elevationM": 2.0,
-      "avgHr": 134,
-      "source": "keep"
-    },
-    {
-      "date": "2026-09-17",
-      "type": "ride",
-      "title": "绍兴市 公路骑行",
-      "distanceKm": 21.29,
-      "movingTimeSec": 3370,
-      "elevationM": 30,
-      "avgHr": 165,
       "source": "coros"
     },
     {
@@ -39931,6 +39921,26 @@ window.REALDATA = {
       "elevationM": 0.0,
       "avgHr": 0,
       "source": "keep"
+    },
+    {
+      "date": "2026-09-17",
+      "type": "ride",
+      "title": "绍兴市 公路骑行",
+      "distanceKm": 21.29,
+      "movingTimeSec": 3370,
+      "elevationM": 30,
+      "avgHr": 165,
+      "source": "coros"
+    },
+    {
+      "date": "2026-09-18",
+      "type": "run",
+      "title": "E50+6ST",
+      "distanceKm": 8.02,
+      "movingTimeSec": 3420,
+      "elevationM": 14,
+      "avgHr": 161,
+      "source": "coros"
     }
   ],
   "checkins": [
