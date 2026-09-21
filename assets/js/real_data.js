@@ -39943,6 +39943,16 @@ window.REALDATA = {
       "source": "coros"
     },
     {
+      "date": "2026-09-19",
+      "type": "walk",
+      "title": "户外步行",
+      "distanceKm": 3.78,
+      "movingTimeSec": 2742,
+      "elevationM": 28.7,
+      "avgHr": 115,
+      "source": "keep"
+    },
+    {
       "date": "2026-09-20",
       "type": "run",
       "title": "E90+8ST",
