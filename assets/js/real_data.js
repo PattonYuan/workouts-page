@@ -39941,6 +39941,16 @@ window.REALDATA = {
       "elevationM": 14,
       "avgHr": 161,
       "source": "coros"
+    },
+    {
+      "date": "2026-09-20",
+      "type": "run",
+      "title": "E90+8ST",
+      "distanceKm": 1.23,
+      "movingTimeSec": 523,
+      "elevationM": 0,
+      "avgHr": 148,
+      "source": "coros"
     }
   ],
   "checkins": [
