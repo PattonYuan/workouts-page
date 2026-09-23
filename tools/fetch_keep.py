@@ -50,6 +50,10 @@ TRAININGLOG_API = "https://api.gotokeep.com/pd/v3/traininglog/{log_id}"
 # runninglog 对其返回 400；hikinglog 返回 geoPoints（真实 GPS 轨迹）。
 # 线索：活动列表 stats.schema 形如 keep://hikinglogs/{id}。
 HIKINGLOG_API = "https://api.gotokeep.com/pd/v3/hikinglog/{log_id}"
+# 骑行（dataType=*Cycling / id 带 _cy 后缀）的详情走 cyclinglog 接口，
+# runninglog 与 hikinglog 对其均返回 400；cyclinglog 返回 geoPoints（真实 GPS 轨迹）。
+# 2026-09-24 实测确认：此前误以为 Keep 骑行无轨迹，实为未走对接口。
+CYCLINGLOG_API = "https://api.gotokeep.com/pd/v3/cyclinglog/{log_id}"
 
 # Keep 返回的时间戳是 UTC 毫秒；日期一律按东八区换算。此前用 UTC 格式化，
 # 导致凌晨 00:00–08:00 的活动（如 00:01 的俯卧撑）被记到前一天，还会让
@@ -465,9 +469,9 @@ def _is_walk(st):
 
 
 def _is_ride(st):
-    """Keep 骑行(cycling)详情接口 RUN_LOG_API 系统性返回 HTTP 400，无法解析；
-    但骑行记录混在 walking 全量活动流里（dataType=outdoorcycling/indoorcycling 等），
-    故在此按 dataType/名称识别，交由 fetch_walks 直接用列表摘要构建，绕过坏接口。"""
+    """识别骑行记录：骑行混在 walking 全量活动流里（dataType=outdoorCycling/indoorCycling），
+    而专用列表接口 STATS_API?type=cycling 的详情(RUN_LOG_API)系统性返回 400，故改从全量流识别。
+    轨迹由 _build_ride 走 CYCLINGLOG_API 补全（该接口正常返回 geoPoints）。"""
     dt = (st.get("dataType") or "").lower()
     if "cycling" in dt:
         return True
@@ -476,8 +480,9 @@ def _is_ride(st):
 
 
 def _build_ride(client, st):
-    """由 walking 全量流的列表摘要构造骑行记录。
-    因 RUN_LOG_API 对骑行 400，不调详情接口，仅用摘要（含距离/时长/日期），无 GPS 轨迹。"""
+    """由 walking 全量流的列表摘要构造骑行记录；户外骑行再调 cyclinglog 详情
+    补全 GPS 轨迹/爬升/心率（RUN_LOG_API、HIKINGLOG_API 对骑行均返回 400，
+    必须用 CYCLINGLOG_API）。详情失败时退化为无轨迹的摘要记录。"""
     ms = st.get("startTime") or 0
     if not ms:
         dd = st.get("doneDate")
@@ -494,15 +499,38 @@ def _build_ride(client, st):
     dist = round(float(dist_m) / 1000.0, 2) if isinstance(dist_m, (int, float)) else 0.0
     dur = int(st.get("duration") or 0)
     name = st.get("name") or "骑行"
+
+    track = []
+    elev = 0.0
+    hr = None
+    rid = st.get("id")
+    # 室内骑行（indoorCycling）本身无 GPS，不调详情，直接用摘要
+    if "outdoor" in (st.get("dataType") or "").lower() and rid:
+        d = client._req(CYCLINGLOG_API.format(log_id=rid))
+        dd = (d or {}).get("data") if d else None
+        if dd:
+            track = _extract_track(dd, client)
+            if isinstance(dd.get("distance"), (int, float)) and dd["distance"] > 0:
+                dist = round(float(dd["distance"]) / 1000.0, 2)
+            if dd.get("duration"):
+                dur = int(dd["duration"])
+            e = dd.get("accumulativeUpliftedHeight")
+            if isinstance(e, (int, float)):
+                elev = round(float(e), 1)
+            h = (dd.get("heartRate") or {}).get("averageHeartRate")
+            if isinstance(h, (int, float)) and 0 < h < 250:
+                hr = int(h)
+            name = dd.get("workoutName") or dd.get("exerciseName") or name
+        time.sleep(0.3)  # 详情接口轻量限速
     return {
         "date": date_str,
         "type": "ride",
         "title": name,
         "distanceKm": dist,
         "movingTimeSec": dur,
-        "elevationM": 0.0,
-        "avgHr": 0,
-        "track": [],
+        "elevationM": elev,
+        "avgHr": hr or 0,
+        "track": _downsample_track(track),
         "source": "keep",
     }
 
