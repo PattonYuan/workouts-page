@@ -464,6 +464,49 @@ def _is_walk(st):
     return any(h in nm for h in WALK_NAME_HINTS)
 
 
+def _is_ride(st):
+    """Keep 骑行(cycling)详情接口 RUN_LOG_API 系统性返回 HTTP 400，无法解析；
+    但骑行记录混在 walking 全量活动流里（dataType=outdoorcycling/indoorcycling 等），
+    故在此按 dataType/名称识别，交由 fetch_walks 直接用列表摘要构建，绕过坏接口。"""
+    dt = (st.get("dataType") or "").lower()
+    if "cycling" in dt:
+        return True
+    nm = st.get("name") or ""
+    return any(h in nm for h in ("骑行", "单车", "骑车"))
+
+
+def _build_ride(client, st):
+    """由 walking 全量流的列表摘要构造骑行记录。
+    因 RUN_LOG_API 对骑行 400，不调详情接口，仅用摘要（含距离/时长/日期），无 GPS 轨迹。"""
+    ms = st.get("startTime") or 0
+    if not ms:
+        dd = st.get("doneDate")
+        if dd:
+            try:
+                ms = int(datetime.fromisoformat(dd.replace("Z", "+00:00")).timestamp() * 1000)
+            except Exception:  # noqa: BLE001
+                ms = 0
+    if not ms:
+        return None
+    dt = datetime.fromtimestamp(ms / 1000, tz=TZ_CN)
+    date_str = dt.strftime("%Y-%m-%d")
+    dist_m = st.get("distance")
+    dist = round(float(dist_m) / 1000.0, 2) if isinstance(dist_m, (int, float)) else 0.0
+    dur = int(st.get("duration") or 0)
+    name = st.get("name") or "骑行"
+    return {
+        "date": date_str,
+        "type": "ride",
+        "title": name,
+        "distanceKm": dist,
+        "movingTimeSec": dur,
+        "elevationM": 0.0,
+        "avgHr": 0,
+        "track": [],
+        "source": "keep",
+    }
+
+
 def _build_walk(client, st):
     """由列表摘要构造步行记录；户外步行再调 hikinglog 详情补全 GPS 轨迹/心率。
     详情失败时退化为无轨迹的摘要记录（距离/时长仍正确）。"""
@@ -543,16 +586,23 @@ def fetch_walks(client, since_ts=0):
                 rid = st.get("id")
                 if not rid or rid in seen:
                     continue
-                if not _is_walk(st):
-                    continue
-                seen.add(rid)
-                act = _build_walk(client, st)
-                if act:
-                    out.append(act)
-                    if newest_ms is None or (ms and ms > newest_ms):
-                        newest_ms = ms
-                    print(f"  + {act['date']} [walk] {act['title']} {act['distanceKm']}km"
-                          f"{' (含GPS轨迹)' if act['track'] else ''}")
+                if _is_walk(st):
+                    seen.add(rid)
+                    act = _build_walk(client, st)
+                    if act:
+                        out.append(act)
+                        if newest_ms is None or (ms and ms > newest_ms):
+                            newest_ms = ms
+                        print(f"  + {act['date']} [walk] {act['title']} {act['distanceKm']}km"
+                              f"{' (含GPS轨迹)' if act['track'] else ''}")
+                elif _is_ride(st):
+                    seen.add(rid)
+                    act = _build_ride(client, st)
+                    if act:
+                        out.append(act)
+                        if newest_ms is None or (ms and ms > newest_ms):
+                            newest_ms = ms
+                        print(f"  + {act['date']} [ride] {act['title']} {act['distanceKm']}km")
         nl = data.get("lastTimestamp", 0)
         if not nl:
             break
@@ -717,6 +767,8 @@ def main():
     for page_type in FETCH_TYPES:
         if page_type == "walking":
             continue  # walking 接口是全量活动流，单独用 fetch_walks 处理（避免误标/崩溃）
+        if page_type == "cycling":
+            continue  # cycling 详情接口(RUN_LOG_API)系统性 400，骑行改从 walking 全量流提取（见 fetch_walks/_is_ride）
         print(f"── 拉取 {TYPE_LABEL.get(page_type, page_type)} …")
         try:
             acts, nm = fetch_type(client, page_type, since_ts=since_ts)
