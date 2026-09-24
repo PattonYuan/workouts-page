@@ -146,6 +146,48 @@ def _fuzzy_dup(new, existing):
     return True
 
 
+# 运动大类归并：Apple Watch 经 Keep 记录的 type 与高驰可能不同（如 高驰 hike「徒步」
+# 对应 Keep walk「户外行走」、高驰 ride 对应 Keep cycling），但它们是同一场运动。
+# 按运动大类归并后再判重，避免「同日同运动、不同 type 字符串」被漏判为两条。
+_SPORT_GROUP = {
+    "run": "run",
+    "walk": "walk", "hike": "walk",
+    "ride": "ride", "cycling": "ride",
+    "moto": "moto",
+    "workout": "workout", "training": "workout", "strength": "workout",
+    "swim": "swim",
+}
+
+
+def _group(t):
+    return _SPORT_GROUP.get(t, t or "")
+
+
+def _coros_overlap_dup(keep_a, coros_acts):
+    """时间重叠去重（Coros 优先）：在 coros_acts 中找与 keep_a 同一场运动的记录。
+
+    判定：同日 + 同运动大类 + 距离相近。
+      · max(距离) < 0.5km 不判重，避免 0km 力量训练与短距离跑步被误删；
+      · 距离容差 max(0.5km, 15%)，覆盖两设备 GPS 漂移。
+    命中返回那条高驰记录（供审计），否则返回 None。
+    """
+    kg = _group(keep_a.get("type"))
+    if not kg:
+        return None
+    kd = keep_a.get("distanceKm") or 0
+    for c in coros_acts:
+        if c.get("date") != keep_a.get("date"):
+            continue
+        if _group(c.get("type")) != kg:
+            continue
+        cd = c.get("distanceKm") or 0
+        if max(kd, cd) < 0.5:
+            continue
+        if abs(kd - cd) <= max(0.5, 0.15 * max(kd, cd, 1)):
+            return c
+    return None
+
+
 def _rebuild_checkins(activities, existing_checkins, incoming_checkins):
     """由合并后的活动重建打卡列表（按 动作+日期 去重）。
 
@@ -256,6 +298,26 @@ def merge_and_write(new_activities, profile=None, checkins=None, out_path=None, 
         if not handled:
             merged.append(a)
 
+    # 时间重叠去重（Coros 优先）：Keep（Apple Watch / 高驰经 Keep 同步）与高驰直接同步
+    # 记录同一场运动时，丢弃 Keep 那条，仅保留高驰。只删 keep、绝不删 coros。
+    # 注：活动记录仅含日期不含时分，"时间重叠"在数据层等价于"同一天"。
+    coros_acts = [o for o in merged if (o.get("source") or "") == "coros"]
+    removed = []
+    kept = []
+    for a in merged:
+        if (a.get("source") or "") == "keep":
+            c = _coros_overlap_dup(a, coros_acts)
+            if c:
+                removed.append((a, c))
+                continue
+        kept.append(a)
+    if removed:
+        print(f"✂️  时间重叠去重（Coros 优先）删除 Keep 重复 {len(removed)} 条：")
+        for a, c in removed[:50]:
+            print(f"   - 删 Keep {a.get('date')} {a.get('type')} {a.get('title')} "
+                  f"{a.get('distanceKm')}km  →  留 Coros {c.get('type')} {c.get('title')} {c.get('distanceKm')}km")
+    merged = kept
+
     data["activities"] = merged
     data["activities"].sort(key=lambda a: a["date"])
 
@@ -297,3 +359,63 @@ def merge_and_write(new_activities, profile=None, checkins=None, out_path=None, 
 
     print(f"✅ 已写入 {out_path}（共 {len(data['activities'])} 条活动）"
           f" + {tracks_path}（{sum(1 for t in tracks if t)} 条轨迹）")
+
+
+def dedup_coros_priority(out_path=None):
+    """对已有的 real_data.js 重新执行「时间重叠去重（Coros 优先）」。
+
+    用于历史数据补去重（如新增了跨源同运动大类的判重规则后，对既有文件重跑）。
+    轨迹随活动一并保留（load_existing 已把轨迹合回活动，写盘时再拆出）。
+    """
+    if out_path is None:
+        here = os.path.dirname(os.path.abspath(__file__))
+        out_path = os.path.join(here, "..", "assets", "js", "real_data.js")
+    out_path = os.path.abspath(out_path)
+
+    data = load_existing(out_path)
+    merged = data["activities"]
+    coros_acts = [o for o in merged if (o.get("source") or "") == "coros"]
+    removed = []
+    kept = []
+    for a in merged:
+        if (a.get("source") or "") == "keep":
+            c = _coros_overlap_dup(a, coros_acts)
+            if c:
+                removed.append((a, c))
+                continue
+        kept.append(a)
+
+    data["activities"] = kept
+    data["activities"].sort(key=lambda a: a["date"])
+    data["checkins"] = _rebuild_checkins(kept, data.get("checkins", []), None)
+
+    tracks = []
+    for a in data["activities"]:
+        t = _sanitize_track(a.pop("track", None))
+        tracks.append(t if t else None)
+
+    with open(out_path, "w", encoding="utf-8") as f:
+        f.write("// 由 tools/sync_*.py 自动生成，请勿手动编辑\n")
+        f.write("window.REALDATA = ")
+        json.dump(data, f, ensure_ascii=False, indent=2)
+        f.write(";\n")
+    tracks_path = os.path.join(os.path.dirname(out_path), "real_tracks.js")
+    with open(tracks_path, "w", encoding="utf-8") as f:
+        f.write("// 由 tools/realdata.py 自动生成（轨迹与 REALDATA.activities 按下标对齐），请勿手动编辑\n")
+        f.write("window.REALTRACKS = ")
+        json.dump(tracks, f, ensure_ascii=False, separators=(",", ":"))
+        f.write(";\n")
+
+    print(f"✂️  时间重叠去重完成：删除 Keep 重复 {len(removed)} 条，保留 {len(kept)} 条")
+    for a, c in removed[:50]:
+        print(f"   - 删 Keep {a.get('date')} {a.get('type')} {a.get('title')} "
+              f"{a.get('distanceKm')}km  →  留 Coros {c.get('type')} {c.get('title')} {c.get('distanceKm')}km")
+    return len(removed)
+
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "dedup":
+        dedup_coros_priority()
+    else:
+        print("用法: python realdata.py dedup   # 对现有 real_data.js 执行 Coros 优先时间重叠去重")
