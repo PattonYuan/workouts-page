@@ -30233,36 +30233,6 @@ window.REALDATA = {
       "source": "coros"
     },
     {
-      "date": "2023-12-03",
-      "type": "walk",
-      "title": "户外行走",
-      "distanceKm": 6.39,
-      "movingTimeSec": 8895,
-      "elevationM": 296.5,
-      "avgHr": 108,
-      "source": "keep"
-    },
-    {
-      "date": "2023-12-03",
-      "type": "walk",
-      "title": "户外行走",
-      "distanceKm": 2.65,
-      "movingTimeSec": 3005,
-      "elevationM": 0.0,
-      "avgHr": 0,
-      "source": "keep"
-    },
-    {
-      "date": "2023-12-03",
-      "type": "walk",
-      "title": "户外行走",
-      "distanceKm": 2.78,
-      "movingTimeSec": 2315,
-      "elevationM": 116.3,
-      "avgHr": 104,
-      "source": "keep"
-    },
-    {
       "date": "2023-12-04",
       "type": "workout",
       "title": "卷腹",
@@ -30291,26 +30261,6 @@ window.REALDATA = {
       "elevationM": 7,
       "avgHr": 113,
       "source": "coros"
-    },
-    {
-      "date": "2023-12-04",
-      "type": "walk",
-      "title": "户外行走",
-      "distanceKm": 1.19,
-      "movingTimeSec": 982,
-      "elevationM": 15.1,
-      "avgHr": 97,
-      "source": "keep"
-    },
-    {
-      "date": "2023-12-04",
-      "type": "walk",
-      "title": "户外行走",
-      "distanceKm": 1.31,
-      "movingTimeSec": 1121,
-      "elevationM": 0.0,
-      "avgHr": 0,
-      "source": "keep"
     },
     {
       "date": "2023-12-05",
@@ -30503,26 +30453,6 @@ window.REALDATA = {
       "source": "coros"
     },
     {
-      "date": "2023-12-10",
-      "type": "walk",
-      "title": "户外行走",
-      "distanceKm": 1.29,
-      "movingTimeSec": 1676,
-      "elevationM": 0.0,
-      "avgHr": 0,
-      "source": "keep"
-    },
-    {
-      "date": "2023-12-10",
-      "type": "walk",
-      "title": "户外行走",
-      "distanceKm": 1.73,
-      "movingTimeSec": 2346,
-      "elevationM": 0.0,
-      "avgHr": 0,
-      "source": "keep"
-    },
-    {
       "date": "2023-12-11",
       "type": "walk",
       "title": "户外行走",
@@ -30651,16 +30581,6 @@ window.REALDATA = {
       "elevationM": 16,
       "avgHr": 163,
       "source": "coros"
-    },
-    {
-      "date": "2023-12-14",
-      "type": "walk",
-      "title": "户外行走",
-      "distanceKm": 1.01,
-      "movingTimeSec": 945,
-      "elevationM": 0.0,
-      "avgHr": 0,
-      "source": "keep"
     },
     {
       "date": "2023-12-15",
@@ -31301,16 +31221,6 @@ window.REALDATA = {
       "elevationM": 2,
       "avgHr": 103,
       "source": "coros"
-    },
-    {
-      "date": "2023-12-30",
-      "type": "walk",
-      "title": "户外行走",
-      "distanceKm": 1.09,
-      "movingTimeSec": 1277,
-      "elevationM": 0.0,
-      "avgHr": 0,
-      "source": "keep"
     },
     {
       "date": "2023-12-31",
@@ -32123,16 +32033,6 @@ window.REALDATA = {
       "source": "coros"
     },
     {
-      "date": "2024-01-13",
-      "type": "walk",
-      "title": "户外行走",
-      "distanceKm": 2.15,
-      "movingTimeSec": 2539,
-      "elevationM": 0.0,
-      "avgHr": 0,
-      "source": "keep"
-    },
-    {
       "date": "2024-01-14",
       "type": "workout",
       "title": "俯卧撑",
@@ -32581,16 +32481,6 @@ window.REALDATA = {
       "elevationM": 0,
       "avgHr": 146,
       "source": "coros"
-    },
-    {
-      "date": "2024-01-23",
-      "type": "run",
-      "title": "Keep跑步",
-      "distanceKm": 5.99,
-      "movingTimeSec": 2366,
-      "elevationM": 0.0,
-      "avgHr": 146,
-      "source": "keep"
     },
     {
       "date": "2024-01-24",
@@ -33793,26 +33683,6 @@ window.REALDATA = {
       "source": "coros"
     },
     {
-      "date": "2024-03-09",
-      "type": "walk",
-      "title": "户外行走",
-      "distanceKm": 2.03,
-      "movingTimeSec": 2488,
-      "elevationM": 0.0,
-      "avgHr": 0,
-      "source": "keep"
-    },
-    {
-      "date": "2024-03-09",
-      "type": "walk",
-      "title": "户外行走",
-      "distanceKm": 1.54,
-      "movingTimeSec": 2411,
-      "elevationM": 0.0,
-      "avgHr": 0,
-      "source": "keep"
-    },
-    {
       "date": "2024-03-10",
       "type": "workout",
       "title": "俯卧撑",
@@ -34641,16 +34511,6 @@ window.REALDATA = {
       "elevationM": 51,
       "avgHr": null,
       "source": "coros"
-    },
-    {
-      "date": "2024-04-12",
-      "type": "ride",
-      "title": "户外骑行",
-      "distanceKm": 11.96,
-      "movingTimeSec": 1864,
-      "elevationM": 0.0,
-      "avgHr": 0,
-      "source": "keep"
     },
     {
       "date": "2024-04-13",
@@ -36891,16 +36751,6 @@ window.REALDATA = {
       "elevationM": 24,
       "avgHr": 151,
       "source": "coros"
-    },
-    {
-      "date": "2024-06-24",
-      "type": "run",
-      "title": "Keep跑步",
-      "distanceKm": 7.17,
-      "movingTimeSec": 3209,
-      "elevationM": 0.0,
-      "avgHr": 0,
-      "source": "keep"
     },
     {
       "date": "2024-06-25",
@@ -39303,16 +39153,6 @@ window.REALDATA = {
       "source": "coros"
     },
     {
-      "date": "2024-11-30",
-      "type": "walk",
-      "title": "户外步行",
-      "distanceKm": 7.75,
-      "movingTimeSec": 6992,
-      "elevationM": 266.2,
-      "avgHr": 119,
-      "source": "keep"
-    },
-    {
       "date": "2024-12-01",
       "type": "walk",
       "title": "户外步行",
@@ -40793,16 +40633,6 @@ window.REALDATA = {
       "source": "coros"
     },
     {
-      "date": "2025-02-13",
-      "type": "ride",
-      "title": "户外单车",
-      "distanceKm": 3.93,
-      "movingTimeSec": 700,
-      "elevationM": 20.9,
-      "avgHr": 122,
-      "source": "keep"
-    },
-    {
       "date": "2025-02-14",
       "type": "walk",
       "title": "户外行走",
@@ -40861,16 +40691,6 @@ window.REALDATA = {
       "elevationM": 33,
       "avgHr": 167,
       "source": "coros"
-    },
-    {
-      "date": "2025-02-15",
-      "type": "run",
-      "title": "Keep跑步",
-      "distanceKm": 5.06,
-      "movingTimeSec": 1683,
-      "elevationM": 23.8,
-      "avgHr": 178,
-      "source": "keep"
     },
     {
       "date": "2025-02-16",
@@ -41261,16 +41081,6 @@ window.REALDATA = {
       "elevationM": 954,
       "avgHr": 128,
       "source": "coros"
-    },
-    {
-      "date": "2025-03-09",
-      "type": "walk",
-      "title": "户外步行",
-      "distanceKm": 18.33,
-      "movingTimeSec": 18987,
-      "elevationM": 1184.4,
-      "avgHr": 126,
-      "source": "keep"
     },
     {
       "date": "2025-03-10",
@@ -41783,16 +41593,6 @@ window.REALDATA = {
       "source": "coros"
     },
     {
-      "date": "2025-03-30",
-      "type": "run",
-      "title": "Keep跑步",
-      "distanceKm": 14.09,
-      "movingTimeSec": 5201,
-      "elevationM": 0.0,
-      "avgHr": 165,
-      "source": "keep"
-    },
-    {
       "date": "2025-03-31",
       "type": "walk",
       "title": "户外行走",
@@ -41931,26 +41731,6 @@ window.REALDATA = {
       "elevationM": 66,
       "avgHr": 112,
       "source": "coros"
-    },
-    {
-      "date": "2025-04-04",
-      "type": "hike",
-      "title": "Keep徒步",
-      "distanceKm": 2.4,
-      "movingTimeSec": 3039,
-      "elevationM": 0.0,
-      "avgHr": 0,
-      "source": "keep"
-    },
-    {
-      "date": "2025-04-04",
-      "type": "walk",
-      "title": "户外行走",
-      "distanceKm": 2.59,
-      "movingTimeSec": 3333,
-      "elevationM": 0.0,
-      "avgHr": 0,
-      "source": "keep"
     },
     {
       "date": "2025-04-05",
@@ -44613,16 +44393,6 @@ window.REALDATA = {
       "source": "coros"
     },
     {
-      "date": "2025-10-16",
-      "type": "run",
-      "title": "Keep跑步",
-      "distanceKm": 6.17,
-      "movingTimeSec": 2228,
-      "elevationM": 2.8,
-      "avgHr": 172,
-      "source": "keep"
-    },
-    {
       "date": "2025-10-17",
       "type": "walk",
       "title": "户外步行",
@@ -45133,16 +44903,6 @@ window.REALDATA = {
       "source": "coros"
     },
     {
-      "date": "2025-11-17",
-      "type": "run",
-      "title": "Keep跑步",
-      "distanceKm": 4.93,
-      "movingTimeSec": 1756,
-      "elevationM": 0.0,
-      "avgHr": 163,
-      "source": "keep"
-    },
-    {
       "date": "2025-11-18",
       "type": "walk",
       "title": "户外步行",
@@ -45181,16 +44941,6 @@ window.REALDATA = {
       "elevationM": 0,
       "avgHr": 157,
       "source": "coros"
-    },
-    {
-      "date": "2025-11-18",
-      "type": "run",
-      "title": "Keep跑步",
-      "distanceKm": 9.93,
-      "movingTimeSec": 3624,
-      "elevationM": 0.0,
-      "avgHr": 156,
-      "source": "keep"
     },
     {
       "date": "2025-11-19",
@@ -47703,16 +47453,6 @@ window.REALDATA = {
       "source": "coros"
     },
     {
-      "date": "2026-05-10",
-      "type": "hike",
-      "title": "Keep徒步",
-      "distanceKm": 13.75,
-      "movingTimeSec": 12779,
-      "elevationM": 424.5,
-      "avgHr": 146,
-      "source": "keep"
-    },
-    {
       "date": "2026-05-11",
       "type": "walk",
       "title": "户外步行",
@@ -47803,16 +47543,6 @@ window.REALDATA = {
       "source": "coros"
     },
     {
-      "date": "2026-05-17",
-      "type": "hike",
-      "title": "Keep徒步",
-      "distanceKm": 4.4,
-      "movingTimeSec": 5436,
-      "elevationM": 322.3,
-      "avgHr": 135,
-      "source": "keep"
-    },
-    {
       "date": "2026-05-18",
       "type": "walk",
       "title": "户外步行",
@@ -47831,16 +47561,6 @@ window.REALDATA = {
       "elevationM": 10,
       "avgHr": 146,
       "source": "coros"
-    },
-    {
-      "date": "2026-05-18",
-      "type": "ride",
-      "title": "户外单车",
-      "distanceKm": 7.25,
-      "movingTimeSec": 1432,
-      "elevationM": 2.7,
-      "avgHr": 141,
-      "source": "keep"
     },
     {
       "date": "2026-05-19",
