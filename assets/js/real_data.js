@@ -49511,6 +49511,36 @@ window.REALDATA = {
       "elevationM": 11,
       "avgHr": 172,
       "source": "coros"
+    },
+    {
+      "date": "2026-09-24",
+      "type": "walk",
+      "title": "户外步行",
+      "distanceKm": 1.08,
+      "movingTimeSec": 2048,
+      "elevationM": 7.5,
+      "avgHr": 97,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-24",
+      "type": "walk",
+      "title": "户外步行",
+      "distanceKm": 0.52,
+      "movingTimeSec": 405,
+      "elevationM": 20.7,
+      "avgHr": 101,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-25",
+      "type": "walk",
+      "title": "户外行走",
+      "distanceKm": 0.74,
+      "movingTimeSec": 593,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
     }
   ],
   "checkins": [
