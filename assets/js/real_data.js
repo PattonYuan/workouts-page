@@ -49571,6 +49571,16 @@ window.REALDATA = {
       "elevationM": 288.7,
       "avgHr": 105,
       "source": "keep"
+    },
+    {
+      "date": "2026-10-01",
+      "type": "run",
+      "title": "南昌市 跑步",
+      "distanceKm": 10.01,
+      "movingTimeSec": 3769,
+      "elevationM": 6,
+      "avgHr": 179,
+      "source": "coros"
     }
   ],
   "checkins": [
