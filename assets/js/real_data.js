@@ -49573,6 +49573,36 @@ window.REALDATA = {
       "source": "keep"
     },
     {
+      "date": "2026-09-28",
+      "type": "walk",
+      "title": "户外步行",
+      "distanceKm": 1.83,
+      "movingTimeSec": 1438,
+      "elevationM": 31.1,
+      "avgHr": 97,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-29",
+      "type": "walk",
+      "title": "户外步行",
+      "distanceKm": 2.14,
+      "movingTimeSec": 1661,
+      "elevationM": 2.1,
+      "avgHr": 108,
+      "source": "keep"
+    },
+    {
+      "date": "2026-09-29",
+      "type": "ride",
+      "title": "户外单车",
+      "distanceKm": 0.63,
+      "movingTimeSec": 318,
+      "elevationM": 0.0,
+      "avgHr": 108,
+      "source": "keep"
+    },
+    {
       "date": "2026-10-01",
       "type": "run",
       "title": "南昌市 跑步",
@@ -49581,6 +49611,56 @@ window.REALDATA = {
       "elevationM": 6,
       "avgHr": 179,
       "source": "coros"
+    },
+    {
+      "date": "2026-10-01",
+      "type": "walk",
+      "title": "户外步行",
+      "distanceKm": 1.69,
+      "movingTimeSec": 1926,
+      "elevationM": 4.0,
+      "avgHr": 130,
+      "source": "keep"
+    },
+    {
+      "date": "2026-10-02",
+      "type": "walk",
+      "title": "户外步行",
+      "distanceKm": 0.39,
+      "movingTimeSec": 518,
+      "elevationM": 3.9,
+      "avgHr": 96,
+      "source": "keep"
+    },
+    {
+      "date": "2026-10-03",
+      "type": "walk",
+      "title": "户外步行",
+      "distanceKm": 1.24,
+      "movingTimeSec": 1388,
+      "elevationM": 6.7,
+      "avgHr": 103,
+      "source": "keep"
+    },
+    {
+      "date": "2026-10-04",
+      "type": "run",
+      "title": "Keep跑步",
+      "distanceKm": 0.17,
+      "movingTimeSec": 51,
+      "elevationM": 4.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-10-06",
+      "type": "walk",
+      "title": "户外步行",
+      "distanceKm": 1.31,
+      "movingTimeSec": 1403,
+      "elevationM": 106.9,
+      "avgHr": 114,
+      "source": "keep"
     }
   ],
   "checkins": [
