@@ -49604,16 +49604,6 @@ window.REALDATA = {
     },
     {
       "date": "2026-10-01",
-      "type": "run",
-      "title": "南昌市 跑步",
-      "distanceKm": 10.01,
-      "movingTimeSec": 3769,
-      "elevationM": 6,
-      "avgHr": 179,
-      "source": "coros"
-    },
-    {
-      "date": "2026-10-01",
       "type": "walk",
       "title": "户外步行",
       "distanceKm": 1.69,
@@ -49621,6 +49611,16 @@ window.REALDATA = {
       "elevationM": 4.0,
       "avgHr": 130,
       "source": "keep"
+    },
+    {
+      "date": "2026-10-01",
+      "type": "run",
+      "title": "南昌市 跑步",
+      "distanceKm": 10.01,
+      "movingTimeSec": 3769,
+      "elevationM": 6,
+      "avgHr": 179,
+      "source": "coros"
     },
     {
       "date": "2026-10-02",
