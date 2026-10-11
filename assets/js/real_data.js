@@ -49661,6 +49661,36 @@ window.REALDATA = {
       "elevationM": 106.9,
       "avgHr": 114,
       "source": "keep"
+    },
+    {
+      "date": "2026-10-06",
+      "type": "walk",
+      "title": "户外行走",
+      "distanceKm": 0.78,
+      "movingTimeSec": 1397,
+      "elevationM": 0.0,
+      "avgHr": 0,
+      "source": "keep"
+    },
+    {
+      "date": "2026-10-08",
+      "type": "walk",
+      "title": "户外步行",
+      "distanceKm": 2.55,
+      "movingTimeSec": 2050,
+      "elevationM": 23.3,
+      "avgHr": 107,
+      "source": "keep"
+    },
+    {
+      "date": "2026-10-11",
+      "type": "run",
+      "title": "绍兴市 跑步",
+      "distanceKm": 10.07,
+      "movingTimeSec": 3557,
+      "elevationM": 38,
+      "avgHr": 186,
+      "source": "coros"
     }
   ],
   "checkins": [
