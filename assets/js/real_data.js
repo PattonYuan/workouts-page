@@ -49358,8 +49358,8 @@ window.REALDATA = {
       "title": "户外步行",
       "distanceKm": 1.13,
       "movingTimeSec": 914,
-      "elevationM": 2.0,
-      "avgHr": 134,
+      "elevationM": 0.0,
+      "avgHr": 0,
       "source": "keep"
     },
     {
@@ -49578,8 +49578,8 @@ window.REALDATA = {
       "title": "户外步行",
       "distanceKm": 1.83,
       "movingTimeSec": 1438,
-      "elevationM": 31.1,
-      "avgHr": 97,
+      "elevationM": 0.0,
+      "avgHr": 0,
       "source": "keep"
     },
     {
