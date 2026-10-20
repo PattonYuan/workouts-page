@@ -49358,8 +49358,8 @@ window.REALDATA = {
       "title": "户外步行",
       "distanceKm": 1.13,
       "movingTimeSec": 914,
-      "elevationM": 0.0,
-      "avgHr": 0,
+      "elevationM": 2.0,
+      "avgHr": 134,
       "source": "keep"
     },
     {
@@ -49578,8 +49578,8 @@ window.REALDATA = {
       "title": "户外步行",
       "distanceKm": 1.83,
       "movingTimeSec": 1438,
-      "elevationM": 0.0,
-      "avgHr": 0,
+      "elevationM": 31.1,
+      "avgHr": 97,
       "source": "keep"
     },
     {
@@ -49701,6 +49701,16 @@ window.REALDATA = {
       "elevationM": 9.3,
       "avgHr": 102,
       "source": "keep"
+    },
+    {
+      "date": "2026-10-17",
+      "type": "hike",
+      "title": "广州市 徒步",
+      "distanceKm": 1.98,
+      "movingTimeSec": 2356,
+      "elevationM": 7,
+      "avgHr": 105,
+      "source": "coros"
     }
   ],
   "checkins": [
