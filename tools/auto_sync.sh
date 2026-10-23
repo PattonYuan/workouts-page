@@ -12,6 +12,21 @@
 # ============================================================================
 set -u
 
+# 互斥锁：防止 bash 工具双跑 / launchd 与手动并发导致多个实例同时运行。
+# 多实例会竞争写 real_data.js / .keep_state.json，造成数据损坏（已踩坑 2026-10-23）。
+LOCK_DIR="/tmp/workouts_autosync.lock"
+if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+  _OLD_PID=$(cat "$LOCK_DIR/pid" 2>/dev/null)
+  if [ -n "$_OLD_PID" ] && kill -0 "$_OLD_PID" 2>/dev/null; then
+    echo "⚠️ 已有 auto_sync 实例在运行（PID=$_OLD_PID），本次退出避免竞态"
+    exit 0
+  fi
+  rm -rf "$LOCK_DIR"
+  mkdir "$LOCK_DIR" 2>/dev/null || { echo "❌ 无法获取锁，退出"; exit 1; }
+fi
+echo $$ > "$LOCK_DIR/pid"
+trap 'rm -rf "$LOCK_DIR"' EXIT INT TERM
+
 PROJ="/Users/yuanpengtao/WorkBuddy/Personal/workouts-page"
 PY="/Users/yuanpengtao/opt/anaconda3/bin/python"
 REMOTE_BRANCH="main"
