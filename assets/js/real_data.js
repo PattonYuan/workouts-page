@@ -49703,6 +49703,26 @@ window.REALDATA = {
       "source": "keep"
     },
     {
+      "date": "2026-10-13",
+      "type": "walk",
+      "title": "户外步行",
+      "distanceKm": 2.55,
+      "movingTimeSec": 2055,
+      "elevationM": 24.6,
+      "avgHr": 103,
+      "source": "keep"
+    },
+    {
+      "date": "2026-10-14",
+      "type": "ride",
+      "title": "户外单车",
+      "distanceKm": 0.84,
+      "movingTimeSec": 487,
+      "elevationM": 0.0,
+      "avgHr": 99,
+      "source": "keep"
+    },
+    {
       "date": "2026-10-17",
       "type": "hike",
       "title": "广州市 徒步",
@@ -49710,6 +49730,26 @@ window.REALDATA = {
       "movingTimeSec": 2356,
       "elevationM": 7,
       "avgHr": 105,
+      "source": "coros"
+    },
+    {
+      "date": "2026-10-21",
+      "type": "walk",
+      "title": "绍兴市 健走",
+      "distanceKm": 2.46,
+      "movingTimeSec": 1984,
+      "elevationM": 6,
+      "avgHr": 100,
+      "source": "coros"
+    },
+    {
+      "date": "2026-10-22",
+      "type": "walk",
+      "title": "绍兴市 健走",
+      "distanceKm": 2.49,
+      "movingTimeSec": 2002,
+      "elevationM": 7,
+      "avgHr": 100,
       "source": "coros"
     }
   ],
