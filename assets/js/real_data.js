@@ -49751,6 +49751,16 @@ window.REALDATA = {
       "elevationM": 7,
       "avgHr": 100,
       "source": "coros"
+    },
+    {
+      "date": "2026-10-25",
+      "type": "ride",
+      "title": "绍兴市 公路骑行",
+      "distanceKm": 10.07,
+      "movingTimeSec": 2202,
+      "elevationM": 13,
+      "avgHr": 117,
+      "source": "coros"
     }
   ],
   "checkins": [
