@@ -49765,12 +49765,22 @@ window.REALDATA = {
     {
       "date": "2026-10-27",
       "type": "walk",
-      "title": "健走",
+      "title": "绍兴市 健走",
       "distanceKm": 1.26,
       "movingTimeSec": 953,
-      "elevationM": 4.0,
+      "elevationM": 4,
       "avgHr": 109,
-      "source": "keep"
+      "source": "coros"
+    },
+    {
+      "date": "2026-10-27",
+      "type": "run",
+      "title": "绍兴市 跑步",
+      "distanceKm": 5.01,
+      "movingTimeSec": 2092,
+      "elevationM": 0,
+      "avgHr": 166,
+      "source": "coros"
     }
   ],
   "checkins": [
