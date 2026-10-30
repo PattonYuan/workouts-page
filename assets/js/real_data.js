@@ -49781,6 +49781,26 @@ window.REALDATA = {
       "elevationM": 0,
       "avgHr": 166,
       "source": "coros"
+    },
+    {
+      "date": "2026-10-28",
+      "type": "walk",
+      "title": "健走",
+      "distanceKm": 1.24,
+      "movingTimeSec": 957,
+      "elevationM": 4.0,
+      "avgHr": 101,
+      "source": "keep"
+    },
+    {
+      "date": "2026-10-29",
+      "type": "walk",
+      "title": "健走",
+      "distanceKm": 2.44,
+      "movingTimeSec": 1723,
+      "elevationM": 6.0,
+      "avgHr": 114,
+      "source": "keep"
     }
   ],
   "checkins": [
